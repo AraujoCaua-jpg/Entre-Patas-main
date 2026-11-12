@@ -1,3 +1,7 @@
+import '../../service/clientes_api.dart';
+import '../../service/auth_api.dart';
+import '../core/scrollable_screen_body.dart';
+
 import 'package:material_ui/material_ui.dart';
 
 // import 'recuperar_senha_2_screen.dart';
@@ -20,7 +24,7 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
     super.dispose();
   }
 
-  void verificarEmail() {
+  Future<void> verificarEmail() async {
     final email = emailController.text.trim();
 
     if (email.isEmpty) {
@@ -39,10 +43,32 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
       return;
     }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const AlterarSenhaScreen()),
-    );
+    final api = ClientesApi();
+    try {
+      final mensagem = await api.solicitarRecuperacao(email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(mensagem)));
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const AlterarSenhaScreen(recuperacao: true),
+        ),
+      );
+    } on LoginException catch (e) {
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.mensagem)));
+    } catch (_) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível solicitar a recuperação.'),
+          ),
+        );
+    } finally {
+      api.close();
+    }
   }
 
   @override
@@ -52,28 +78,20 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
 
       appBar: AppBar(
         backgroundColor: Colors.white,
-        
+
         centerTitle: true,
         automaticallyImplyLeading: false,
-        title: Image.asset(
-          'assets/logo.png',
-          height: 25,
-          fit: BoxFit.contain,
-        ),
+        title: Image.asset('assets/logo.png', height: 25, fit: BoxFit.contain),
 
         shape: const Border(
-          bottom: BorderSide(
-            color: Color(0xFFD96C3F),
-            width: 2,
-          ),
+          bottom: BorderSide(color: Color(0xFFD96C3F), width: 2),
         ),
       ),
 
-      body: Padding(
+      body: ScrollableScreenBody(
         padding: EdgeInsets.all(24),
-        child: Column(   
+        child: Column(
           children: [
-            
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -87,7 +105,7 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
                 ),
               ],
             ),
-            
+
             Expanded(
               child: Column(
                 mainAxisAlignment: .center,
@@ -116,20 +134,13 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
                     ),
                   ),
 
-
                   Text(
                     'Digite o e-mail da sua conta',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFF888888),
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Color(0xFF888888), fontSize: 16),
                   ),
 
-                  SizedBox(
-                    height: 40,
-                  ),
-
+                  SizedBox(height: 40),
 
                   TextField(
                     controller: emailController,
@@ -145,13 +156,12 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
                       ),
                     ),
                   ),
-
                 ],
               ),
             ),
 
             Row(
-              children: [ 
+              children: [
                 Expanded(
                   child: SizedBox(
                     height: 62,
@@ -168,24 +178,16 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            'Entrar',
-                            style: TextStyle(
-                              fontSize: 24,
-                            ),
-                          ),
+                          Text('Entrar', style: TextStyle(fontSize: 24)),
                           SizedBox(width: 10),
                           Icon(Icons.arrow_forward),
                         ],
                       ),
                     ),
                   ),
-                )
-                
-
+                ),
               ],
             ),
-
           ],
         ),
       ),

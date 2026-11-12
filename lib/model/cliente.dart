@@ -24,4 +24,29 @@ class Cliente {
     this.endereco,
     this.larDeAdocao = false,
   });
+  factory Cliente.fromJson(Map<String, dynamic> c) => Cliente(
+    id: c['id'] as int,
+    nome: c['nome'] as String? ?? '',
+    sobrenome: c['sobrenome'] as String? ?? '',
+    email: c['email'] as String? ?? '',
+    telefone: c['telefone'] as String? ?? '',
+    usuario: c['usuario'] as String? ?? '',
+    cidadeDeResidencia: c['cidadeDeResidencia'] as String? ?? '',
+    estado: c['estado'] as String?,
+    endereco: c['endereco'] as String?,
+    imageUrl: c['imagem'] as String?,
+    larDeAdocao: c['larDeAdocao'] == true || c['larDeAdocao'] == 1,
+  );
+  Map<String, dynamic> toJson() => {
+    'nome': nome,
+    'sobrenome': sobrenome,
+    'email': email,
+    'telefone': telefone,
+    'usuario': usuario,
+    'cidadeDeResidencia': cidadeDeResidencia,
+    'estado': estado,
+    'endereco': endereco,
+    'imagem': imageUrl,
+    'larDeAdocao': larDeAdocao,
+  };
 }

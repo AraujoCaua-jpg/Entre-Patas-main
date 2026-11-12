@@ -1,3 +1,5 @@
+import '../service/clientes_api.dart';
+
 import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
@@ -9,6 +11,7 @@ class ClienteController extends ChangeNotifier {
   ClienteController({AuthApi? authApi}) : _authApi = authApi ?? AuthApi();
   final AuthApi _authApi;
   String? _token;
+  final _dadosApi = ClientesApi();
   bool _autenticando = false;
   final List<Cliente> clientes = [];
   int? _clienteLogadoId;
@@ -42,6 +45,7 @@ class ClienteController extends ChangeNotifier {
   @override
   void dispose() {
     _authApi.close();
+    _dadosApi.close();
     super.dispose();
   }
 
@@ -122,5 +126,45 @@ class ClienteController extends ChangeNotifier {
     }
 
     return clientes.length < quantidadeAnterior;
+  }
+
+  String get _sessao =>
+      _token ?? (throw const LoginException('Entre novamente para continuar.'));
+  void _atualizar(Cliente c) {
+    clientes.removeWhere((outro) => outro.id == c.id);
+    clientes.add(c);
+    notifyListeners();
+  }
+
+  Future<Cliente> atualizarPerfil() async {
+    final c = await _dadosApi.perfil(_sessao);
+    _atualizar(c);
+    return c;
+  }
+
+  Future<Cliente> buscarClienteRemoto(int id, {bool basico = false}) =>
+      _dadosApi.buscarId(_sessao, id, basico: basico);
+  Future<List<Cliente>> pesquisarClientes(String termo) =>
+      _dadosApi.pesquisar(_sessao, termo);
+  Future<bool> editarClienteRemoto(Cliente c) async {
+    final atualizado = await _dadosApi.editar(_sessao, c);
+    _atualizar(atualizado);
+    return true;
+  }
+
+  void limparSessao() {
+    _token = null;
+    _clienteLogadoId = null;
+    notifyListeners();
+  }
+
+  Future<void> apagarConta() async {
+    await _dadosApi.apagar(_sessao);
+    limparSessao();
+  }
+
+  Future<void> alterarSenha(String atual, String nova) async {
+    await _dadosApi.alterarSenha(_sessao, atual, nova);
+    limparSessao();
   }
 }

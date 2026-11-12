@@ -68,7 +68,7 @@ function exigir_sessao() {
     $consulta = banco()->prepare('SELECT * FROM cliente WHERE id = ? AND ativo = 1');
     $consulta->execute([$_SESSION['cliente_id']]);
     $cliente = $consulta->fetch();
-    if (!$cliente) {
+    if (!$cliente || !hash_equals($_SESSION['senha_versao'] ?? '', hash('sha256', $cliente['senha']))) {
         $_SESSION = [];
         session_destroy();
         resposta(401, ['erro' => 'Entre novamente para continuar.']);

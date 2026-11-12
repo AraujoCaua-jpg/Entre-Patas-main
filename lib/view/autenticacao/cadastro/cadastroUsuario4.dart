@@ -1,6 +1,7 @@
 import '../../core/scrollable_screen_body.dart';
 
-import 'package:entre_patas/view/questionario/testeComp.dart';
+import '../login.dart';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../../../model/cliente.dart';
@@ -132,12 +133,12 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const TesteCompScreen(),
+                      builder: (context) => const LoginScreen(),
                     ),
                     (Route<dynamic> route) => false,
                   );
                 },
-                child: const Text('Realizar Teste de Compatibilidade'),
+                child: const Text('Entrar na minha conta'),
               ),
             ],
           ),
@@ -146,7 +147,7 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const TesteCompScreen()),
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
         (route) => route.isFirst,
       );
       return;

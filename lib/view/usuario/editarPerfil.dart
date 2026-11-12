@@ -1,3 +1,5 @@
+import '../../service/auth_api.dart';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../../model/cliente.dart';
@@ -15,24 +17,42 @@ class EditarPerfilScreen extends StatefulWidget {
 class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   int? _clienteId;
   bool _dadosCarregados = false;
+  bool _salvando = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_dadosCarregados) return;
     _dadosCarregados = true;
-    final cliente = ClientesScope.of(context).clienteLogado;
-    if (cliente == null) return;
-    _clienteId = cliente.id;
-    nomeController.text = cliente.nome;
-    sobrenomeController.text = cliente.sobrenome;
-    emailController.text = cliente.email;
-    telefoneController.text = cliente.telefone;
-    usuarioController.text = cliente.usuario;
-    cidadeController.text = cliente.cidadeDeResidencia;
-    enderecoController.text = cliente.endereco ?? '';
-    estado = estados.containsKey(cliente.estado) ? cliente.estado : null;
-    larDeAdocao = cliente.larDeAdocao;
+    _carregar();
+  }
+
+  Future<void> _carregar() async {
+    try {
+      final cliente = await ClientesScope.of(context).atualizarPerfil();
+      if (!mounted) return;
+
+      _clienteId = cliente.id;
+      nomeController.text = cliente.nome;
+      sobrenomeController.text = cliente.sobrenome;
+      emailController.text = cliente.email;
+      telefoneController.text = cliente.telefone;
+      usuarioController.text = cliente.usuario;
+      cidadeController.text = cliente.cidadeDeResidencia;
+      enderecoController.text = cliente.endereco ?? '';
+      estado = estados.containsKey(cliente.estado) ? cliente.estado : null;
+      larDeAdocao = cliente.larDeAdocao;
+      setState(() {});
+    } catch (_) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Não foi possível carregar o perfil. Volte e tente novamente.',
+            ),
+          ),
+        );
+    }
   }
 
   final nomeController = TextEditingController();
@@ -89,7 +109,8 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     super.dispose();
   }
 
-  void editarConta() {
+  Future<void> editarConta() async {
+    if (_salvando) return;
     final controller = ClientesScope.of(context);
     final cliente = controller.clienteLogado;
     if (cliente == null || cliente.id != _clienteId) {
@@ -137,28 +158,41 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     )) {
       mensagem = 'Este nome de usuário já está cadastrado.';
     } else {
-      final atualizado = controller.editarCliente(
-        cliente.id,
-        Cliente(
-          id: cliente.id,
-          nome: nomeController.text.trim(),
-          sobrenome: sobrenomeController.text.trim(),
-          email: emailController.text.trim(),
-          telefone: telefoneController.text.trim(),
-          usuario: usuarioController.text.trim(),
-          cidadeDeResidencia: cidadeController.text.trim(),
-          imageUrl: cliente.imageUrl,
-          estado: estado,
-          larDeAdocao: larDeAdocao,
-          endereco: larDeAdocao ? enderecoController.text.trim() : null,
-        ),
-      );
-      if (!atualizado) return;
-      FocusScope.of(context).unfocus();
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('Perfil atualizado!')));
-      Navigator.pop(context, true);
+      setState(() => _salvando = true);
+      try {
+        final atualizado = await controller.editarClienteRemoto(
+          Cliente(
+            id: cliente.id,
+            nome: nomeController.text.trim(),
+            sobrenome: sobrenomeController.text.trim(),
+            email: emailController.text.trim(),
+            telefone: telefoneController.text.trim(),
+            usuario: usuarioController.text.trim(),
+            cidadeDeResidencia: cidadeController.text.trim(),
+            imageUrl: cliente.imageUrl,
+            estado: estado,
+            larDeAdocao: larDeAdocao,
+            endereco: larDeAdocao ? enderecoController.text.trim() : null,
+          ),
+        );
+        if (!mounted || !atualizado) return;
+        FocusScope.of(context).unfocus();
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(const SnackBar(content: Text('Perfil atualizado!')));
+        Navigator.pop(context, true);
+      } on LoginException catch (e) {
+        if (mounted)
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(e.mensagem)));
+      } catch (_) {
+        if (mounted)
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Não foi possível salvar.')),
+          );
+      } finally {
+        if (mounted) setState(() => _salvando = false);
+      }
       return;
     }
     ScaffoldMessenger.of(context)
@@ -440,7 +474,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             SizedBox(
               height: 62,
               child: ElevatedButton(
-                onPressed: editarConta,
+                onPressed: _salvando ? null : editarConta,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.laranja,
                   foregroundColor: Colors.white,

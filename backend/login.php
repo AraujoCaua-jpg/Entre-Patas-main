@@ -25,7 +25,7 @@ try {
     if (!session_regenerate_id(true)) {
         throw new RuntimeException('Falha ao renovar sessão.');
     }
-    $_SESSION = ['cliente_id' => (int) $cliente['id'], 'expira' => time() + 3600];
+    $_SESSION = ['cliente_id' => (int) $cliente['id'], 'expira' => time() + 3600, 'senha_versao' => hash('sha256', $cliente['senha'])];
     $token = session_id();
     session_write_close();
     resposta(200, ['cliente' => cliente_publico($cliente), 'token' => $token]);

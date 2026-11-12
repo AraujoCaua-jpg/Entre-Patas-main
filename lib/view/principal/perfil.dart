@@ -43,14 +43,14 @@ class PerfilScreen extends StatelessWidget {
             ),
 
             CircleAvatar(
-              onBackgroundImageError: (error, stackTrace) {},
-              radius: 100, // Define o tamanho do raio do círculo
-              backgroundImage: NetworkImage(
-                'https://ciclovivo.com.br/wp-content/uploads/2022/03/foto-mundo-natural-ciclo-1024x683.jpg',
-              ),
-              // Ou use NetworkImage, AssetImage, etc.
+              radius: 100,
+              backgroundImage: cliente.imageUrl?.isNotEmpty == true
+                  ? NetworkImage(cliente.imageUrl!)
+                  : null,
+              child: cliente.imageUrl?.isNotEmpty == true
+                  ? null
+                  : const Icon(Icons.person, size: 80),
             ),
-
             SizedBox(height: 10),
 
             Text(
@@ -87,44 +87,44 @@ class PerfilScreen extends StatelessWidget {
 
             //EXIBIR APENAS SE FOR CONTA DE LAR DE ADOÇÂO
             if (cliente.larDeAdocao)
-            Container(
-              padding: const EdgeInsets.all(17),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF2EC),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.pets_outlined,
-                        color: AppColors.laranja,
-                        size: 18,
-                      ),
-                      Text(
-                        ' Lar de Adoção',
-                        style: TextStyle(
+              Container(
+                padding: const EdgeInsets.all(17),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF2EC),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.pets_outlined,
                           color: AppColors.laranja,
-                          fontSize: 14,
+                          size: 18,
                         ),
-                      ),
-                    ],
-                  ),
+                        Text(
+                          ' Lar de Adoção',
+                          style: TextStyle(
+                            color: AppColors.laranja,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
 
-                  SizedBox(height: 8),
+                    SizedBox(height: 8),
 
-                  Text(
-                    '${cliente.endereco ?? ''}\nTel: ${cliente.telefone}',
-                    style: TextStyle(color: Colors.black, fontSize: 14),
-                  ),
-                ],
+                    Text(
+                      '${cliente.endereco ?? ''}\nTel: ${cliente.telefone}',
+                      style: TextStyle(color: Colors.black, fontSize: 14),
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            SizedBox(height: 10,),
+            SizedBox(height: 10),
 
             SizedBox(
               height: 62,
@@ -176,10 +176,11 @@ class PerfilScreen extends StatelessWidget {
                   const minCardWidth = 160.0;
                   const spacing = 8.0;
 
-                  final columns = ((constraints.maxWidth + spacing) /
-                          (minCardWidth + spacing))
-                      .floor()
-                      .clamp(1, 100);
+                  final columns =
+                      ((constraints.maxWidth + spacing) /
+                              (minCardWidth + spacing))
+                          .floor()
+                          .clamp(1, 100);
 
                   return GridView.count(
                     shrinkWrap: true,
@@ -221,9 +222,7 @@ class PerfilScreen extends StatelessWidget {
                     ],
                   );
                 },
-              )
-
-              
+              ),
             ),
 
             SizedBox(height: 10),
@@ -234,7 +233,8 @@ class PerfilScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const AnimaisCadastradosScreen(), //HOME
+                      builder: (context) =>
+                          const AnimaisCadastradosScreen(), //HOME
                     ),
                   );
                 },
@@ -242,25 +242,17 @@ class PerfilScreen extends StatelessWidget {
                   foregroundColor: AppColors.laranja,
                   backgroundColor: Colors.white,
                   elevation: 0,
-                  side: const BorderSide(
-                    color: AppColors.laranja,
-                    width: 2,
-                  ),
+                  side: const BorderSide(color: AppColors.laranja, width: 2),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('Ver Todos',style: TextStyle(fontSize: 24,),
-                    ),
-                  ],
+                  children: [Text('Ver Todos', style: TextStyle(fontSize: 24))],
                 ),
               ),
             ),
-
           ],
         ),
       ),
@@ -293,10 +285,7 @@ class _PetCardState extends State<_PetCard> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(
-          color: AppColors.laranja,
-          width: 2,
-        ),
+        border: Border.all(color: AppColors.laranja, width: 2),
         borderRadius: BorderRadius.circular(12),
       ),
       clipBehavior: Clip.antiAlias,
@@ -375,7 +364,7 @@ class _PetCardState extends State<_PetCard> {
               ],
             ),
           ),
-          
+
           // Informações do pet
           Padding(
             padding: const EdgeInsets.only(left: 7, top: 1),
@@ -394,7 +383,6 @@ class _PetCardState extends State<_PetCard> {
               ],
             ),
           ),
-
         ],
       ),
     );

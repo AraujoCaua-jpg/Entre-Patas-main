@@ -28,9 +28,22 @@ class ConfiguracoesScreen extends StatelessWidget {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(dialogContext).pop();
-
+                try {
+                  await ClientesScope.of(context).apagarConta();
+                } catch (_) {
+                  if (context.mounted)
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Não foi possível apagar a conta. Tente novamente.',
+                        ),
+                      ),
+                    );
+                  return;
+                }
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Conta apagada!'),
