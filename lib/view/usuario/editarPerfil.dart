@@ -44,7 +44,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       larDeAdocao = cliente.larDeAdocao;
       setState(() {});
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -52,6 +52,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             ),
           ),
         );
+      }
     }
   }
 
@@ -182,14 +183,16 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
           ..showSnackBar(const SnackBar(content: Text('Perfil atualizado!')));
         Navigator.pop(context, true);
       } on LoginException catch (e) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text(e.mensagem)));
+        }
       } catch (_) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Não foi possível salvar.')),
           );
+        }
       } finally {
         if (mounted) setState(() => _salvando = false);
       }

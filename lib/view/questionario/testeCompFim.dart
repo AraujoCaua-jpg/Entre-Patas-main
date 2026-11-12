@@ -1,5 +1,5 @@
-
 import 'package:material_ui/material_ui.dart';
+
 import '../navagacao.dart';
 
 import '../core/app_colors.dart';
@@ -29,7 +29,6 @@ class TesteCompFimScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -78,7 +77,7 @@ class TesteCompFimScreen extends StatelessWidget {
                       size: 28,
                     ),
                   ),
-                  
+
                   Text(
                     'Teste concluído',
                     textAlign: TextAlign.center,
@@ -88,24 +87,17 @@ class TesteCompFimScreen extends StatelessWidget {
                       height: 1.05,
                     ),
                   ),
-                  
-                  SizedBox(
-                    height: 10,
-                  ),
+
+                  SizedBox(height: 10),
 
                   Text(
                     'Suas respostas serão comparadas com a do animal te dando a porcentagem de compatibilidade.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.black, fontSize: 14),
                   ),
-                ]
+                ],
               ),
-                      
             ),
-
 
             Row(
               children: [
@@ -120,7 +112,8 @@ class TesteCompFimScreen extends StatelessWidget {
                             Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const NavegacaoScreen(), //HOME
+                                builder: (context) =>
+                                    const NavegacaoScreen(), //HOME
                               ),
                               (Route<dynamic> route) => false,
                             );
@@ -148,7 +141,6 @@ class TesteCompFimScreen extends StatelessWidget {
                 ),
               ],
             ),
-            
           ],
         ),
       ),

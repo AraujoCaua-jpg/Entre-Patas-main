@@ -4,7 +4,8 @@ import 'package:material_ui/material_ui.dart';
 import '../core/app_colors.dart';
 
 class TesteCompBScreen extends StatefulWidget {
-  const TesteCompBScreen({super.key});
+  const TesteCompBScreen({super.key, this.respostas = const {}});
+  final Map<String, dynamic> respostas;
 
   @override
   State<TesteCompBScreen> createState() => _TesteCompBScreenState();
@@ -15,13 +16,30 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
   String? sozinho = "5";
   String? dedicacao = "1";
   String? convivencia = 'Sim';
-  
+
+  @override
+  void initState() {
+    super.initState();
+    residencia = widget.respostas['ambiente'] as String? ?? residencia;
+    sozinho = '${widget.respostas['sozinho'] ?? sozinho}';
+    dedicacao = '${widget.respostas['dedicacao'] ?? dedicacao}';
+    convivencia = widget.respostas['animais'] as String? ?? convivencia;
+  }
+
   void avancar() {
     FocusScope.of(context).unfocus();
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => TesteCompCScreen(),
+        builder: (context) => TesteCompCScreen(
+          respostas: {
+            ...widget.respostas,
+            'ambiente': residencia!,
+            'sozinho': int.parse(sozinho!),
+            'dedicacao': int.parse(dedicacao!),
+            'animais': convivencia!,
+          },
+        ),
       ),
     );
   }
@@ -43,11 +61,10 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
         ),
       ),
 
-      body: SingleChildScrollView (
+      body: SingleChildScrollView(
         padding: EdgeInsets.all(24),
         child: Column(
           children: [
-                       
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -88,30 +105,22 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
               ],
             ),
 
-            SizedBox(height: 20,),
+            SizedBox(height: 20),
 
             Row(
-              mainAxisAlignment: MainAxisAlignment.start, 
-              children: [
-                Text(
-                  "Bloco B",
-                  style: TextStyle(
-                    fontSize: 24
-                  ),
-                ),
-
-              ],
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [Text("Bloco B", style: TextStyle(fontSize: 24))],
             ),
 
-            SizedBox(height: 20,),
-
-                          
+            SizedBox(height: 20),
 
             Row(
               children: [
-                const Text(
-                  '1- Qual o ambiente que você mora?',
-                  style: TextStyle(fontSize: 18),
+                const Expanded(
+                  child: Text(
+                    '1- Qual o ambiente que você mora?',
+                    style: TextStyle(fontSize: 18),
+                  ),
                 ),
               ],
             ),
@@ -128,10 +137,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                     });
                   },
                 ),
-                const Text(
-                  'Casa c/ Quintal',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('Casa c/ Quintal', style: TextStyle(fontSize: 18)),
               ],
             ),
 
@@ -147,10 +153,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                     });
                   },
                 ),
-                const Text(
-                  'Casa s/ Quintal',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('Casa s/ Quintal', style: TextStyle(fontSize: 18)),
               ],
             ),
 
@@ -166,10 +169,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                     });
                   },
                 ),
-                const Text(
-                  'Apartamento',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('Apartamento', style: TextStyle(fontSize: 18)),
               ],
             ),
 
@@ -185,20 +185,19 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                     });
                   },
                 ),
-                const Text(
-                  'Outro',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('Outro', style: TextStyle(fontSize: 18)),
               ],
             ),
 
-            SizedBox(height: 20,),
+            SizedBox(height: 20),
 
             Row(
               children: [
-                const Text(
-                  '2- Quantas horas por dia o animal ficaria sozinho?',
-                  style: TextStyle(fontSize: 18),
+                const Expanded(
+                  child: Text(
+                    '2- Quantas horas por dia o animal ficaria sozinho?',
+                    style: TextStyle(fontSize: 18),
+                  ),
                 ),
               ],
             ),
@@ -215,10 +214,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                     });
                   },
                 ),
-                const Text(
-                  '0-2',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('0-2', style: TextStyle(fontSize: 18)),
               ],
             ),
             Row(
@@ -233,10 +229,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                     });
                   },
                 ),
-                const Text(
-                  '2-4',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('2-4', style: TextStyle(fontSize: 18)),
               ],
             ),
             Row(
@@ -251,10 +244,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                     });
                   },
                 ),
-                const Text(
-                  '4-6',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('4-6', style: TextStyle(fontSize: 18)),
               ],
             ),
             Row(
@@ -269,10 +259,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                     });
                   },
                 ),
-                const Text(
-                  '6-8',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('6-8', style: TextStyle(fontSize: 18)),
               ],
             ),
             Row(
@@ -287,19 +274,15 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                     });
                   },
                 ),
-                const Text(
-                  '8+',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('8+', style: TextStyle(fontSize: 18)),
               ],
             ),
 
-            SizedBox(height: 20,),
+            SizedBox(height: 20),
 
             Row(
               children: [
-                const 
-                Expanded(
+                const Expanded(
                   child: Text(
                     '3- Quanto tempo você tem para dedicar ao animal (passeio e brincadeiras)?',
                     style: TextStyle(fontSize: 18),
@@ -320,10 +303,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                     });
                   },
                 ),
-                const Text(
-                  '0-30 min',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('0-30 min', style: TextStyle(fontSize: 18)),
               ],
             ),
             Row(
@@ -338,10 +318,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                     });
                   },
                 ),
-                const Text(
-                  '30-60 min',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('30-60 min', style: TextStyle(fontSize: 18)),
               ],
             ),
             Row(
@@ -356,10 +333,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                     });
                   },
                 ),
-                const Text(
-                  '1-2 horas',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('1-2 horas', style: TextStyle(fontSize: 18)),
               ],
             ),
             Row(
@@ -374,24 +348,23 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                     });
                   },
                 ),
-                const Text(
-                  '+2 horas',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('+2 horas', style: TextStyle(fontSize: 18)),
               ],
             ),
 
-            SizedBox(height: 20,),
+            SizedBox(height: 20),
 
             Row(
               children: [
-                const Text(
-                  '4- Você tem outros animais em sua residência?',
-                  style: TextStyle(fontSize: 18),
+                const Expanded(
+                  child: Text(
+                    '4- Você tem outros animais em sua residência?',
+                    style: TextStyle(fontSize: 18),
+                  ),
                 ),
               ],
             ),
-          
+
             Row(
               children: [
                 Radio<String>(
@@ -404,10 +377,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                     });
                   },
                 ),
-                const Text(
-                  'Sim',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('Sim', style: TextStyle(fontSize: 18)),
 
                 const SizedBox(width: 8),
 
@@ -421,14 +391,11 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                     });
                   },
                 ),
-                const Text(
-                  'Não',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('Não', style: TextStyle(fontSize: 18)),
               ],
             ),
-            
-            SizedBox(height: 20,),
+
+            SizedBox(height: 20),
 
             SizedBox(
               height: 62,
@@ -452,7 +419,6 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                 ),
               ),
             ),
-
           ],
         ),
       ),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Centers forms on wide windows and allows scrolling on short screens.
 class ScrollableScreenBody extends StatelessWidget {

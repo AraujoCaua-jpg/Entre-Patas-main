@@ -7,6 +7,7 @@ import '../../controller/clientes_scope.dart';
 
 import '../core/app_colors.dart';
 import '../navagacao.dart';
+import '../questionario/testeComp.dart';
 import 'cadastro/cadastroUsuario.dart';
 import 'esqueciSenha.dart';
 
@@ -53,11 +54,20 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _entrando = true);
     try {
       await controller.entrar(emailController.text, senhaController.text);
+      final precisaTeste =
+          controller.clienteLogado?.questionarioPendente ?? false;
+      final questionario = precisaTeste
+          ? await controller.carregarQuestionario()
+          : null;
       if (!mounted) return;
       senhaController.clear();
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const NavegacaoScreen()),
+        MaterialPageRoute(
+          builder: (_) => precisaTeste && questionario == null
+              ? const TesteCompScreen()
+              : const NavegacaoScreen(),
+        ),
         (route) => false,
       );
     } on LoginException catch (erro) {

@@ -16,9 +16,10 @@ class _FichaPerfilScreenState extends State<FichaPerfilScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (widget.clienteId != null)
+    if (widget.clienteId != null) {
       dados ??= ClientesScope.of(context)
           .buscarClienteRemoto(widget.clienteId!);
+    }
   }
 
   @override
@@ -31,7 +32,7 @@ class _FichaPerfilScreenState extends State<FichaPerfilScreen> {
         : FutureBuilder<Cliente>(
             future: dados,
             builder: (context, snapshot) {
-              if (snapshot.hasError)
+              if (snapshot.hasError) {
                 return Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -42,18 +43,22 @@ class _FichaPerfilScreenState extends State<FichaPerfilScreen> {
                             : 'Não foi possível carregar o perfil.',
                       ),
                       TextButton(
-                        onPressed: () => setState(
-                          () =>
-                              dados = ClientesScope.of(context)
-                                  .buscarClienteRemoto(widget.clienteId!),
-                        ),
+                        onPressed: () {
+                          final consulta = ClientesScope.of(context)
+                              .buscarClienteRemoto(widget.clienteId!);
+                          setState(() {
+                            dados = consulta;
+                          });
+                        },
                         child: const Text('Tentar novamente'),
                       ),
                     ],
                   ),
                 );
-              if (!snapshot.hasData)
+              }
+              if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
+              }
               final c = snapshot.data!;
               return ListView(
                 padding: const EdgeInsets.all(24),

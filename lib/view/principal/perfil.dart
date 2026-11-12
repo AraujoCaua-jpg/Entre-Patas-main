@@ -5,9 +5,33 @@ import '../../controller/clientes_scope.dart';
 import '../usuario/configuracoes.dart';
 import '../usuario/editarPerfil.dart';
 import '../animal/animaisCadastrados.dart';
+import '../animal/fichaAnimal.dart';
+import '../../model/animais.dart';
+import '../../service/auth_api.dart';
 
-class PerfilScreen extends StatelessWidget {
+class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
+  @override
+  State<PerfilScreen> createState() => _PerfilScreenState();
+}
+
+class _PerfilScreenState extends State<PerfilScreen> {
+  Future<List<Animal>>? _consulta;
+  void _recarregar() {
+    final c = ClientesScope.of(context);
+    final consulta = c.listarAnimais(
+      filtros: {'id_cliente': '${c.clienteLogado?.id ?? 0}'},
+    );
+    setState(() {
+      _consulta = consulta;
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_consulta == null) _recarregar();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -182,44 +206,57 @@ class PerfilScreen extends StatelessWidget {
                           .floor()
                           .clamp(1, 100);
 
-                  return GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: EdgeInsets.zero,
-                    crossAxisCount: columns,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    childAspectRatio: 167 / 162,
-                    children: const [
-                      _PetCard(
-                        name: 'Bolt',
-                        age: '1 ano',
-                        gender: 'Macho',
-                        match: 95,
-                        image: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=500&h=340&fit=crop',
-                      ),
-                      _PetCard(
-                        name: 'Rubi',
-                        age: '4 anos',
-                        gender: 'Fêmea',
-                        match: 80,
-                        image: 'https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?w=500&h=340&fit=crop',
-                      ),
-                      _PetCard(
-                        name: 'Brutos',
-                        age: '2 anos',
-                        gender: 'Macho',
-                        match: 60,
-                        image: 'https://images.unsplash.com/photo-1551717743-49959800b1f6?w=500&h=340&fit=crop',
-                      ),
-                      _PetCard(
-                        name: 'Brutus',
-                        age: '4 meses',
-                        gender: 'Macho',
-                        match: 55,
-                        image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=500&h=340&fit=crop',
-                      ),
-                    ],
+                  return FutureBuilder<List<Animal>>(
+                    future: _consulta,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError)
+                        return TextButton(
+                          onPressed: _recarregar,
+                          child: Text(
+                            snapshot.error is LoginException
+                                ? (snapshot.error as LoginException).mensagem
+                                : 'Não foi possível carregar os animais.',
+                          ),
+                        );
+                      if (!snapshot.hasData)
+                        return const Center(child: CircularProgressIndicator());
+                      if (snapshot.data!.isEmpty)
+                        return const Text('Nenhum Animal Cadastrado');
+                      return GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: EdgeInsets.zero,
+                        crossAxisCount: columns,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                        childAspectRatio: 167 / 162,
+                        children: snapshot.data!
+                            .take(4)
+                            .map(
+                              (a) => InkWell(
+                                onTap: () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          FichaAnimalScreen(animalId: a.id),
+                                    ),
+                                  );
+                                  if (mounted) _recarregar();
+                                },
+                                child: _PetCard(
+                                  name: a.nome,
+                                  age: '${a.idade} ano(s)',
+                                  gender: a.sexo,
+                                  match: (a.compatibilidade?['total'] as num?)
+                                      ?.toInt(),
+                                  image: a.imageUrl ?? '',
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      );
+                    },
                   );
                 },
               ),
@@ -229,14 +266,15 @@ class PerfilScreen extends StatelessWidget {
             SizedBox(
               height: 42,
               child: OutlinedButton(
-                onPressed: () {
-                  Navigator.push(
+                onPressed: () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
                           const AnimaisCadastradosScreen(), //HOME
                     ),
                   );
+                  if (mounted) _recarregar();
                 },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.laranja,
@@ -272,7 +310,7 @@ class _PetCard extends StatefulWidget {
   final String name;
   final String age;
   final String gender;
-  final int match;
+  final int? match;
   final String image;
 
   @override
@@ -298,22 +336,33 @@ class _PetCardState extends State<_PetCard> {
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: Image.network(
-                    widget.image,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: AppColors.rosaClaro,
-                        child: const Center(
-                          child: Icon(
-                            Icons.pets,
-                            size: 48,
-                            color: AppColors.laranja,
+                  child: widget.image.isEmpty
+                      ? const ColoredBox(
+                          color: AppColors.rosaClaro,
+                          child: Center(
+                            child: Icon(
+                              Icons.pets,
+                              size: 48,
+                              color: AppColors.laranja,
+                            ),
                           ),
+                        )
+                      : Image.network(
+                          widget.image,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: AppColors.rosaClaro,
+                              child: const Center(
+                                child: Icon(
+                                  Icons.pets,
+                                  size: 48,
+                                  color: AppColors.laranja,
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
 
                 Positioned(
@@ -340,15 +389,19 @@ class _PetCardState extends State<_PetCard> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${widget.match}%',
+                              widget.match == null
+                                  ? 'Publicado'
+                                  : '${widget.match}%',
                               style: const TextStyle(
                                 fontSize: 10,
                                 height: 1,
                                 color: AppColors.laranja,
                               ),
                             ),
-                            const Text(
-                              'compatibilidade',
+                            Text(
+                              widget.match == null
+                                  ? 'animal'
+                                  : 'compatibilidade',
                               style: TextStyle(
                                 fontSize: 6,
                                 height: 1.2,

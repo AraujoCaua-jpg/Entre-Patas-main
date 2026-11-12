@@ -2,9 +2,12 @@ import 'package:material_ui/material_ui.dart';
 
 import '../core/app_colors.dart';
 import 'testeCompFim.dart';
+import '../../controller/clientes_scope.dart';
+import '../../service/auth_api.dart';
 
 class TesteCompCScreen extends StatefulWidget {
-  const TesteCompCScreen({super.key});
+  const TesteCompCScreen({super.key, this.respostas = const {}});
+  final Map<String, dynamic> respostas;
 
   @override
   State<TesteCompCScreen> createState() => _TesteCompCScreenState();
@@ -17,55 +20,71 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
   String? moradores = 'Sim';
   String? financeiro = '3';
   String? rotina = 'Sim';
-  
-  void avancar() {
-    if ([
-      imovel,
-      apoio,
-      compromisso,
-      moradores,
-      rotina
-    ].any((opcao) => opcao == "Não" || financeiro == "1")) {
-      
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Aviso'),
-            content: const Text('Você não está totalmente preparado para esse compromisso. Pense melhor antes de uma adoção!'),
-            actions: [
-              ElevatedButton(
-                onPressed: () {
-                  FocusScope.of(context).unfocus();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const TesteCompFimScreen(), //HOME
-                    ),
-                  );
 
-                  Navigator.of(context).pop();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.laranja,
-                  padding: const EdgeInsets.all(16),
-                ),
-                child: const Text('Ok', style: TextStyle(color: Colors.white)),
+  bool _salvando = false;
+  @override
+  void initState() {
+    super.initState();
+    String resposta(String k) =>
+        '${widget.respostas[k] ?? 1}' == '1' ? 'Sim' : 'Não';
+    imovel = resposta('imovel');
+    apoio = resposta('apoio');
+    compromisso = resposta('compromisso');
+    moradores = resposta('moradores');
+    rotina = resposta('rotina');
+    financeiro = '${widget.respostas['financeiro'] ?? 3}';
+  }
+
+  Future<void> avancar() async {
+    if (_salvando) return;
+    setState(() => _salvando = true);
+    try {
+      await ClientesScope.of(context).salvarQuestionario({
+        ...widget.respostas,
+        'imovel': imovel == 'Sim' ? 1 : 0,
+        'apoio': apoio == 'Sim' ? 1 : 0,
+        'compromisso': compromisso == 'Sim' ? 1 : 0,
+        'moradores': moradores == 'Sim' ? 1 : 0,
+        'rotina': rotina == 'Sim' ? 1 : 0,
+        'financeiro': int.parse(financeiro!),
+      });
+      if (!mounted) return;
+      if ([imovel, apoio, compromisso, moradores, rotina].contains('Não') ||
+          financeiro == '1') {
+        await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Aviso'),
+            content: const Text(
+              'Algumas respostas indicam pontos para preparar antes da adoção. Converse com o responsável pelo animal.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Entendi'),
               ),
             ],
-          );
-        },
-      );
-
-    } else {
-      FocusScope.of(context).unfocus();
+          ),
+        );
+      }
+      if (!mounted) return;
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => TesteCompFimScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const TesteCompFimScreen()),
       );
-      return;
+    } catch (e) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e is LoginException
+                  ? e.mensagem
+                  : 'Não foi possível salvar o teste.',
+            ),
+          ),
+        );
+    } finally {
+      if (mounted) setState(() => _salvando = false);
     }
   }
 
@@ -86,11 +105,10 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
         ),
       ),
 
-      body: SingleChildScrollView (
+      body: SingleChildScrollView(
         padding: EdgeInsets.all(24),
         child: Column(
           children: [
-                       
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -131,32 +149,26 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
               ],
             ),
 
-            SizedBox(height: 20,),
+            SizedBox(height: 20),
 
             Row(
-              mainAxisAlignment: MainAxisAlignment.start, 
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [Text("Bloco C", style: TextStyle(fontSize: 24))],
+            ),
+
+            SizedBox(height: 20),
+
+            Row(
               children: [
-                Text(
-                  "Bloco C",
-                  style: TextStyle(
-                    fontSize: 24
+                const Expanded(
+                  child: Text(
+                    '1- O imóvel permite animais?',
+                    style: TextStyle(fontSize: 18),
                   ),
                 ),
-
               ],
             ),
 
-            SizedBox(height: 20,),
-
-            Row(
-              children: [
-                const Text(
-                  '1- O imóvel permite animais?',
-                  style: TextStyle(fontSize: 18),
-                ),
-              ],
-            ),
-          
             Row(
               children: [
                 Radio<String>(
@@ -169,10 +181,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                     });
                   },
                 ),
-                const Text(
-                  'Sim',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('Sim', style: TextStyle(fontSize: 18)),
 
                 const SizedBox(width: 8),
 
@@ -186,19 +195,15 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                     });
                   },
                 ),
-                const Text(
-                  'Não',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('Não', style: TextStyle(fontSize: 18)),
               ],
             ),
-            
-            SizedBox(height: 20,),
+
+            SizedBox(height: 20),
 
             Row(
               children: [
-                const 
-                Expanded(
+                const Expanded(
                   child: Text(
                     '2- Você tem apoio para viagens ou emergências?',
                     style: TextStyle(fontSize: 18),
@@ -206,7 +211,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                 ),
               ],
             ),
-          
+
             Row(
               children: [
                 Radio<String>(
@@ -219,10 +224,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                     });
                   },
                 ),
-                const Text(
-                  'Sim',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('Sim', style: TextStyle(fontSize: 18)),
 
                 const SizedBox(width: 8),
 
@@ -236,19 +238,15 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                     });
                   },
                 ),
-                const Text(
-                  'Não',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('Não', style: TextStyle(fontSize: 18)),
               ],
             ),
 
-            SizedBox(height: 20,),
-            
+            SizedBox(height: 20),
+
             Row(
               children: [
-                const 
-                Expanded(
+                const Expanded(
                   child: Text(
                     '3- Você está preparado para um compromisso de longo prazo?',
                     style: TextStyle(fontSize: 18),
@@ -256,7 +254,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                 ),
               ],
             ),
-          
+
             Row(
               children: [
                 Radio<String>(
@@ -269,10 +267,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                     });
                   },
                 ),
-                const Text(
-                  'Sim',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('Sim', style: TextStyle(fontSize: 18)),
 
                 const SizedBox(width: 8),
 
@@ -286,19 +281,15 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                     });
                   },
                 ),
-                const Text(
-                  'Não',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('Não', style: TextStyle(fontSize: 18)),
               ],
             ),
 
-            SizedBox(height: 20,),
-            
+            SizedBox(height: 20),
+
             Row(
               children: [
-                const 
-                Expanded(
+                const Expanded(
                   child: Text(
                     '4- Todos os moradores concordam com a adoção?',
                     style: TextStyle(fontSize: 18),
@@ -306,7 +297,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                 ),
               ],
             ),
-          
+
             Row(
               children: [
                 Radio<String>(
@@ -319,10 +310,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                     });
                   },
                 ),
-                const Text(
-                  'Sim',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('Sim', style: TextStyle(fontSize: 18)),
 
                 const SizedBox(width: 8),
 
@@ -336,18 +324,14 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                     });
                   },
                 ),
-                const Text(
-                  'Não',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('Não', style: TextStyle(fontSize: 18)),
               ],
             ),
-            SizedBox(height: 20,),
+            SizedBox(height: 20),
 
             Row(
               children: [
-                const 
-                Expanded(
+                const Expanded(
                   child: Text(
                     '5- Qual é a sua disponibilidade financeira para cuidar do animal?',
                     style: TextStyle(fontSize: 18),
@@ -420,14 +404,11 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
               ],
             ),
 
-            
+            SizedBox(height: 20),
 
-            SizedBox(height: 20,),
-            
             Row(
               children: [
-                const 
-                Expanded(
+                const Expanded(
                   child: Text(
                     '6 - Consegue manter uma rotina de alimentação, higiene e cuidados?',
                     style: TextStyle(fontSize: 18),
@@ -435,7 +416,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                 ),
               ],
             ),
-          
+
             Row(
               children: [
                 Radio<String>(
@@ -448,10 +429,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                     });
                   },
                 ),
-                const Text(
-                  'Sim',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('Sim', style: TextStyle(fontSize: 18)),
 
                 const SizedBox(width: 8),
 
@@ -465,19 +443,16 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                     });
                   },
                 ),
-                const Text(
-                  'Não',
-                  style: TextStyle(fontSize: 18),
-                ),
+                const Text('Não', style: TextStyle(fontSize: 18)),
               ],
             ),
-            
-            SizedBox(height: 20,),
+
+            SizedBox(height: 20),
 
             SizedBox(
               height: 62,
               child: ElevatedButton(
-                onPressed: avancar,
+                onPressed: _salvando ? null : avancar,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.laranja,
                   foregroundColor: Colors.white,
@@ -496,7 +471,6 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                 ),
               ),
             ),
-            
           ],
         ),
       ),

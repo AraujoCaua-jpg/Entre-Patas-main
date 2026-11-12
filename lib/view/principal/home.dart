@@ -1,93 +1,156 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../core/app_colors.dart';
+import '../../controller/clientes_scope.dart';
+import '../../model/animais.dart';
+import '../../service/auth_api.dart';
+import '../animal/fichaAnimal.dart';
+import '../animal/animaisCadastrados.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  Future<List<Animal>>? _consulta;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _consulta ??= ClientesScope.of(context)
+        .listarAnimais(filtros: {'acao': 'melhores'});
+  }
+
+  void _recarregar() {
+    final consulta = ClientesScope.of(context)
+        .listarAnimais(filtros: {'acao': 'melhores'});
+    setState(() {
+      _consulta = consulta;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Row(
+      body: FutureBuilder<List<Animal>>(
+        future: _consulta,
+        builder: (context, snapshot) {
+          if (snapshot.hasError)
+            return Center(
+              child: TextButton(
+                onPressed: _recarregar,
+                child: Text(
+                  snapshot.error is LoginException
+                      ? (snapshot.error as LoginException).mensagem
+                      : 'Não foi possível carregar os animais.',
+                ),
+              ),
+            );
+          if (!snapshot.hasData)
+            return const Center(child: CircularProgressIndicator());
+          final animais = snapshot.data!;
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(16.0),
+            child: Column(
               children: [
-                Text('Seus melhores Matches', style: TextStyle(fontSize: 18)),
-              ],
-            ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Encontre seu amiguinho',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Filtrar animais',
+                      icon: const Icon(Icons.tune, color: AppColors.laranja),
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => Scaffold(
+                              appBar: AppBar(
+                                title: const Text('Buscar Animais'),
+                              ),
+                              body: const ListaAnimais(),
+                            ),
+                          ),
+                        );
+                        if (mounted) _recarregar();
+                      },
+                    ),
+                  ],
+                ),
 
-            Row(
-              children: [
-                Text(
-                  'Amiguinhos que combinam com você!',
-                  style: TextStyle(fontSize: 14, color: Color(0xFF888888)),
+                Row(
+                  children: [
+                    Text(
+                      'Amiguinhos esperando por um lar!',
+                      style: TextStyle(fontSize: 14, color: Color(0xFF888888)),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 20),
+
+                if (animais.isEmpty) const Text('Nenhum Animal Cadastrado'),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 0),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      const minCardWidth = 160.0;
+
+                      const spacing = 8.0;
+
+                      final columns =
+                          ((constraints.maxWidth + spacing) /
+                                  (minCardWidth + spacing))
+                              .floor()
+                              .clamp(1, 100);
+
+                      return GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: EdgeInsets.zero,
+                        crossAxisCount: columns,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                        childAspectRatio: 167 / 162,
+                        children: animais
+                            .map(
+                              (a) => InkWell(
+                                onTap: () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          FichaAnimalScreen(animalId: a.id),
+                                    ),
+                                  );
+                                  if (mounted) _recarregar();
+                                },
+                                child: _PetCard(
+                                  name: a.nome,
+                                  age: '${a.idade} ano(s)',
+                                  gender: a.sexo,
+                                  status: a.status,
+                                  compatibilidade: a.compatibilidade,
+                                  image: a.imageUrl ?? '',
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
-
-            SizedBox(height: 20),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 0),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  const minCardWidth = 160.0;
-
-                  const spacing = 8.0;
-
-                  final columns =
-                      ((constraints.maxWidth + spacing) /
-                              (minCardWidth + spacing))
-                          .floor()
-                          .clamp(1, 100);
-
-                  return GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: EdgeInsets.zero,
-                    crossAxisCount: columns,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    childAspectRatio: 167 / 162,
-                    children: const [
-                      _PetCard(
-                        name: 'Bolt',
-                        age: '1 ano',
-                        gender: 'Macho',
-                        match: 95,
-                        image: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=500&h=340&fit=crop',
-                      ),
-                      _PetCard(
-                        name: 'Rubi',
-                        age: '4 anos',
-                        gender: 'Fêmea',
-                        match: 80,
-                        image: 'https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?w=500&h=340&fit=crop',
-                      ),
-                      _PetCard(
-                        name: 'Brutos',
-                        age: '2 anos',
-                        gender: 'Macho',
-                        match: 60,
-                        image: 'https://images.unsplash.com/photo-1551717743-49959800b1f6?w=500&h=340&fit=crop',
-                      ),
-                      _PetCard(
-                        name: 'Brutus',
-                        age: '4 meses',
-                        gender: 'Macho',
-                        match: 55,
-                        image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=500&h=340&fit=crop',
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -98,14 +161,16 @@ class _PetCard extends StatefulWidget {
     required this.name,
     required this.age,
     required this.gender,
-    required this.match,
+    required this.status,
+    this.compatibilidade,
     required this.image,
   });
 
   final String name;
   final String age;
   final String gender;
-  final int match;
+  final String status;
+  final Map<String, dynamic>? compatibilidade;
   final String image;
 
   @override
@@ -131,22 +196,33 @@ class _PetCardState extends State<_PetCard> {
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: Image.network(
-                    widget.image,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: AppColors.rosaClaro,
-                        child: const Center(
-                          child: Icon(
-                            Icons.pets,
-                            size: 48,
-                            color: AppColors.laranja,
+                  child: widget.image.isEmpty
+                      ? const ColoredBox(
+                          color: AppColors.rosaClaro,
+                          child: Center(
+                            child: Icon(
+                              Icons.pets,
+                              size: 48,
+                              color: AppColors.laranja,
+                            ),
                           ),
+                        )
+                      : Image.network(
+                          widget.image,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: AppColors.rosaClaro,
+                              child: const Center(
+                                child: Icon(
+                                  Icons.pets,
+                                  size: 48,
+                                  color: AppColors.laranja,
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
 
                 Positioned(
@@ -173,15 +249,19 @@ class _PetCardState extends State<_PetCard> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${widget.match}%',
+                              widget.compatibilidade == null
+                                  ? widget.status
+                                  : '${widget.compatibilidade!['total']}%',
                               style: const TextStyle(
                                 fontSize: 10,
                                 height: 1,
                                 color: AppColors.laranja,
                               ),
                             ),
-                            const Text(
-                              'compatibilidade',
+                            Text(
+                              widget.compatibilidade == null
+                                  ? 'adoção'
+                                  : 'compatibilidade',
                               style: TextStyle(
                                 fontSize: 6,
                                 height: 1.2,

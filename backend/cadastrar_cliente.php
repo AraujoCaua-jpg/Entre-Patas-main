@@ -67,9 +67,9 @@ try {
 
     $consulta = $pdo->prepare(
         'INSERT INTO cliente
-        (nome, sobrenome, email, telefone, senha, usuario, larDeAdocao, ativo, estado, cidadeDeResidencia, endereco, imagem)
+        (nome, sobrenome, email, telefone, senha, usuario, larDeAdocao, ativo, estado, cidadeDeResidencia, endereco, imagem, questionario_pendente)
         VALUES
-        (:nome, :sobrenome, :email, :telefone, :senha, :usuario, :larDeAdocao, 1, :estado, :cidade, :endereco, :imagem)'
+        (:nome, :sobrenome, :email, :telefone, :senha, :usuario, :larDeAdocao, 1, :estado, :cidade, :endereco, :imagem, 1)'
     );
 
     $consulta->execute([

@@ -49,6 +49,9 @@ class AuthApi {
           endereco: c['endereco'] as String?,
           imageUrl: c['imagem'] as String?,
           larDeAdocao: c['larDeAdocao'] == true || c['larDeAdocao'] == 1,
+          questionarioPendente:
+              c['questionario_pendente'] == true ||
+              c['questionario_pendente'] == 1,
         ),
         token,
       );

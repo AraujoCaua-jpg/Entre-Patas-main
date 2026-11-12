@@ -10,6 +10,7 @@ class Cliente {
   String? estado;
   String? endereco;
   bool larDeAdocao;
+  bool questionarioPendente;
 
   Cliente({
     required this.id,
@@ -23,6 +24,7 @@ class Cliente {
     this.estado,
     this.endereco,
     this.larDeAdocao = false,
+    this.questionarioPendente = false,
   });
   factory Cliente.fromJson(Map<String, dynamic> c) => Cliente(
     id: c['id'] as int,
@@ -36,6 +38,8 @@ class Cliente {
     endereco: c['endereco'] as String?,
     imageUrl: c['imagem'] as String?,
     larDeAdocao: c['larDeAdocao'] == true || c['larDeAdocao'] == 1,
+    questionarioPendente:
+        c['questionario_pendente'] == true || c['questionario_pendente'] == 1,
   );
   Map<String, dynamic> toJson() => {
     'nome': nome,

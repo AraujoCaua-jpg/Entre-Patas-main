@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../../model/cliente.dart';
+import '../../model/animais.dart';
 import '../../controller/clientes_scope.dart';
 import '../../service/auth_api.dart';
 
@@ -18,45 +19,26 @@ class PesquisaScreen extends StatefulWidget {
 }
 
 class _PesquisaScreenState extends State<PesquisaScreen> {
-  static const List<List> _animais = [
-    [
-      "Bolt",
-      "1 ano",
-      "Macho",
-      "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=500&h=340&fit=crop",
-    ],
-    [
-      "Rubi",
-      "4 anos",
-      "Fêmea",
-      "https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?w=500&h=340&fit=crop",
-    ],
-    [
-      "Brutos",
-      "2 anos",
-      "Macho",
-      "https://images.unsplash.com/photo-1551717743-49959800b1f6?w=500&h=340&fit=crop",
-    ],
-    [
-      "Brutus",
-      "4 meses",
-      "Macho",
-      "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=500&h=340&fit=crop",
-    ],
-  ];
-
-  List<List> get animais => _animais
-      .where(
-        (a) => (a[0] as String).toLowerCase().contains(
-          pesquisaController.text.toLowerCase(),
-        ),
-      )
+  List<Animal> _pets = [];
+  List<List<dynamic>> get animais => _pets
+      .map((a) => [a.nome, '${a.idade} ano(s)', a.sexo, a.imageUrl ?? '', a.id])
       .toList();
   List<Cliente> _usuarios = [];
   Timer? _debounce;
   int _versao = 0;
   bool _carregando = false;
   String? _erro;
+  bool _iniciada = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_iniciada) {
+      _iniciada = true;
+      _buscar();
+    }
+  }
+
   List<List<dynamic>> get usuarios => _usuarios
       .map(
         (c) => [
@@ -74,22 +56,31 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
 
   Future<void> _buscar() async {
     final versao = ++_versao;
+    final buscarPets = pesquisa == "Pets";
     setState(() {
       _carregando = true;
       _erro = null;
     });
     try {
+      if (buscarPets) {
+        final pets = await ClientesScope.of(context)
+            .listarAnimais(filtros: {'q': pesquisaController.text});
+        if (mounted && versao == _versao) setState(() => _pets = pets);
+        return;
+      }
       final resultados = await ClientesScope.of(context)
           .pesquisarClientes(pesquisaController.text);
       if (mounted && versao == _versao) setState(() => _usuarios = resultados);
     } catch (e) {
-      if (mounted && versao == _versao)
+      if (mounted && versao == _versao) {
         setState(() {
           _usuarios = [];
+          if (buscarPets) _pets = [];
           _erro = e is LoginException
               ? e.mensagem
               : 'Não foi possível pesquisar.';
         });
+      }
     } finally {
       if (mounted && versao == _versao) setState(() => _carregando = false);
     }
@@ -206,7 +197,16 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
             Container(
               child: pesquisa == "Pets"
                   ? Expanded(
-                      child: animais.isEmpty
+                      child: _carregando
+                          ? const Center(child: CircularProgressIndicator())
+                          : _erro != null
+                          ? Center(
+                              child: TextButton(
+                                onPressed: _buscar,
+                                child: Text(_erro!),
+                              ),
+                            )
+                          : animais.isEmpty
                           ? const Center(
                               child: Text('Nenhum Animal Cadastrado'),
                             )
@@ -219,7 +219,9 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
                                   name: item[0],
                                   desc: "${item[1]} - ${item[2]}",
                                   image: item[3],
-                                  page: FichaAnimalScreen(),
+                                  page: FichaAnimalScreen(
+                                    animalId: item[4] as int,
+                                  ),
                                 );
                               },
                             ),

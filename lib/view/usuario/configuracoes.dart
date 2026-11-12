@@ -33,7 +33,7 @@ class ConfiguracoesScreen extends StatelessWidget {
                 try {
                   await ClientesScope.of(context).apagarConta();
                 } catch (_) {
-                  if (context.mounted)
+                  if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
@@ -41,6 +41,7 @@ class ConfiguracoesScreen extends StatelessWidget {
                         ),
                       ),
                     );
+                  }
                   return;
                 }
                 if (!context.mounted) return;

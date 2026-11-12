@@ -62,9 +62,119 @@ Os endereços HTTP e a lista CORS local servem ao desenvolvimento. Publicação 
 servidor requer configurar HTTPS, origens permitidas e proteção contra tentativas
 repetidas de login antes de disponibilizar autenticação publicamente.
 
-Os botões das fichas aceitam `donoId`. As telas de animais e adoções ainda usam
-exemplos: seus registros precisam ser integrados para fornecer IDs reais. A aba
-de usuários pesquisa o banco; a aba Pets ainda filtra os exemplos locais.
+As telas de animais (início, pesquisa, ficha, publicação, edição e animais do
+responsável) consultam `animais.php`. A região vem de `cliente.estado` e
+`cliente.cidadeDeResidencia`, pelo vínculo `animal.id_cliente`. As solicitações
+de adoção e notificações consultam `adocoes.php`; o questionário é persistido
+por `questionario.php`. As telas mantêm as cores e os componentes do projeto.
+
+## Animais
+
+Copie `animais.php`, `compatibilidade.php`, `questionario.php` e `adocoes.php`
+para a pasta da API no XAMPP. Execute uma vez (pode repetir sem apagar dados):
+
+```powershell
+C:\xampp\php\php.exe backend\migrar_animais.php
+```
+
+Essa migração coloca AUTO_INCREMENT nos IDs de `questionario` e `adocao` e
+adiciona ao questionário as respostas de preparo (`imovel`, `apoio`,
+`compromisso`, `moradores`, `financeiro`, `rotina`). Cria também
+`cliente.questionario_pendente` com padrão 0, dispensando contas existentes.
+Novos cadastros pela API recebem 1; salvar o teste muda para 0.
+A tabela `animal` deve
+ter `id` com AUTO_INCREMENT e `ativo` NOT NULL DEFAULT 1. O vínculo com o
+responsável é `animal.id_cliente` → `cliente.id`. Idade é inteira em anos:
+zero representa menos de um ano. Todos os endpoints exigem sessão Bearer.
+
+| Método | Rota | Uso |
+| --- | --- | --- |
+| GET | animais.php | Animais ativos de responsáveis ativos |
+| GET | animais.php?acao=id&id=1 | Ficha por ID |
+| GET | animais.php?acao=usuario&id_cliente=1 | Animais por responsável |
+| GET | animais.php?q=lua | Pesquisa parcial pelo nome |
+| POST | animais.php?acao=cadastrar | Cadastro vinculado à sessão |
+| POST | animais.php?acao=editar&id=1 | Editar o próprio animal |
+| POST | animais.php?acao=apagar&id=1 | Exclusão lógica do próprio animal |
+
+Filtros combináveis: `estado`, `cidade`, `tipo`, `sexo`, `porte`, `energia`,
+`convivencia`, `carencia`, `status`, `id_cliente`, `q`. A listagem retorna até
+50 registros por página; use `pagina=2` para continuar. A interface oferece
+"Carregar mais" na lista principal e na lista por responsável.
+
+Cadastro e edição recebem JSON com `nome`, `idade`, `imagem` (URL HTTP/HTTPS
+opcional), `tipo`, `descricao`, `sexo`, `status`, `energia`, `porte`, `convivencia`
+e `carencia`. O servidor define o responsável e o estado ativo. Apenas o
+responsável pode editar ou desativar o animal. Os controles de castração e
+vacinação do layout original ficam desabilitados e indicados como futuros,
+pois esses campos ainda não existem na estrutura atual do banco.
+
+## Compatibilidade e solicitações de adoção
+
+`GET questionario.php` recupera apenas as respostas do usuário da sessão.
+`POST questionario.php` salva ou atualiza seu teste completo. O usuário não pode
+alterar respostas de outra pessoa enviando um ID no corpo. Respostas antigas
+incompletas são tratadas como teste não concluído.
+
+As respostas das etapas A, B e C passam entre as telas; a conclusão só aparece
+após a confirmação do banco. Após autenticar, somente contas com
+`questionario_pendente=1` consultam o questionário e abrem automaticamente a
+introdução se ele estiver incompleto. Contas anteriores à migração entram
+direto no Início, mesmo sem respostas. Novas contas que concluíram o teste
+também entram direto. Se a consulta necessária falhar, o login exibe o erro.
+Não há botão de teste no Início; a ficha permite refazer o questionário.
+As rotas de animais retornam `compatibilidade`
+com `rotina`, `ambiente`, `preferencias`, `total` e `versao`, ou `null` sem teste
+completo. O início usa `animais.php?acao=melhores`, que ordena por nota antes de
+paginar. Os cartões mostram o percentual real; a ficha detalha as três notas.
+
+A regra de afinidade, versão 1, usa `(Rotina*5 + Ambiente*3 + Preferências*2)/10`:
+
+- Rotina: dedicação versus energia, tempo sozinho versus carência, e preparo
+  informado na etapa C. As seis respostas de preparo têm o mesmo peso; o
+  financeiro usa 0, 0,5 ou 1 para as três opções.
+- Ambiente: espaço em relação à espécie/porte e convivência com outros animais.
+  Gatos e animais pequenos têm nota de espaço 100. Para os demais, quintal
+  recebe 100; casa sem quintal recebe 80 (médio) ou 60 (grande); apartamento
+  recebe 60 (médio) ou 40 (grande); outro recebe 50. Incompatibilidade de
+  convivência recebe 0 nesse item, com peso igual ao espaço.
+- Preferências: espécie, sexo, faixa etária, porte e energia têm pesos iguais.
+  Porte e energia descontam metade por nível de distância; os demais são
+  correspondência completa ou zero.
+
+O cálculo é uma regra explicável do produto, não uma garantia de adaptação.
+A nota não aprova nem impede automaticamente uma solicitação.
+
+| Método | Rota | Uso |
+| --- | --- | --- |
+| GET | adocoes.php | Solicitações enviadas e recebidas pela sessão |
+| GET | adocoes.php?acao=id&id=1 | Detalhes, só para solicitante/responsável |
+| POST | adocoes.php?acao=solicitar | JSON `{"id_animal":1}`; cria Aguardando |
+| POST | adocoes.php?acao=aceitar&id=1 | Responsável aprova |
+| POST | adocoes.php?acao=recusar&id=1 | Responsável recusa |
+| POST | adocoes.php?acao=cancelar&id=1 | Solicitante cancela |
+
+O servidor define IDs de solicitante e responsável, data e status. Não permite
+solicitar o próprio animal nem duplicar pedido pendente. Apenas pedidos
+Aguardando podem mudar. A aprovação trava o registro do animal em transação,
+marca `animal.status=Adotado` e recusa os demais pedidos pendentes; editar a
+ficha não reabre um animal adotado. Animais ou responsáveis inativos não
+recebem novos pedidos. As solicitações permanecem como histórico.
+
+Antes do envio, a tela confirma o compartilhamento de nome, e-mail e telefone
+do solicitante com o responsável. Esses dados só aparecem nos detalhes/listas
+das duas partes. Notificações são consultadas ao abrir a tela ou tocar em
+Atualizar; não há push ou e-mail automático de adoção.
+
+Para conferir visualmente com duas contas:
+
+1. Na primeira conta, publique um animal.
+2. Crie uma segunda conta e faça login; o teste abrirá automaticamente.
+   Conclua as três etapas e toque em Concluir para entrar no Início.
+3. Abra a ficha, confira a nota e toque em Quero Adotar → Enviar solicitação.
+4. Na primeira conta, abra o sino de notificações e aprove ou recuse o pedido.
+5. Na segunda, consulte o resultado pelo sino. Para testar cancelamento,
+   envie outro pedido e cancele antes da decisão do responsável.
 
 ## Testes
 
@@ -72,7 +182,12 @@ de usuários pesquisa o banco; a aba Pets ainda filtra os exemplos locais.
 flutter test
 C:\xampp\php\php.exe test\backend_login_test.php
 C:\xampp\php\php.exe test\clientes_backend_test.php
+C:\xampp\php\php.exe test\animais_backend_test.php
+C:\xampp\php\php.exe test\adocoes_backend_test.php
 ```
 
 Os testes PHP usam contas temporárias e as removem ao terminar; o contador de IDs
 pode avançar. Não alteram as contas existentes.
+Os testes de animais e adoções usam `http://127.0.0.1:8091` por padrão: execute antes
+`C:\xampp\php\php.exe -S 127.0.0.1:8091 -t backend`, ou defina `API_BASE_URL`
+com o endereço da API que contém `animais.php`.

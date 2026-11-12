@@ -56,16 +56,18 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
         ),
       );
     } on LoginException catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(e.mensagem)));
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Não foi possível solicitar a recuperação.'),
           ),
         );
+      }
     } finally {
       api.close();
     }

@@ -15,7 +15,7 @@ class TesteCompScreen extends StatelessWidget {
         backgroundColor: AppColors.fundo,
 
         centerTitle: true,
-        automaticallyImplyLeading: false,
+        automaticallyImplyLeading: true,
         title: Image.asset('assets/logo.png', height: 25, fit: BoxFit.contain),
 
         shape: const Border(
@@ -28,7 +28,6 @@ class TesteCompScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -77,7 +76,7 @@ class TesteCompScreen extends StatelessWidget {
                       size: 28,
                     ),
                   ),
-                  
+
                   Text(
                     'Teste de Compatibilidade',
                     textAlign: TextAlign.center,
@@ -87,24 +86,17 @@ class TesteCompScreen extends StatelessWidget {
                       height: 1.05,
                     ),
                   ),
-                  
-                  SizedBox(
-                    height: 10,
-                  ),
+
+                  SizedBox(height: 10),
 
                   Text(
                     'Esse teste avaliará as melhores opções\nde pet para você.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.black, fontSize: 14),
                   ),
-                ]
+                ],
               ),
-                      
             ),
-
 
             Row(
               children: [
@@ -115,12 +107,12 @@ class TesteCompScreen extends StatelessWidget {
                         height: 62,
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.pushAndRemoveUntil(
+                            Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const TesteCompAScreen(), //HOME
+                                builder: (context) =>
+                                    const TesteCompAScreen(), //HOME
                               ),
-                              (Route<dynamic> route) => false,
                             );
                           },
                           style: ElevatedButton.styleFrom(
@@ -146,7 +138,6 @@ class TesteCompScreen extends StatelessWidget {
                 ),
               ],
             ),
-            
           ],
         ),
       ),

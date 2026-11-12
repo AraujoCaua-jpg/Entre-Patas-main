@@ -58,14 +58,16 @@ class _AlterarSenhaScreenState extends State<AlterarSenhaScreen> {
         (_) => false,
       );
     } on LoginException catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(e.mensagem)));
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Não foi possível alterar a senha.')),
         );
+      }
     } finally {
       if (mounted) setState(() => salvando = false);
     }

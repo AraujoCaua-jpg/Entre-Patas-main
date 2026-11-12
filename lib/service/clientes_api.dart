@@ -33,10 +33,11 @@ class ClientesApi {
               .timeout(const Duration(seconds: 15));
       final json = jsonDecode(utf8.decode(response.bodyBytes));
       if (json is! Map<String, dynamic>) throw const FormatException();
-      if (response.statusCode != 200)
+      if (response.statusCode != 200) {
         throw LoginException(
           json['erro'] as String? ?? 'Não foi possível concluir.',
         );
+      }
       return json;
     } on TimeoutException {
       throw const LoginException('O servidor demorou para responder.');

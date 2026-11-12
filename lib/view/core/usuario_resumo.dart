@@ -16,27 +16,32 @@ class _UsuarioResumoState extends State<UsuarioResumo> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (widget.clienteId != null)
+    if (widget.clienteId != null) {
       dados ??= ClientesScope.of(context)
           .buscarClienteRemoto(widget.clienteId!, basico: true);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.clienteId == null)
+    if (widget.clienteId == null) {
       return const Text('Usuário ainda não vinculado a este item.');
+    }
     return FutureBuilder<Cliente>(
       future: dados,
       builder: (context, s) {
-        if (s.hasError)
+        if (s.hasError) {
           return TextButton(
-            onPressed: () => setState(
-              () =>
-                  dados = ClientesScope.of(context)
-                      .buscarClienteRemoto(widget.clienteId!, basico: true),
-            ),
+            onPressed: () {
+              final consulta = ClientesScope.of(context)
+                  .buscarClienteRemoto(widget.clienteId!, basico: true);
+              setState(() {
+                dados = consulta;
+              });
+            },
             child: const Text('Não foi possível carregar. Tentar novamente'),
           );
+        }
         if (!s.hasData) return const LinearProgressIndicator();
         final c = s.data!;
         return ListTile(
