@@ -127,15 +127,21 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment
                       .start, // 👈 Alinha os elementos para a esquerda
-                  children: [Text(animal.nome, style: TextStyle(fontSize: 28))],
+                  children: [
+                    Expanded(
+                      child: Text(animal.nome, style: TextStyle(fontSize: 28)),
+                    ),
+                  ],
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment
                       .start, // 👈 Alinha os elementos para a esquerda
                   children: [
-                    Text(
-                      '${animal.idade} ano(s) - ${animal.sexo}',
-                      style: TextStyle(fontSize: 14),
+                    Expanded(
+                      child: Text(
+                        '${animal.idade} ano(s) - ${animal.sexo}',
+                        style: TextStyle(fontSize: 14),
+                      ),
                     ),
                   ],
                 ),
@@ -149,9 +155,11 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
                       size: 18,
                       color: AppColors.laranja,
                     ),
-                    Text(
-                      '${animal.cidade} - ${animal.estado}',
-                      style: TextStyle(fontSize: 14),
+                    Flexible(
+                      child: Text(
+                        '${animal.cidade} - ${animal.estado}',
+                        style: TextStyle(fontSize: 14),
+                      ),
                     ),
                   ],
                 ),
@@ -161,7 +169,11 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment
                       .start, // 👈 Alinha os elementos para a esquerda
-                  children: [Text("Sobre mim", style: TextStyle(fontSize: 24))],
+                  children: [
+                    Expanded(
+                      child: Text("Sobre mim", style: TextStyle(fontSize: 24)),
+                    ),
+                  ],
                 ),
 
                 Row(
@@ -185,7 +197,12 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
                   mainAxisAlignment: MainAxisAlignment
                       .start, // 👈 Alinha os elementos para a esquerda
                   children: [
-                    Text("Informações", style: TextStyle(fontSize: 24)),
+                    Expanded(
+                      child: Text(
+                        "Informações",
+                        style: TextStyle(fontSize: 24),
+                      ),
+                    ),
                   ],
                 ),
 
@@ -398,7 +415,12 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Quero Adotar', style: TextStyle(fontSize: 24)),
+                        Flexible(
+                          child: Text(
+                            'Quero Adotar',
+                            style: TextStyle(fontSize: 24),
+                          ),
+                        ),
                         SizedBox(width: 10),
                         Icon(Icons.pets),
                       ],
@@ -419,7 +441,12 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
                   mainAxisAlignment: MainAxisAlignment
                       .start, // 👈 Alinha os elementos para a esquerda
                   children: [
-                    Text("Publicado por: ", style: TextStyle(fontSize: 24)),
+                    Expanded(
+                      child: Text(
+                        "Publicado por: ",
+                        style: TextStyle(fontSize: 24),
+                      ),
+                    ),
                   ],
                 ),
 
