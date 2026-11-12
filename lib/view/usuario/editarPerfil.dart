@@ -349,9 +349,11 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             SizedBox(height: 20),
 
             DropdownButtonFormField<String>(
+              menuMaxHeight: 240,
+              borderRadius: BorderRadius.circular(10),
               initialValue: estado,
               isExpanded: true,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.black,
                 fontFamily: 'NunitoSans',
                 fontSize: 16,
@@ -391,7 +393,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             TextField(
               controller: cidadeController,
               textCapitalization: TextCapitalization.words,
-              style: TextStyle(color: Colors.black),
+              style: const TextStyle(color: Colors.black),
               decoration: InputDecoration(
                 hintText: 'Cidade',
                 prefixIcon: const Icon(

@@ -101,25 +101,28 @@ class _CadastroUsuario2ScreenState extends State<CadastroUsuario2Screen> {
               ],
             ),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment
-                  .spaceBetween, // Centraliza as barrinhas (opcional)
-              children: [
-                for (var etapa = 0; etapa < 4; etapa++)
-                  Expanded(
-                    child: Container(
-                      height: 6,
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                      ), // Um espaço leve entre elas
-                      decoration: BoxDecoration(
-                        // Se a etapa já passou ou é a atual, fica verde. Senão, cinza.
-                        color: etapa < 2 ? AppColors.verde : AppColors.cinza,
-                        borderRadius: BorderRadius.circular(3),
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 28),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment
+                    .spaceBetween, // Centraliza as barrinhas (opcional)
+                children: [
+                  for (var etapa = 0; etapa < 4; etapa++)
+                    Expanded(
+                      child: Container(
+                        height: 6,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                        ), // Um espaço leve entre elas
+                        decoration: BoxDecoration(
+                          // Se a etapa já passou ou é a atual, fica verde. Senão, cinza.
+                          color: etapa < 2 ? AppColors.verde : AppColors.cinza,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
 
             Expanded(

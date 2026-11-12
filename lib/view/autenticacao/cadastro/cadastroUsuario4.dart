@@ -196,25 +196,28 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
               ],
             ),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment
-                  .spaceBetween, // Centraliza as barrinhas (opcional)
-              children: [
-                for (var etapa = 0; etapa < 4; etapa++)
-                  Expanded(
-                    child: Container(
-                      height: 6,
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                      ), // Um espaço leve entre elas
-                      decoration: BoxDecoration(
-                        // Se a etapa já passou ou é a atual, fica verde. Senão, cinza.
-                        color: etapa < 4 ? AppColors.verde : AppColors.cinza,
-                        borderRadius: BorderRadius.circular(3),
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 28),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment
+                    .spaceBetween, // Centraliza as barrinhas (opcional)
+                children: [
+                  for (var etapa = 0; etapa < 4; etapa++)
+                    Expanded(
+                      child: Container(
+                        height: 6,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                        ), // Um espaço leve entre elas
+                        decoration: BoxDecoration(
+                          // Se a etapa já passou ou é a atual, fica verde. Senão, cinza.
+                          color: etapa < 4 ? AppColors.verde : AppColors.cinza,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
 
             Expanded(
@@ -254,9 +257,11 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
                   SizedBox(height: 40),
 
                   DropdownButtonFormField<String>(
+                    menuMaxHeight: 240,
+                    borderRadius: BorderRadius.circular(10),
                     initialValue: estado,
                     isExpanded: true,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.black,
                       fontFamily: 'NunitoSans',
                       fontSize: 16,
@@ -296,7 +301,7 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
                   TextField(
                     controller: cidadeController,
                     textCapitalization: TextCapitalization.words,
-                    style: TextStyle(color: Colors.black),
+                    style: const TextStyle(color: Colors.black),
                     decoration: InputDecoration(
                       hintText: 'Cidade',
                       prefixIcon: const Icon(

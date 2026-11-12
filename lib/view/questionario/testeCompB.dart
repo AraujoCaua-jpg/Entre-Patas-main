@@ -84,28 +84,29 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
               ],
             ),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment
-                  .spaceBetween, // Centraliza as barrinhas (opcional)
-              children: [
-                for (var etapa = 0; etapa < 5; etapa++)
-                  Expanded(
-                    child: Container(
-                      height: 6,
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                      ), // Um espaço leve entre elas
-                      decoration: BoxDecoration(
-                        // Se a etapa já passou ou é a atual, fica verde. Senão, cinza.
-                        color: etapa < 3 ? AppColors.verde : AppColors.cinza,
-                        borderRadius: BorderRadius.circular(3),
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 28),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment
+                    .spaceBetween, // Centraliza as barrinhas (opcional)
+                children: [
+                  for (var etapa = 0; etapa < 5; etapa++)
+                    Expanded(
+                      child: Container(
+                        height: 6,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                        ), // Um espaço leve entre elas
+                        decoration: BoxDecoration(
+                          // Se a etapa já passou ou é a atual, fica verde. Senão, cinza.
+                          color: etapa < 3 ? AppColors.verde : AppColors.cinza,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
-
-            SizedBox(height: 20),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
