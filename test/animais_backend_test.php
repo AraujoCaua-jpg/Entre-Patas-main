@@ -26,9 +26,11 @@ try {
     }
     [$status]=api('animais.php'); check($status===401,'Consulta sem sessão aceita');
     $dados=['nome'=>"Pet$s",'idade'=>0,'imagem'=>null,'tipo'=>'Gato','descricao'=>'Animal de teste','sexo'=>'Fêmea','status'=>'Disponível','energia'=>'Médio','porte'=>'Pequeno','convivencia'=>'Sim','carencia'=>'Não','id_cliente'=>$ids['b']];
+    $dados['vacinado']='Sim'; $dados['castrado']='Não';
     [$status,$d]=api('animais.php?acao=cadastrar',$dados,$tokens['a']);
     check($status===200,'Cadastro falhou: '.json_encode($d));
     $id=$d['animal']['id']; $animais[]=$id;
+    check($d['animal']['vacinado']==='Sim' && $d['animal']['castrado']==='Não','Dados de saúde não foram salvos');
     check($d['animal']['id_cliente']===$ids['a'],'Responsável do corpo foi aceito');
     check($d['animal']['idade']===0 && $d['animal']['estado']==='SP','Idade ou região incorreta');
     [$status,$d]=api("animais.php?acao=id&id=$id",null,$tokens['b']); check($status===200 && $d['animal']['nome']===$dados['nome'],'Busca por ID falhou');
@@ -36,6 +38,9 @@ try {
         [$status]=api("animais.php?acao=$acao&id=$id",$dados,$tokens['b']); check($status===403,'Outro usuário alterou animal');
     }
     [$status]=api('animais.php?acao=cadastrar',[...$dados,'idade'=>-1],$tokens['a']); check($status===400,'Idade negativa aceita');
+    foreach (['vacinado','castrado'] as $campo) {
+        [$status]=api('animais.php?acao=cadastrar',[...$dados,$campo=>'Talvez'],$tokens['a']); check($status===400,'Resposta de saúde inválida aceita');
+    }
     [$status]=api('animais.php?acao=cadastrar',[...$dados,'imagem'=>'javascript:alert(1)'],$tokens['a']); check($status===400,'Imagem inválida aceita');
     foreach (["q=Pet$s",'id_cliente='.$ids['a'],'estado=SP&porte=Pequeno&tipo=Gato&energia=M%C3%A9dio&sexo=F%C3%AAmea&convivencia=Sim&carencia=N%C3%A3o&cidade='.urlencode("Cidadea$s")] as $filtro) {
         [$status,$d]=api("animais.php?$filtro",null,$tokens['a']);
@@ -46,8 +51,13 @@ try {
     [$status,$d]=api('animais.php?q=%25&id_cliente='.$ids['a'],null,$tokens['a']); check($d['animais']===[],'Curinga não escapado');
     [$status]=api('animais.php?pagina=0',null,$tokens['a']); check($status===400,'Página inválida aceita');
     $dados['nome']="Editado$s"; $dados['idade']=3;
+    $dados['vacinado']='Não'; $dados['castrado']='Sim';
     [$status,$d]=api("animais.php?acao=editar&id=$id",$dados,$tokens['a']); check($status===200 && $d['animal']['nome']===$dados['nome'],'Edição falhou');
     [$status,$d]=api("animais.php?acao=id&id=$id",null,$tokens['a']); check($d['animal']['idade']===3,'Edição não persistiu');
+    check($d['animal']['vacinado']==='Não' && $d['animal']['castrado']==='Sim','Edição de saúde não persistiu');
+    $semSaude=$dados; unset($semSaude['vacinado'],$semSaude['castrado']);
+    [$status,$d]=api("animais.php?acao=editar&id=$id",$semSaude,$tokens['a']);
+    check($status===200 && $d['animal']['vacinado']==='Não' && $d['animal']['castrado']==='Sim','Cliente antigo apagou saúde ao omitir campos');
     $pdo->prepare('UPDATE cliente SET ativo=0 WHERE id=?')->execute([$ids['a']]);
     [$status]=api("animais.php?acao=id&id=$id",null,$tokens['b']); check($status===404,'Animal de responsável inativo visível');
     $pdo->prepare('UPDATE cliente SET ativo=1 WHERE id=?')->execute([$ids['a']]);

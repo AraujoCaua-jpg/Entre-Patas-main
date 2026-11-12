@@ -8,10 +8,11 @@ function animal_id($valor) {
     return $id;
 }
 function animal_json($a) {
-    global $questionario;
+    global $questionario, $cliente;
     foreach (['id', 'idade', 'id_cliente'] as $campo) $a[$campo] = (int)$a[$campo];
     $a['ativo'] = (bool)$a['ativo'];
-    $a['compatibilidade'] = compatibilidade($a, $questionario);
+    $a['compatibilidade'] = $a['id_cliente'] === (int)$cliente['id']
+        ? null : compatibilidade($a, $questionario);
     return $a;
 }
 function animal_dados($d) {
@@ -37,6 +38,12 @@ function animal_dados($d) {
         || !filter_var($imagem, FILTER_VALIDATE_URL) || !in_array(strtolower(parse_url($imagem, PHP_URL_SCHEME) ?? ''), ['https','http'], true)))
         resposta(400, ['erro'=>'Informe um endereço HTTP ou HTTPS válido para a imagem.']);
     $resultado['imagem'] = $imagem;
+    foreach (['vacinado','castrado'] as $campo) {
+        if (!array_key_exists($campo, $d)) continue;
+        if ($d[$campo] !== null && !in_array($d[$campo], ['Sim','Não'], true))
+            resposta(400, ['erro'=>"Confira o campo $campo."]);
+        $resultado[$campo] = $d[$campo];
+    }
     return $resultado;
 }
 try {

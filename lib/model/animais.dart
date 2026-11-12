@@ -11,6 +11,8 @@ class Animal {
   String porte;
   String convivencia;
   String carencia;
+  String? vacinado;
+  String? castrado;
   int idCliente;
   String estado;
   String cidade;
@@ -33,6 +35,8 @@ class Animal {
     this.estado = '',
     this.cidade = '',
     this.compatibilidade,
+    this.vacinado,
+    this.castrado,
   });
 
   factory Animal.fromJson(Map<String, dynamic> d) => Animal(
@@ -48,6 +52,8 @@ class Animal {
     porte: d['porte'] as String? ?? '',
     convivencia: d['convivencia'] as String? ?? '',
     carencia: d['carencia'] as String? ?? '',
+    vacinado: d['vacinado'] as String?,
+    castrado: d['castrado'] as String?,
     idCliente: (d['id_cliente'] as num).toInt(),
     estado: d['estado'] as String? ?? '',
     cidade: d['cidadeDeResidencia'] as String? ?? '',
@@ -66,5 +72,7 @@ class Animal {
     'porte': porte,
     'convivencia': convivencia,
     'carencia': carencia,
+    'vacinado': vacinado,
+    'castrado': castrado,
   };
 }

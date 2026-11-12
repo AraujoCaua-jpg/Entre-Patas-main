@@ -82,6 +82,8 @@ adiciona ao questionário as respostas de preparo (`imovel`, `apoio`,
 `compromisso`, `moradores`, `financeiro`, `rotina`). Cria também
 `cliente.questionario_pendente` com padrão 0, dispensando contas existentes.
 Novos cadastros pela API recebem 1; salvar o teste muda para 0.
+Adiciona ainda `animal.vacinado` e `animal.castrado` (VARCHAR(5), NULL por
+padrão). Registros antigos ficam sem informação até serem editados.
 A tabela `animal` deve
 ter `id` com AUTO_INCREMENT e `ativo` NOT NULL DEFAULT 1. O vínculo com o
 responsável é `animal.id_cliente` → `cliente.id`. Idade é inteira em anos:
@@ -104,10 +106,13 @@ Filtros combináveis: `estado`, `cidade`, `tipo`, `sexo`, `porte`, `energia`,
 
 Cadastro e edição recebem JSON com `nome`, `idade`, `imagem` (URL HTTP/HTTPS
 opcional), `tipo`, `descricao`, `sexo`, `status`, `energia`, `porte`, `convivencia`
-e `carencia`. O servidor define o responsável e o estado ativo. Apenas o
-responsável pode editar ou desativar o animal. Os controles de castração e
-vacinação do layout original ficam desabilitados e indicados como futuros,
-pois esses campos ainda não existem na estrutura atual do banco.
+e `carencia`, além de `vacinado` e `castrado` (`Sim`, `Não` ou `null` para dados
+não informados). O servidor define o responsável e o estado ativo. Apenas o
+responsável pode editar ou desativar o animal. Os controles originais de
+vacinação e castração salvam as respostas, recuperam os valores na edição e
+exibem os dados na ficha. A interface exige ambas as respostas para salvar.
+Clientes antigos que omitem esses campos na edição não apagam os valores
+existentes. Esses dados não modificam a fórmula de compatibilidade.
 
 ## Compatibilidade e solicitações de adoção
 
@@ -127,6 +132,9 @@ As rotas de animais retornam `compatibilidade`
 com `rotina`, `ambiente`, `preferencias`, `total` e `versao`, ou `null` sem teste
 completo. O início usa `animais.php?acao=melhores`, que ordena por nota antes de
 paginar. Os cartões mostram o percentual real; a ficha detalha as três notas.
+Para animais do próprio usuário, a API retorna compatibilidade `null` mesmo
+com questionário concluído. Na ficha, o responsável vê "Publicado por você",
+sem botão de adoção ou seção de compatibilidade.
 
 A regra de afinidade, versão 1, usa `(Rotina*5 + Ambiente*3 + Preferências*2)/10`:
 

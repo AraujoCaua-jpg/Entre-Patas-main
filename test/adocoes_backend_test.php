@@ -46,6 +46,9 @@ try {
     $animal=['nome'=>"Pet$s",'idade'=>2,'imagem'=>null,'tipo'=>'Gato','descricao'=>'Animal temporário','sexo'=>'Fêmea','status'=>'Disponível','energia'=>'Médio','porte'=>'Pequeno','convivencia'=>'Sim','carencia'=>'Sim'];
     [$status,$d]=api('animais.php?acao=cadastrar',$animal,$tokens['dono']); check($status===200,'Cadastro animal falhou'); $animalId=$d['animal']['id'];
     [$status,$d]=api("animais.php?acao=id&id=$animalId",null,$tokens['a']); check($d['animal']['compatibilidade']['total']===100,'Compatibilidade perfeita não é 100');
+    api('questionario.php',$respostas,$tokens['dono']);
+    [$status,$d]=api("animais.php?acao=id&id=$animalId",null,$tokens['dono']);
+    check($status===200 && $d['animal']['compatibilidade']===null,'Responsável recebeu nota para próprio animal');
     [$status,$d]=api("animais.php?acao=id&id=$animalId",null,$tokens['b']); check($d['animal']['compatibilidade']===null,'Inventou nota sem respostas');
     $desfavoravel=[...$respostas,'tipo'=>'Cachorro','sexo'=>'Macho','porte'=>2,'energia'=>2,'idadeMin'=>20,'idadeMax'=>30,'sozinho'=>1,'dedicacao'=>1,'imovel'=>0,'apoio'=>0,'compromisso'=>0,'moradores'=>0,'financeiro'=>1,'rotina'=>0];
     api('questionario.php',$desfavoravel,$tokens['a']);

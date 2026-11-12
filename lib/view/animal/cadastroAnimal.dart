@@ -89,6 +89,8 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
       ].indexOf(a.porte).clamp(0, 2).toDouble();
       carencia = a.carencia;
       convivencia = a.convivencia;
+      vacinado = a.vacinado;
+      castrado = a.castrado;
     } catch (e) {
       if (mounted)
         _erro = e is LoginException
@@ -113,6 +115,8 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
       erro = 'Selecione a espécie do animal.';
     } else if (idade == null || idade < 0 || idade > 2147483647) {
       erro = 'Informe uma idade inteira em anos, a partir de zero.';
+    } else if (vacinado == null || castrado == null) {
+      erro = 'Informe se o animal é vacinado e castrado.';
     }
     if (erro != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(erro)));
@@ -135,6 +139,8 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
           porte: ['Pequeno', 'Médio', 'Grande'][porte.round()],
           convivencia: convivencia!,
           carencia: carencia!,
+          vacinado: vacinado,
+          castrado: castrado,
           idCliente: c.clienteLogado?.id ?? 0,
         ),
         editar: widget.animalId != null,
@@ -512,7 +518,7 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
                   Row(
                     children: [
                       const Text(
-                        'O animal é castrado? (em breve)',
+                        'O animal é castrado?',
                         style: TextStyle(fontSize: 18),
                       ),
                     ],
@@ -524,7 +530,7 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
                         value: 'Sim',
                         groupValue: castrado,
                         activeColor: AppColors.verde,
-                        onChanged: null,
+                        onChanged: (value) => setState(() => castrado = value),
                       ),
                       const Text('Sim', style: TextStyle(fontSize: 18)),
 
@@ -534,7 +540,7 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
                         value: 'Não',
                         groupValue: castrado,
                         activeColor: AppColors.laranja,
-                        onChanged: null,
+                        onChanged: (value) => setState(() => castrado = value),
                       ),
                       const Text('Não', style: TextStyle(fontSize: 18)),
                     ],
@@ -545,7 +551,7 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
                   Row(
                     children: [
                       const Text(
-                        'Vacinação regular? (em breve)',
+                        'Vacinação regular?',
                         style: TextStyle(fontSize: 18),
                       ),
                     ],
@@ -557,7 +563,7 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
                         value: 'Sim',
                         groupValue: vacinado,
                         activeColor: AppColors.verde,
-                        onChanged: null,
+                        onChanged: (value) => setState(() => vacinado = value),
                       ),
                       const Text('Sim', style: TextStyle(fontSize: 18)),
 
@@ -567,7 +573,7 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
                         value: 'Não',
                         groupValue: vacinado,
                         activeColor: AppColors.laranja,
-                        onChanged: null,
+                        onChanged: (value) => setState(() => vacinado = value),
                       ),
                       const Text('Não', style: TextStyle(fontSize: 18)),
                     ],

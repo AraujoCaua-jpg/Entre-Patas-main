@@ -56,6 +56,7 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
           );
         final animal = snapshot.data!;
         final donoId = animal.idCliente;
+        final souDono = donoId == ClientesScope.of(context).clienteLogado?.id;
         return Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
@@ -354,7 +355,7 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
                           children: [
                             Text("Vacinado:"),
                             Text(
-                              "Não informado",
+                              animal.vacinado ?? 'Não informado',
                               style: TextStyle(fontSize: 20),
                             ),
                           ],
@@ -379,7 +380,7 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
                           children: [
                             Text("Castrado:"),
                             Text(
-                              "Não informado",
+                              animal.castrado ?? 'Não informado',
                               style: TextStyle(fontSize: 20),
                             ),
                           ],
@@ -391,49 +392,51 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
 
                 SizedBox(height: 20),
 
-                SizedBox(
-                  height: 62,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              AdocaoScreen(animalId: animal.id),
+                if (!souDono)
+                  SizedBox(
+                    height: 62,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                AdocaoScreen(animalId: animal.id),
+                          ),
+                        );
+                        if (mounted) _recarregar();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.laranja,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                      );
-                      if (mounted) _recarregar();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.laranja,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              'Quero Adotar',
+                              style: TextStyle(fontSize: 24),
+                            ),
+                          ),
+                          SizedBox(width: 10),
+                          Icon(Icons.pets),
+                        ],
                       ),
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            'Quero Adotar',
-                            style: TextStyle(fontSize: 24),
-                          ),
-                        ),
-                        SizedBox(width: 10),
-                        Icon(Icons.pets),
-                      ],
-                    ),
                   ),
-                ),
 
-                SizedBox(height: 20),
-
-                CompatibilidadeAnimal(
-                  dados: animal.compatibilidade,
-                  atualizar: _recarregar,
-                ),
+                if (!souDono) ...[
+                  const SizedBox(height: 20),
+                  CompatibilidadeAnimal(
+                    dados: animal.compatibilidade,
+                    atualizar: _recarregar,
+                  ),
+                ],
                 const SizedBox(height: 20),
                 const Divider(color: AppColors.laranja, thickness: 1),
 
@@ -443,30 +446,31 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        "Publicado por: ",
+                        souDono ? 'Publicado por você' : 'Publicado por: ',
                         style: TextStyle(fontSize: 24),
                       ),
                     ),
                   ],
                 ),
 
-                SizedBox(height: 10),
-
-                UsuarioResumo(clienteId: donoId),
-                TextButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => Scaffold(
-                        appBar: AppBar(
-                          title: const Text('Animais deste responsável'),
+                if (!souDono) ...[
+                  const SizedBox(height: 10),
+                  UsuarioResumo(clienteId: donoId),
+                  TextButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => Scaffold(
+                          appBar: AppBar(
+                            title: const Text('Animais deste responsável'),
+                          ),
+                          body: ListaAnimais(usuarioId: donoId),
                         ),
-                        body: ListaAnimais(usuarioId: donoId),
                       ),
                     ),
+                    child: const Text('Ver animais deste responsável'),
                   ),
-                  child: const Text('Ver animais deste responsável'),
-                ),
+                ],
               ],
             ),
           ),

@@ -5,7 +5,6 @@ import '../../controller/clientes_scope.dart';
 import '../../model/animais.dart';
 import '../../service/auth_api.dart';
 import '../animal/fichaAnimal.dart';
-import '../animal/animaisCadastrados.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,16 +15,36 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   Future<List<Animal>>? _consulta;
+  String? _tipo;
+  bool _preferenciaCarregada = false;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _consulta ??= ClientesScope.of(context)
-        .listarAnimais(filtros: {'acao': 'melhores'});
+    _consulta ??= _carregar();
+  }
+
+  Future<List<Animal>> _carregar() async {
+    final controller = ClientesScope.of(context);
+    if (!_preferenciaCarregada) {
+      final respostas = await controller.carregarQuestionario();
+      if (!mounted) return [];
+      final tipo = respostas?['tipo'];
+      _tipo = tipo == 'Cachorro' || tipo == 'Gato' ? tipo as String : null;
+      _preferenciaCarregada = true;
+    }
+    return controller.listarAnimais(
+      filtros: {'acao': 'melhores', if (_tipo != null) 'tipo': _tipo!},
+    );
+  }
+
+  void _selecionarTipo(String tipo) {
+    if (_tipo == tipo) return;
+    _tipo = tipo;
+    _recarregar();
   }
 
   void _recarregar() {
-    final consulta = ClientesScope.of(context)
-        .listarAnimais(filtros: {'acao': 'melhores'});
+    final consulta = _carregar();
     setState(() {
       _consulta = consulta;
     });
@@ -64,24 +83,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: TextStyle(fontSize: 18),
                       ),
                     ),
-                    IconButton(
-                      tooltip: 'Filtrar animais',
-                      icon: const Icon(Icons.tune, color: AppColors.laranja),
-                      onPressed: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => Scaffold(
-                              appBar: AppBar(
-                                title: const Text('Buscar Animais'),
-                              ),
-                              body: const ListaAnimais(),
-                            ),
-                          ),
-                        );
-                        if (mounted) _recarregar();
-                      },
-                    ),
                   ],
                 ),
 
@@ -95,6 +96,35 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
 
                 SizedBox(height: 20),
+
+                Row(
+                  children: [
+                    for (final tipo in ['Cachorro', 'Gato']) ...[
+                      if (tipo == 'Gato') const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => _selecionarTipo(tipo),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _tipo == tipo
+                                ? AppColors.laranja
+                                : AppColors.rosa,
+                            foregroundColor: _tipo == tipo
+                                ? Colors.white
+                                : AppColors.laranja,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(
+                            tipo == 'Cachorro' ? 'Cachorros' : 'Gatos',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 16),
 
                 if (animais.isEmpty) const Text('Nenhum Animal Cadastrado'),
                 Padding(

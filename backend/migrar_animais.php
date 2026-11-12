@@ -12,4 +12,9 @@ foreach (['imovel','apoio','compromisso','moradores','financeiro','rotina'] as $
 }
 $coluna = $pdo->query("SHOW COLUMNS FROM cliente LIKE 'questionario_pendente'")->fetch();
 if (!$coluna) $pdo->exec('ALTER TABLE cliente ADD questionario_pendente TINYINT NOT NULL DEFAULT 0');
-echo "Questionário e adoções preparados. Contas existentes dispensadas do teste inicial.\n";
+foreach (['vacinado','castrado'] as $campo) {
+    $q = $pdo->prepare('SHOW COLUMNS FROM animal LIKE ?');
+    $q->execute([$campo]);
+    if (!$q->fetch()) $pdo->exec("ALTER TABLE animal ADD `$campo` VARCHAR(5) NULL DEFAULT NULL");
+}
+echo "Questionário, adoções e dados de vacinação/castração preparados.\n";

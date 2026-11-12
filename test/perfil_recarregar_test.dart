@@ -11,6 +11,8 @@ import 'package:entre_patas/view/principal/home.dart';
 import 'package:entre_patas/view/principal/notificacoes.dart';
 
 class DadosPerfil extends ClienteController {
+  @override
+  Future<Map<String, dynamic>?> carregarQuestionario() async => null;
   int consultas = 0, notificacoes = 0;
   bool falhar = false;
   @override
