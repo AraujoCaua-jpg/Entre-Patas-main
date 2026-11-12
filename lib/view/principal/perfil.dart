@@ -1,5 +1,5 @@
 import 'package:entre_patas/view/core/app_colors.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../controller/clientes_scope.dart';
 import '../usuario/configuracoes.dart';

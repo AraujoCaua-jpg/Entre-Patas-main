@@ -1,5 +1,5 @@
 import 'package:entre_patas/view/animal/adocao.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../core/app_colors.dart';
 
 import '../usuario/fichaPerfil.dart';
@@ -465,44 +465,42 @@ class FichaAnimalScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: Container(
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundImage: NetworkImage("https://media.licdn.com/dms/image/v2/D4D03AQFA2t10Xx7Ryg/profile-displayphoto-scale_200_200/B4DZyzsK6CGQAY-/0/1772541231367?e=2147483647&v=beta&t=Ibx53alkSHmeFX_kLbUu-5MLnQ1zvtBL7ziHrb6m_iE"),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Lucas Siqueira",
-                                style: const TextStyle(fontSize: 20),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundImage: NetworkImage("https://media.licdn.com/dms/image/v2/D4D03AQFA2t10Xx7Ryg/profile-displayphoto-scale_200_200/B4DZyzsK6CGQAY-/0/1772541231367?e=2147483647&v=beta&t=Ibx53alkSHmeFX_kLbUu-5MLnQ1zvtBL7ziHrb6m_iE"),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Lucas Siqueira",
+                              style: const TextStyle(fontSize: 20),
+                            ),
+                            Text(
+                              "@lucas_siq",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.cinzaEscuro,
                               ),
-                              Text(
-                                "@lucas_siq",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.cinzaEscuro,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          color: AppColors.laranja,
-                          size: 26,
-                        ),
-                      ],
-                    ),
-                    
-                  ],
-                ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: AppColors.laranja,
+                        size: 26,
+                      ),
+                    ],
+                  ),
+                  
+                ],
               ),
             ),
 

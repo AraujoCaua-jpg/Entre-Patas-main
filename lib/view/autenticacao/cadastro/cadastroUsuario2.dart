@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';
+import '../../core/scrollable_screen_body.dart';
+
+import 'package:material_ui/material_ui.dart';
 
 import '../../../model/cliente.dart';
 
@@ -49,7 +51,8 @@ class _CadastroUsuario2ScreenState extends State<CadastroUsuario2Screen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => CadastroUsuario3Screen(cliente: widget.cliente),
+          builder: (context) =>
+              CadastroUsuario3Screen(cliente: widget.cliente, senha: senha),
         ),
       );
       return;
@@ -75,7 +78,7 @@ class _CadastroUsuario2ScreenState extends State<CadastroUsuario2Screen> {
         ),
       ),
 
-      body: Padding(
+      body: ScrollableScreenBody(
         padding: EdgeInsets.all(24),
         child: Column(
           children: [
@@ -148,7 +151,7 @@ class _CadastroUsuario2ScreenState extends State<CadastroUsuario2Screen> {
                   ),
 
                   Text(
-                    'Simulação: a senha não é armazenada nem autenticada.',
+                    'Escolha uma senha para proteger sua conta.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Color(0xFF888888), fontSize: 16),
                   ),

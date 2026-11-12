@@ -1,16 +1,23 @@
+import '../../core/scrollable_screen_body.dart';
+
 import 'package:entre_patas/view/questionario/testeComp.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../model/cliente.dart';
+import '../../../service/cliente_api.dart';
 import '../../../controller/clientes_scope.dart';
 
 import '../../core/app_colors.dart';
-import '../login.dart';
 
 class CadastroUsuario4Screen extends StatefulWidget {
-  const CadastroUsuario4Screen({super.key, required this.cliente});
+  const CadastroUsuario4Screen({
+    super.key,
+    required this.cliente,
+    required this.senha,
+  });
 
   final Cliente cliente;
+  final String senha;
 
   @override
   State<CadastroUsuario4Screen> createState() => _CadastroUsuario4ScreenState();
@@ -51,16 +58,19 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
   String? estado;
   bool larDeAdocao = false;
   bool _cadastroConcluido = false;
+  bool _salvando = false;
+  final _api = ClienteApi();
 
   @override
   void dispose() {
+    _api.close();
     cidadeController.dispose();
     enderecoController.dispose();
     super.dispose();
   }
 
   Future<void> criarConta() async {
-    if (_cadastroConcluido) return;
+    if (_cadastroConcluido || _salvando) return;
     final String mensagem;
     if (estado == null || cidadeController.text.trim().isEmpty) {
       mensagem = 'Selecione o estado e informe sua cidade.';
@@ -79,18 +89,32 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
         );
         return;
       }
-      // Usa um ID acima dos existentes, inclusive os criados pela tela de CRUD.
-      final maiorId = controller.listarClientes().fold<int>(
-        0,
-        (maior, cliente) => cliente.id > maior ? cliente.id : maior,
-      );
-      widget.cliente.id = maiorId + 1;
       widget.cliente.cidadeDeResidencia = cidadeController.text.trim();
       widget.cliente.estado = estado;
       widget.cliente.larDeAdocao = larDeAdocao;
       widget.cliente.endereco = larDeAdocao
           ? enderecoController.text.trim()
           : null;
+      setState(() => _salvando = true);
+      try {
+        widget.cliente.id = await _api.cadastrar(widget.cliente, widget.senha);
+      } on CadastroException catch (erro) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(erro.mensagem)));
+        return;
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível concluir o cadastro.'),
+          ),
+        );
+        return;
+      } finally {
+        if (mounted) setState(() => _salvando = false);
+      }
+      if (!mounted) return;
       controller.cadastrarCliente(widget.cliente);
       setState(() => _cadastroConcluido = true);
       await showDialog<void>(
@@ -100,9 +124,7 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
           canPop: false,
           child: AlertDialog(
             title: const Text('Cadastro concluído'),
-            content: const Text(
-              'Usuário cadastrado com sucesso!',
-            ),
+            content: const Text('Usuário cadastrado com sucesso!'),
             actions: [
               TextButton(
                 onPressed: () {
@@ -150,7 +172,7 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
         ),
       ),
 
-      body: Padding(
+      body: ScrollableScreenBody(
         padding: EdgeInsets.all(24),
         child: Column(
           children: [
@@ -368,7 +390,9 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
                   child: SizedBox(
                     height: 62,
                     child: ElevatedButton(
-                      onPressed: _cadastroConcluido ? null : criarConta,
+                      onPressed: _cadastroConcluido || _salvando
+                          ? null
+                          : criarConta,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.laranja,
                         foregroundColor: Colors.white,
@@ -380,7 +404,7 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('Entrar', style: TextStyle(fontSize: 24)),
+                          Text('Criar conta', style: TextStyle(fontSize: 24)),
                           SizedBox(width: 10),
                           Icon(Icons.arrow_forward),
                         ],

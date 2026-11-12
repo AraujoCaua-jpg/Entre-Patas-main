@@ -1,6 +1,6 @@
 # Claude Code ToolBox — MCP & Skills awareness
 
-_Generated: 2026-11-11T23:40:01.263Z_
+_Generated: 2026-11-12T01:05:33.285Z_
 
 ## How to use this report
 
@@ -15,7 +15,7 @@ _Generated: 2026-11-11T23:40:01.263Z_
 
 Workspace `mcp.json` _(folder: Entre-Patas-main)_
 
-- **c:\Users\CauãAraujoMarques\Downloads\Entre-Patas-main (2) (2)\Entre-Patas-main\.mcp.json** — _File missing_
+- **c:\Users\CauãAraujoMarques\Entre-Patas-main\.mcp.json** — _File missing_
 
 _No active workspace servers in mcp.json._
 

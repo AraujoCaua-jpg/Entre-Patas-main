@@ -1,6 +1,6 @@
 import 'package:entre_patas/view/autenticacao/bemVindo.dart';
 import 'package:entre_patas/view/usuario/alterarSenha.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../core/app_colors.dart';
 import 'editarPerfil.dart';
 

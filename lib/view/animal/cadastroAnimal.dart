@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../core/app_colors.dart';
 
 class CadastroAnimalScreen extends StatefulWidget {
@@ -26,6 +26,7 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
   String? castrado = 'Sim';
   String? vacinado = 'Sim';
 
+  @override
   void dispose() {
     nomeController.dispose();
     idadeController.dispose();

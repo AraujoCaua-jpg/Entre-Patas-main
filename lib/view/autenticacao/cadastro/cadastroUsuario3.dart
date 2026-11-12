@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';
+import '../../core/scrollable_screen_body.dart';
+
+import 'package:material_ui/material_ui.dart';
 
 import '../../../model/cliente.dart';
 import '../../../controller/clientes_scope.dart';
@@ -7,9 +9,14 @@ import '../../core/app_colors.dart';
 import 'cadastroUsuario4.dart';
 
 class CadastroUsuario3Screen extends StatefulWidget {
-  const CadastroUsuario3Screen({super.key, required this.cliente});
+  const CadastroUsuario3Screen({
+    super.key,
+    required this.cliente,
+    required this.senha,
+  });
 
   final Cliente cliente;
+  final String senha;
 
   @override
   State<CadastroUsuario3Screen> createState() => _CadastroUsuario3ScreenState();
@@ -39,7 +46,10 @@ class _CadastroUsuario3ScreenState extends State<CadastroUsuario3Screen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => CadastroUsuario4Screen(cliente: widget.cliente),
+          builder: (context) => CadastroUsuario4Screen(
+            cliente: widget.cliente,
+            senha: widget.senha,
+          ),
         ),
       );
       return;
@@ -65,7 +75,7 @@ class _CadastroUsuario3ScreenState extends State<CadastroUsuario3Screen> {
         ),
       ),
 
-      body: Padding(
+      body: ScrollableScreenBody(
         padding: EdgeInsets.all(24),
         child: Column(
           children: [

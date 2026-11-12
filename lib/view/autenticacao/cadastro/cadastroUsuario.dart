@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';
+import '../../core/scrollable_screen_body.dart';
+
+import 'package:material_ui/material_ui.dart';
 
 import '../../../model/cliente.dart';
 import '../../../controller/clientes_scope.dart';
@@ -89,7 +91,7 @@ class _CadastroUsuarioScreenState extends State<CadastroUsuarioScreen> {
         ),
       ),
 
-      body: Padding(
+      body: ScrollableScreenBody(
         padding: EdgeInsets.all(24),
         child: Column(
           children: [
@@ -279,7 +281,7 @@ class _CadastroUsuarioScreenState extends State<CadastroUsuarioScreen> {
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text('Entrar', style: TextStyle(fontSize: 24)),
+                              Text('Continuar', style: TextStyle(fontSize: 24)),
                               SizedBox(width: 10),
                               Icon(Icons.arrow_forward),
                             ],

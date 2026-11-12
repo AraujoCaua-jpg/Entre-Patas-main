@@ -1,5 +1,5 @@
 import 'package:entre_patas/view/animal/fichaAnimal.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../core/app_colors.dart';
 import '../usuario/fichaPerfil.dart';
 
@@ -196,47 +196,45 @@ class _SearchCard extends StatelessWidget {
           ),
         );
       },
-      child: Container(
-        child: Column(
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundImage: NetworkImage(image),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(fontSize: 20),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundImage: NetworkImage(image),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(fontSize: 20),
+                    ),
+                    Text(
+                      desc,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.cinzaEscuro,
                       ),
-                      Text(
-                        desc,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.cinzaEscuro,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  color: AppColors.laranja,
-                  size: 26,
-                ),
-              ],
-            ),
-            const Divider(
-              color: Colors.grey,
-              thickness: 1,
-            ),
-          ],
-        ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: AppColors.laranja,
+                size: 26,
+              ),
+            ],
+          ),
+          const Divider(
+            color: Colors.grey,
+            thickness: 1,
+          ),
+        ],
       ),
     );
   }
