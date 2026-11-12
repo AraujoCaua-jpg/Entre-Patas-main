@@ -3,21 +3,46 @@ import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 
 import '../model/cliente.dart';
+import '../service/auth_api.dart';
 
 class ClienteController extends ChangeNotifier {
+  ClienteController({AuthApi? authApi}) : _authApi = authApi ?? AuthApi();
+  final AuthApi _authApi;
+  String? _token;
+  bool _autenticando = false;
   final List<Cliente> clientes = [];
   int? _clienteLogadoId;
 
   Cliente? get clienteLogado =>
       _clienteLogadoId == null ? null : buscarCliente(_clienteLogadoId!);
 
-  // Identifica o perfil da simulação; não autentica nem armazena senhas.
-  bool entrarSimulado(String email) {
-    final cliente = buscarPorEmail(email);
-    if (cliente == null) return false;
-    _clienteLogadoId = cliente.id;
+  Future<void> entrar(String email, String senha) async {
+    if (_autenticando) return;
+    _autenticando = true;
+    try {
+      final sessao = await _authApi.entrar(email, senha);
+      clientes.removeWhere((cliente) => cliente.id == sessao.cliente.id);
+      clientes.add(sessao.cliente);
+      _clienteLogadoId = sessao.cliente.id;
+      _token = sessao.token;
+      notifyListeners();
+    } finally {
+      _autenticando = false;
+    }
+  }
+
+  Future<void> sair() async {
+    final token = _token;
+    if (token != null) await _authApi.sair(token);
+    _token = null;
+    _clienteLogadoId = null;
     notifyListeners();
-    return true;
+  }
+
+  @override
+  void dispose() {
+    _authApi.close();
+    super.dispose();
   }
 
   // Cadastrar cliente

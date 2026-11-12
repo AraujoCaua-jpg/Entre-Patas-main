@@ -1,6 +1,9 @@
+import '../../controller/clientes_scope.dart';
+
 import 'package:entre_patas/view/autenticacao/bemVindo.dart';
 import 'package:entre_patas/view/usuario/alterarSenha.dart';
 import 'package:material_ui/material_ui.dart';
+
 import '../core/app_colors.dart';
 import 'editarPerfil.dart';
 
@@ -13,9 +16,7 @@ class ConfiguracoesScreen extends StatelessWidget {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Apagar conta'),
-          content: const Text(
-            'Tem certeza que deseja apagar sua conta?',
-          ),
+          content: const Text('Tem certeza que deseja apagar sua conta?'),
           actions: [
             TextButton(
               onPressed: () {
@@ -49,10 +50,7 @@ class ConfiguracoesScreen extends StatelessWidget {
                 backgroundColor: AppColors.laranja,
                 padding: const EdgeInsets.all(16),
               ),
-              child: const Text(
-                'Sim',
-                style: TextStyle(color: Colors.white),
-              ),
+              child: const Text('Sim', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -68,10 +66,7 @@ class ConfiguracoesScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         title: const Text('Configurações'),
         shape: const Border(
-          bottom: BorderSide(
-            color: Color(0xFFD96C3F),
-            width: 2,
-          ),
+          bottom: BorderSide(color: Color(0xFFD96C3F), width: 2),
         ),
       ),
       body: Padding(
@@ -80,10 +75,14 @@ class ConfiguracoesScreen extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text("Perfil", style: TextStyle(fontSize: 16, color: Colors.grey), textAlign: TextAlign.start),
+                Text(
+                  "Perfil",
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                  textAlign: TextAlign.start,
+                ),
               ],
             ),
-            
+
             //REFAZER TESTE
             ElevatedButton(
               onPressed: () {
@@ -106,19 +105,13 @@ class ConfiguracoesScreen extends StatelessWidget {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  
-                  Icon(Icons.quiz_outlined, size: 24,),
+                  Icon(Icons.quiz_outlined, size: 24),
                   SizedBox(width: 10),
-                  Text(
-                    'Refazer teste',
-                    style: TextStyle(
-                      fontSize: 20,
-                    ),
-                  ),
+                  Text('Refazer teste', style: TextStyle(fontSize: 20)),
                 ],
               ),
             ),
-                   
+
             //EDITAR PERFIL
             ElevatedButton(
               onPressed: () {
@@ -141,15 +134,9 @@ class ConfiguracoesScreen extends StatelessWidget {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  
-                  Icon(Icons.edit_note_rounded, size: 24,),
+                  Icon(Icons.edit_note_rounded, size: 24),
                   SizedBox(width: 10),
-                  Text(
-                    'Editar Perfil',
-                    style: TextStyle(
-                      fontSize: 20,
-                    ),
-                  ),
+                  Text('Editar Perfil', style: TextStyle(fontSize: 20)),
                 ],
               ),
             ),
@@ -176,29 +163,24 @@ class ConfiguracoesScreen extends StatelessWidget {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  
-                  Icon(Icons.lock_outlined, size: 24,),
+                  Icon(Icons.lock_outlined, size: 24),
                   SizedBox(width: 10),
-                  Text(
-                    'Alterar Senha',
-                    style: TextStyle(
-                      fontSize: 20,
-                    ),
-                  ),
+                  Text('Alterar Senha', style: TextStyle(fontSize: 20)),
                 ],
               ),
             ),
 
-            Divider(
-              color: AppColors.laranja,
-              thickness: 2,             
-            ),
-            
-            SizedBox(height: 8,),
+            Divider(color: AppColors.laranja, thickness: 2),
+
+            SizedBox(height: 8),
 
             Row(
               children: [
-                Text("Mais informações e Suporte", style: TextStyle(fontSize: 16, color: Colors.grey), textAlign: TextAlign.start),
+                Text(
+                  "Mais informações e Suporte",
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                  textAlign: TextAlign.start,
+                ),
               ],
             ),
 
@@ -224,19 +206,13 @@ class ConfiguracoesScreen extends StatelessWidget {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  
-                  Icon(Icons.info_outline, size: 24,),
+                  Icon(Icons.info_outline, size: 24),
                   SizedBox(width: 10),
-                  Text(
-                    'Sobre o App',
-                    style: TextStyle(
-                      fontSize: 20,
-                    ),
-                  ),
+                  Text('Sobre o App', style: TextStyle(fontSize: 20)),
                 ],
               ),
             ),
-            
+
             //AJUDA
             ElevatedButton(
               onPressed: () {
@@ -259,35 +235,44 @@ class ConfiguracoesScreen extends StatelessWidget {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  
-                  Icon(Icons.help_outline, size: 24,),
+                  Icon(Icons.help_outline, size: 24),
                   SizedBox(width: 10),
-                  Text(
-                    'Ajuda',
-                    style: TextStyle(
-                      fontSize: 20,
-                    ),
-                  ),
+                  Text('Ajuda', style: TextStyle(fontSize: 20)),
                 ],
               ),
             ),
-            
-            Divider(
-              color: AppColors.laranja,
-              thickness: 2,             
-            ),
-            
-            SizedBox(height: 8,),
+
+            Divider(color: AppColors.laranja, thickness: 2),
+
+            SizedBox(height: 8),
 
             Row(
               children: [
-                Text("Entrar", style: TextStyle(fontSize: 16, color: Colors.grey), textAlign: TextAlign.start),
+                Text(
+                  "Entrar",
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                  textAlign: TextAlign.start,
+                ),
               ],
             ),
 
             //SAIR DO APLICATIVO
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
+                try {
+                  await ClientesScope.of(context).sair();
+                } catch (_) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Não foi possível sair. Confira a conexão e tente novamente.',
+                      ),
+                    ),
+                  );
+                  return;
+                }
+                if (!context.mounted) return;
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(
@@ -308,19 +293,13 @@ class ConfiguracoesScreen extends StatelessWidget {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  
-                  Icon(Icons.logout_outlined, size: 24,),
+                  Icon(Icons.logout_outlined, size: 24),
                   SizedBox(width: 10),
-                  Text(
-                    'Sair do Aplicativo',
-                    style: TextStyle(
-                      fontSize: 20,
-                    ),
-                  ),
+                  Text('Sair do Aplicativo', style: TextStyle(fontSize: 20)),
                 ],
               ),
             ),
-            
+
             //APAGAR CONTA
             ElevatedButton(
               onPressed: () => apagar(context),
@@ -336,19 +315,12 @@ class ConfiguracoesScreen extends StatelessWidget {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  
-                  Icon(Icons.delete_forever_outlined, size: 24,),
+                  Icon(Icons.delete_forever_outlined, size: 24),
                   SizedBox(width: 10),
-                  Text(
-                    'Apagar Conta',
-                    style: TextStyle(
-                      fontSize: 20,
-                    ),
-                  ),
+                  Text('Apagar Conta', style: TextStyle(fontSize: 20)),
                 ],
               ),
             ),
-         
           ],
         ),
       ),

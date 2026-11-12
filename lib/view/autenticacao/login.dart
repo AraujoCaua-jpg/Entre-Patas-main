@@ -1,3 +1,6 @@
+import '../../service/auth_api.dart';
+import '../core/scrollable_screen_body.dart';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../../controller/clientes_scope.dart';
@@ -16,6 +19,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool mostrarSenha = false;
+  bool _entrando = false;
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController senhaController = TextEditingController();
@@ -27,37 +31,49 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void entrar() {
-    final String mensagem;
-    if ([
-      emailController,
-      senhaController,
-    ].any((controller) => controller.text.trim().isEmpty)) {
-      mensagem = 'Preencha todos os campos para continuar.';
-    } else if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-        .hasMatch(emailController.text.trim())) {
-      mensagem = 'Digite um e-mail válido.';
-    } else if (!ClientesScope.of(context)
-        .entrarSimulado(emailController.text)) {
-      mensagem =
-          'E-mail não cadastrado nesta execução. Crie uma conta primeiro.';
-    } else {
-      // Apenas simula a navegação. A senha não é comparada ou persistida.
-      senhaController.clear();
-      FocusScope.of(context).unfocus();
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const NavegacaoScreen(), //HOME
+  Future<void> entrar() async {
+    if (_entrando) return;
+    if (emailController.text.trim().isEmpty || senhaController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Preencha e-mail e senha para continuar.'),
         ),
-        (Route<dynamic> route) => false,
       );
-
       return;
     }
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(mensagem)));
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+        .hasMatch(emailController.text.trim())) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Digite um e-mail válido.')));
+      return;
+    }
+    final controller = ClientesScope.of(context);
+    FocusScope.of(context).unfocus();
+    setState(() => _entrando = true);
+    try {
+      await controller.entrar(emailController.text, senhaController.text);
+      if (!mounted) return;
+      senhaController.clear();
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const NavegacaoScreen()),
+        (route) => false,
+      );
+    } on LoginException catch (erro) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(erro.mensagem)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível entrar. Tente novamente.'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _entrando = false);
+    }
   }
 
   @override
@@ -77,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
 
-      body: Padding(
+      body: ScrollableScreenBody(
         padding: EdgeInsets.all(24),
         child: Column(
           children: [
@@ -112,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       size: 28,
                     ),
                   ),
-                  
+
                   Text(
                     'Que bom ter você de volta!',
                     textAlign: TextAlign.center,
@@ -122,18 +138,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 1.05,
                     ),
                   ),
-                  
-                  SizedBox(
-                    height: 10,
-                  ),
+
+                  SizedBox(height: 10),
 
                   Text(
                     'Entre na sua conta e encontre seu\nnovo amigo.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.black, fontSize: 14),
                   ),
 
                   SizedBox(height: 40),
@@ -213,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(
                     height: 62,
                     child: ElevatedButton(
-                      onPressed: entrar,
+                      onPressed: _entrando ? null : entrar,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.laranja,
                         foregroundColor: Colors.white,
@@ -222,10 +233,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('Entrar', style: TextStyle(fontSize: 24)),
+                          Text(
+                            _entrando ? 'Entrando...' : 'Entrar',
+                            style: const TextStyle(fontSize: 24),
+                          ),
                           SizedBox(width: 10),
                           Icon(Icons.arrow_forward),
                         ],
@@ -273,7 +287,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-
                 ],
               ),
             ),
