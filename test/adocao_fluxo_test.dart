@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:entre_patas/controller/cliente_controller.dart';
 import 'package:entre_patas/controller/clientes_scope.dart';
@@ -7,6 +8,8 @@ import 'package:entre_patas/model/animais.dart';
 import 'package:entre_patas/model/adocao.dart';
 import 'package:entre_patas/view/animal/adocao.dart';
 import 'package:entre_patas/view/questionario/testeCompA.dart';
+import 'package:entre_patas/view/questionario/testeComp.dart';
+import 'package:entre_patas/view/usuario/configuracoes.dart';
 
 class FluxoDados extends ClienteController {
   FluxoDados({this.dono = false});
@@ -105,6 +108,12 @@ class FluxoDados extends ClienteController {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async {
+    await (FontLoader(
+      'NunitoSans',
+    )..addFont(rootBundle.load('assets/fonts/NunitoSans.ttf'))).load();
+  });
   Future<void> abrir(WidgetTester tester, FluxoDados dados, Widget tela) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
@@ -113,7 +122,10 @@ void main() {
     await tester.pumpWidget(
       ClientesScope(
         controller: dados,
-        child: MaterialApp(home: tela),
+        child: MaterialApp(
+          theme: ThemeData(fontFamily: 'NunitoSans'),
+          home: tela,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -138,7 +150,11 @@ void main() {
     tester,
   ) async {
     final dados = FluxoDados();
-    await abrir(tester, dados, const TesteCompAScreen());
+    await abrir(tester, dados, const ConfiguracoesScreen());
+    await clicar(tester, 'Refazer teste');
+    expect(find.byType(TesteCompScreen), findsOneWidget);
+    await clicar(tester, 'Começar');
+    expect(find.byType(TesteCompAScreen), findsOneWidget);
     expect(
       tester
           .widgetList<TextField>(find.byType(TextField))

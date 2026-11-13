@@ -20,10 +20,12 @@ function resposta($status, $dados) {
 }
 
 function banco() {
+    $host = getenv('DB_HOST') ?: 'localhost';
+    $nome = getenv('DB_NAME') ?: 'entrepatas';
     return new PDO(
-        'mysql:host=localhost;dbname=entrepatas;charset=utf8mb4',
+        "mysql:host=$host;dbname=$nome;charset=utf8mb4",
         getenv('DB_USER') ?: 'root',
-        getenv('DB_PASSWORD') ?: '',
+        getenv('DB_PASSWORD') === false ? '' : getenv('DB_PASSWORD'),
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
          PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
          PDO::ATTR_EMULATE_PREPARES => false]

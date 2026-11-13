@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/auth_common.php';
+require_once __DIR__ . '/validacao_cliente.php';
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') resposta(405, ['erro'=>'Método não permitido.']);
 $d = json_decode(file_get_contents('php://input'), true);
 if (!is_array($d)) resposta(400, ['erro'=>'Dados inválidos.']);
@@ -29,9 +30,7 @@ try {
         resposta(200,['mensagem'=>'Se o e-mail pertencer a uma conta ativa, você receberá um código de recuperação.']);
     }
     $senha=$d['novaSenha'] ?? null;
-    if (!is_string($senha) || strlen($senha)<8 || strlen($senha)>72 || !preg_match('/[A-Z]/',$senha)
-        || !preg_match('/[a-z]/',$senha) || !preg_match('/[0-9]/',$senha) || !preg_match('/[^a-zA-Z0-9\s]/',$senha))
-        resposta(400,['erro'=>'Use uma senha de 8 a 72 bytes com maiúscula, minúscula, número e símbolo.']);
+    if (!senha_valida($senha)) resposta(400,['erro'=>'Use ao menos 8 caracteres, até 72 bytes, com maiúscula, minúscula, número e símbolo.']);
     if ($acao === 'alterar') {
         $c=exigir_sessao();
         if (!is_string($d['senhaAtual'] ?? null) || !password_verify($d['senhaAtual'],$c['senha'])) resposta(400,['erro'=>'Senha atual incorreta.']);

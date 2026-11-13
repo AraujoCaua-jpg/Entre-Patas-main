@@ -3,6 +3,7 @@ import '../../core/scrollable_screen_body.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../model/cliente.dart';
+import '../../../service/validacao_senha.dart';
 
 import '../../core/app_colors.dart';
 import 'cadastroUsuario3.dart';
@@ -21,14 +22,7 @@ class _CadastroUsuario2ScreenState extends State<CadastroUsuario2Screen> {
   final confirmacaoController = TextEditingController();
   bool mostrarSenha = false;
 
-  Map<String, bool> get requisitos => {
-    '8 caracteres': senhaController.text.runes.length >= 8,
-    '1 letra maiúscula': RegExp(r'[A-Z]').hasMatch(senhaController.text),
-    '1 letra minúscula': RegExp(r'[a-z]').hasMatch(senhaController.text),
-    '1 número': RegExp(r'[0-9]').hasMatch(senhaController.text),
-    '1 caractere especial': RegExp(r'[^a-zA-Z0-9\s]')
-        .hasMatch(senhaController.text),
-  };
+  Map<String, bool> get requisitos => requisitosSenha(senhaController.text);
 
   @override
   void dispose() {
@@ -39,11 +33,11 @@ class _CadastroUsuario2ScreenState extends State<CadastroUsuario2Screen> {
 
   void avancar() {
     final senha = senhaController.text;
-    final valida = requisitos.values.every((atendido) => atendido);
+    final erroSenha = validarSenha(senha);
 
     final String mensagem;
-    if (!valida) {
-      mensagem = 'A senha deve atender a todos os requisitos indicados.';
+    if (erroSenha != null) {
+      mensagem = erroSenha;
     } else if (senha != confirmacaoController.text) {
       mensagem = 'As senhas devem ser iguais.';
     } else {

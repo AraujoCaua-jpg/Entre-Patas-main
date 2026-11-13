@@ -5,6 +5,7 @@ import 'package:entre_patas/view/usuario/alterarSenha.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../core/app_colors.dart';
+import '../questionario/testeComp.dart';
 import 'editarPerfil.dart';
 
 class ConfiguracoesScreen extends StatelessWidget {
@@ -100,12 +101,10 @@ class ConfiguracoesScreen extends StatelessWidget {
             //REFAZER TESTE
             ElevatedButton(
               onPressed: () {
-                // Navigator.pushReplacement(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => const NavegacaoScreen(), //HOME
-                //   ),
-                // );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TesteCompScreen()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,

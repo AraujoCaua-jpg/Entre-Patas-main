@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../controller/clientes_scope.dart';
 import '../../service/auth_api.dart';
 import '../../service/clientes_api.dart';
+import '../../service/validacao_senha.dart';
 import '../autenticacao/login.dart';
 import '../core/app_colors.dart';
 import '../core/scrollable_screen_body.dart';
@@ -22,13 +23,7 @@ class _AlterarSenhaScreenState extends State<AlterarSenhaScreen> {
   bool salvando = false;
   bool mostrarSenha = false;
 
-  Map<String, bool> get requisitos => {
-    '8 caracteres': nova.text.runes.length >= 8,
-    '1 letra maiúscula': RegExp(r'[A-Z]').hasMatch(nova.text),
-    '1 letra minúscula': RegExp(r'[a-z]').hasMatch(nova.text),
-    '1 número': RegExp(r'[0-9]').hasMatch(nova.text),
-    '1 caractere especial': RegExp(r'[^a-zA-Z0-9\s]').hasMatch(nova.text),
-  };
+  Map<String, bool> get requisitos => requisitosSenha(nova.text);
 
   @override
   void dispose() {
@@ -49,6 +44,12 @@ class _AlterarSenhaScreenState extends State<AlterarSenhaScreen> {
           content: Text('Preencha os campos e confirme a mesma senha.'),
         ),
       );
+      return;
+    }
+    final erroSenha = validarSenha(nova.text);
+    if (erroSenha != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(erroSenha)));
       return;
     }
     final controller = ClientesScope.of(context);
@@ -109,7 +110,6 @@ class _AlterarSenhaScreenState extends State<AlterarSenhaScreen> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -235,7 +235,9 @@ class _AlterarSenhaScreenState extends State<AlterarSenhaScreen> {
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          mostrarSenha ? Icons.visibility : Icons.visibility_off,
+                          mostrarSenha
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                         ),
                         onPressed: () {
                           setState(() => mostrarSenha = !mostrarSenha);
@@ -262,7 +264,9 @@ class _AlterarSenhaScreenState extends State<AlterarSenhaScreen> {
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          mostrarSenha ? Icons.visibility : Icons.visibility_off,
+                          mostrarSenha
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                         ),
                         onPressed: () {
                           setState(() => mostrarSenha = !mostrarSenha);

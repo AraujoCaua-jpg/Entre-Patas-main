@@ -369,7 +369,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                   activeColor: AppColors.laranja,
                   onChanged: (value) {
                     setState(() {
-                      financeiro = widget.respostas['financeiro']?.toString();
+                      financeiro = value;
                     });
                   },
                 ),
@@ -390,7 +390,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                   activeColor: AppColors.laranja,
                   onChanged: (value) {
                     setState(() {
-                      financeiro = widget.respostas['financeiro']?.toString();
+                      financeiro = value;
                     });
                   },
                 ),
@@ -411,7 +411,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                   activeColor: AppColors.laranja,
                   onChanged: (value) {
                     setState(() {
-                      financeiro = widget.respostas['financeiro']?.toString();
+                      financeiro = value;
                     });
                   },
                 ),

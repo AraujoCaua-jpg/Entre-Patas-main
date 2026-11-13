@@ -11,8 +11,33 @@ C:\xampp\php\php.exe backend\migrar.php
 ```
 
 O padrão local é MySQL `localhost`, banco `entrepatas`, usuário `root` sem senha.
-O login e as novas rotas aceitam `DB_USER` e `DB_PASSWORD` no ambiente do servidor.
-A rota de cadastro ainda usa a configuração local no próprio arquivo.
+Todas as rotas HTTP, incluindo o cadastro, aceitam `DB_HOST`, `DB_NAME`,
+`DB_USER` e `DB_PASSWORD` no ambiente do servidor. Sem essas variáveis,
+continuam usando a configuração local acima.
+
+Para o alwaysdata, configure no servidor:
+
+```text
+DB_HOST=mysql-caua.alwaysdata.net
+DB_NAME=caua_entrepatas
+DB_USER=caua
+DB_PASSWORD=<senha do usuário MySQL, preenchida somente no servidor>
+```
+
+Reenvie `auth_common.php` e `cadastrar_cliente.php` para `/www/api` após esta
+atualização. Não salve a senha em arquivos versionados nem envie capturas
+que a mostrem. Os scripts CLI de migração ainda usam o banco local; o banco
+online foi preparado pela importação SQL. Hospedar a API não publica a
+interface Flutter nem altera seu `API_BASE_URL` automaticamente.
+
+Cadastro e edição compartilham `validacao_cliente.php`: os limites de campos,
+formato de usuário, UF, telefone e exigência de endereço para lares são iguais.
+Senhas novas (cadastro, troca e recuperação) exigem pelo menos 8 caracteres,
+no máximo 72 bytes em UTF-8, maiúscula, minúscula, número e símbolo. O aplicativo
+verifica essas regras antes do envio e a API as verifica novamente.
+
+Ao atualizar a API já instalada, envie também o novo `validacao_cliente.php`,
+junto de `cadastrar_cliente.php`, `clientes.php`, `senha.php` e `animais.php`.
 
 ## Rotas
 
@@ -152,6 +177,12 @@ A regra de afinidade, versão 1, usa `(Rotina*5 + Ambiente*3 + Preferências*2)/
 
 O cálculo é uma regra explicável do produto, não uma garantia de adaptação.
 A nota não aprova nem impede automaticamente uma solicitação.
+Início e pesquisa exibem somente animais com status Disponível; a listagem por
+responsável e a consulta por ID preservam o acesso ao histórico de adotados.
+Configurações → Refazer teste abre o questionário existente, com as respostas
+salvas. O logout limpa imediatamente a sessão local e tenta revogar a sessão
+remota sem bloquear a saída; se o servidor estiver indisponível, a sessão
+remota mantém sua expiração original.
 
 | Método | Rota | Uso |
 | --- | --- | --- |
@@ -192,6 +223,7 @@ C:\xampp\php\php.exe test\backend_login_test.php
 C:\xampp\php\php.exe test\clientes_backend_test.php
 C:\xampp\php\php.exe test\animais_backend_test.php
 C:\xampp\php\php.exe test\adocoes_backend_test.php
+C:\xampp\php\php.exe test\validacao_cliente_test.php
 ```
 
 Os testes PHP usam contas temporárias e as removem ao terminar; o contador de IDs

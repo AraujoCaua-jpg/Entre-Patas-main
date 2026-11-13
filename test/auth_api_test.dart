@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:entre_patas/controller/cliente_controller.dart';
 import 'package:entre_patas/service/auth_api.dart';
@@ -67,6 +68,32 @@ void main() {
     expect(controller.clienteLogado, isNull);
     expect(controller.clientes, isEmpty);
   });
+
+  test(
+    'logout limpa sessão imediatamente mesmo com servidor lento ou offline',
+    () async {
+      final remoto = Completer<http.Response>();
+      final controller = ClienteController(
+        authApi: AuthApi(
+          client: MockClient((request) async {
+            if (request.url.path.endsWith('login.php'))
+              return http.Response(
+                jsonEncode({'cliente': perfil, 'token': 'token-teste'}),
+                200,
+              );
+            return remoto.future;
+          }),
+        ),
+      );
+      addTearDown(controller.dispose);
+      await controller.entrar('login@example.com', 'Senha!123');
+      await controller.sair().timeout(const Duration(seconds: 1));
+      expect(controller.clienteLogado, isNull);
+      expect(controller.clientes, isEmpty);
+      remoto.complete(http.Response('{"erro":"Indisponível"}', 503));
+      await Future<void>.delayed(Duration.zero);
+    },
+  );
 
   test('rejeita resposta incompleta e falha de conexão', () async {
     for (final body in ['<html>Erro PHP</html>', '{"cliente":{}}']) {

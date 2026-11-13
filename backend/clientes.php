@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/auth_common.php';
+require_once __DIR__ . '/validacao_cliente.php';
 function dados_publicos($c, $basico = false) {
     $campos = $basico ? ['id','nome','usuario','imagem']
         : ['id','nome','sobrenome','usuario','imagem','estado','cidadeDeResidencia','larDeAdocao'];
@@ -42,23 +43,11 @@ try {
         if ($acao === 'editar') {
             $d = json_decode(file_get_contents('php://input'), true);
             if (!is_array($d)) resposta(400, ['erro' => 'Dados inválidos.']);
-            foreach (['nome'=>50,'sobrenome'=>100,'email'=>100,'usuario'=>50,'cidadeDeResidencia'=>100,'estado'=>2] as $campo=>$limite) {
-                if (!is_string($d[$campo] ?? null) || trim($d[$campo]) === '' || mb_strlen(trim($d[$campo])) > $limite)
-                    resposta(400, ['erro' => "Confira o campo $campo."]);
-                $d[$campo] = trim($d[$campo]);
+            try {
+                $d = validar_cliente($d);
+            } catch (InvalidArgumentException $erro) {
+                resposta(400, ['erro'=>$erro->getMessage()]);
             }
-            if (!filter_var($d['email'], FILTER_VALIDATE_EMAIL) || !preg_match('/^[a-zA-Z0-9_]+$/D', $d['usuario'])
-                || !preg_match('/^(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)$/D', $d['estado']))
-                resposta(400, ['erro' => 'E-mail, usuário ou estado inválido.']);
-            if (!is_string($d['telefone'] ?? null)) resposta(400, ['erro' => 'Telefone inválido.']);
-            $d['telefone'] = preg_replace('/\D/', '', $d['telefone']);
-            if (!preg_match('/^\d{10,11}$/D', $d['telefone'])) resposta(400, ['erro' => 'Informe o telefone com DDD.']);
-            if (!is_bool($d['larDeAdocao'] ?? null)) resposta(400, ['erro' => 'Tipo de conta inválido.']);
-            foreach (['endereco','imagem'] as $campo) {
-                if (isset($d[$campo]) && (!is_string($d[$campo]) || mb_strlen($d[$campo]) > 255))
-                    resposta(400, ['erro' => "Confira o campo $campo."]);
-            }
-            if ($d['larDeAdocao'] && trim($d['endereco'] ?? '') === '') resposta(400, ['erro' => 'Informe o endereço do lar.']);
             $q = $pdo->prepare('UPDATE cliente SET nome=?,sobrenome=?,email=?,telefone=?,usuario=?,cidadeDeResidencia=?,estado=?,larDeAdocao=?,endereco=?,imagem=? WHERE id=? AND ativo=1');
             $q->execute([$d['nome'],$d['sobrenome'],$d['email'],$d['telefone'],$d['usuario'],$d['cidadeDeResidencia'],$d['estado'],
                 (int)$d['larDeAdocao'],$d['larDeAdocao'] ? $d['endereco'] : null,$d['imagem'] ?? null,$proprio['id']]);

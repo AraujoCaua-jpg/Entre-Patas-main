@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/validacao_cliente.php';
 header('Content-Type: application/json; charset=utf-8');
 
 // Permite o Flutter rodando localmente no navegador.
@@ -32,33 +33,23 @@ if (!is_array($dados)) {
     responder(400, ['erro' => 'Dados inválidos.']);
 }
 
-foreach (['nome', 'sobrenome', 'email', 'telefone', 'senha', 'usuario'] as $campo) {
-    if (!isset($dados[$campo]) ||
-        !is_string($dados[$campo]) ||
-        trim($dados[$campo]) === '') {
-        responder(400, ['erro' => "Preencha o campo $campo."]);
-    }
-}
-
-$email = trim($dados['email']);
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    responder(400, ['erro' => 'E-mail inválido.']);
-}
-
-if (strlen($dados['senha']) < 8) {
-    responder(400, ['erro' => 'A senha deve ter pelo menos 8 caracteres.']);
-}
-
-$telefone = preg_replace('/\D/', '', $dados['telefone']);
-if (!preg_match('/^\d{10,11}$/', $telefone)) {
-    responder(400, ['erro' => 'Informe o telefone com DDD.']);
-}
-
 try {
+    $dados = validar_cliente($dados);
+} catch (InvalidArgumentException $erro) {
+    responder(400, ['erro'=>$erro->getMessage()]);
+}
+if (!senha_valida($dados['senha'] ?? null)) {
+    responder(400, ['erro'=>'Use ao menos 8 caracteres, até 72 bytes, com maiúscula, minúscula, número e símbolo.']);
+}
+$email = $dados['email'];
+$telefone = $dados['telefone'];
+try {
+    $host = getenv('DB_HOST') ?: 'localhost';
+    $nome = getenv('DB_NAME') ?: 'entrepatas';
     $pdo = new PDO(
-        'mysql:host=localhost;dbname=entrepatas;charset=utf8mb4',
-        'root',
-        '',
+        "mysql:host=$host;dbname=$nome;charset=utf8mb4",
+        getenv('DB_USER') ?: 'root',
+        getenv('DB_PASSWORD') === false ? '' : getenv('DB_PASSWORD'),
         [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_EMULATE_PREPARES => false

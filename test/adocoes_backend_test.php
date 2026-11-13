@@ -30,7 +30,7 @@ try {
     [$status,$d]=api('login.php',['email'=>"a$s@example.com",'senha'=>'TesteAnimal!123']);
     check((int)$d['cliente']['questionario_pendente']===0,'Conta antiga foi obrigada a fazer teste');
     $tokens['antigo']=$d['token'];
-    [$status,$d]=api('cadastrar_cliente.php',['nome'=>'Novo','sobrenome'=>'Teste','email'=>"novo$s@example.com",'telefone'=>'11'.random_int(100000000,999999999),'senha'=>'TesteAnimal!123','usuario'=>"novo$s",'questionario_pendente'=>0]);
+    [$status,$d]=api('cadastrar_cliente.php',['nome'=>'Novo','sobrenome'=>'Teste','email'=>"novo$s@example.com",'telefone'=>'11'.random_int(100000000,999999999),'senha'=>'TesteAnimal!123','usuario'=>"novo$s",'estado'=>'SP','cidadeDeResidencia'=>'São Paulo','larDeAdocao'=>false,'questionario_pendente'=>0]);
     check($status===201,'Cadastro novo falhou'); $ids['novo']=$d['id'];
     [$status,$d]=api('login.php',['email'=>"novo$s@example.com",'senha'=>'TesteAnimal!123']);
     check($status===200 && (int)$d['cliente']['questionario_pendente']===1,'Novo cadastro não exige teste'); $tokens['novo']=$d['token'];
@@ -68,6 +68,12 @@ try {
     [$status]=api("adocoes.php?acao=cancelar&id=$pedido",[],$tokens['dono']); check($status===403,'Responsável cancelou pelo solicitante');
     [$status,$d]=api("adocoes.php?acao=aceitar&id=$pedido",[],$tokens['dono']); check($status===200 && $d['adocao']['status']==='Aceito','Aprovação falhou');
     [$status,$d]=api("animais.php?acao=id&id=$animalId",null,$tokens['a']); check($d['animal']['status']==='Adotado','Animal não marcado adotado');
+    foreach (['listar','buscar','melhores'] as $listagem) {
+        [$status,$d]=api("animais.php?acao=$listagem&q=Pet$s",null,$tokens['a']);
+        check($status===200 && !in_array($animalId,array_column($d['animais'],'id')),'Animal adotado voltou à vitrine: '.$listagem);
+    }
+    [$status,$d]=api('animais.php?acao=usuario&id_cliente='.$ids['dono'],null,$tokens['dono']);
+    check(in_array($animalId,array_column($d['animais'],'id')),'Animal adotado sumiu do histórico do responsável');
     [$status,$d]=api("adocoes.php?acao=id&id=$outro",null,$tokens['b']); check($d['adocao']['status']==='Recusado','Pedido concorrente não encerrado');
     [$status]=api("adocoes.php?acao=aceitar&id=$outro",[],$tokens['dono']); check($status===409,'Segunda adoção aceita');
     [$status]=api('adocoes.php?acao=solicitar',['id_animal'=>$animalId],$tokens['fora']); check($status===409,'Pedido em animal adotado aceito');

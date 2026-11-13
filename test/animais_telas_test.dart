@@ -162,7 +162,7 @@ void main() {
         .toList();
     expect(campos.first.controller!.text, 'Lua');
     expect(campos[1].controller!.text, '2');
-    expect(find.byType(DropdownButtonFormField<double>), findsNWidgets(2));
+    expect(find.byType(Slider), findsNWidgets(2));
     final saude = tester
         .widgetList<Radio<String>>(find.byType(Radio<String>))
         .toList()
@@ -229,7 +229,7 @@ void main() {
       await tester.tap(find.byIcon(Icons.edit_note_rounded));
       await tester.pumpAndSettle();
       expect(find.text('Editar Animal'), findsOneWidget);
-      expect(find.byType(DropdownButtonFormField<double>), findsNWidgets(2));
+      expect(find.byType(Slider), findsNWidgets(2));
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       dados.dispose();

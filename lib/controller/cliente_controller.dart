@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../service/clientes_api.dart';
 import '../service/animais_api.dart';
 import '../model/animais.dart';
@@ -40,10 +42,11 @@ class ClienteController extends ChangeNotifier {
 
   Future<void> sair() async {
     final token = _token;
-    if (token != null) await _authApi.sair(token);
-    _token = null;
-    _clienteLogadoId = null;
-    notifyListeners();
+    limparSessao();
+    if (token != null) {
+      // Não bloqueia a saída local se o servidor estiver indisponível.
+      unawaited(_authApi.sair(token).catchError((Object _) {}));
+    }
   }
 
   @override
@@ -215,6 +218,7 @@ class ClienteController extends ChangeNotifier {
   void limparSessao() {
     _token = null;
     _clienteLogadoId = null;
+    clientes.clear();
     notifyListeners();
   }
 
