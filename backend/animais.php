@@ -65,6 +65,10 @@ try {
         if ($acao === 'usuario' || isset($_GET['id_cliente'])) {
             $select .= ' AND a.id_cliente=?';
             $params[] = animal_id($_GET['id_cliente'] ?? $cliente['id']);
+        } else {
+            // Inicio e pesquisa mostram apenas animais de outros responsaveis.
+            $select .= ' AND a.id_cliente<>?';
+            $params[] = (int)$cliente['id'];
         }
         foreach (['estado'=>'c.estado', 'cidade'=>'c.cidadeDeResidencia', 'tipo'=>'a.tipo', 'sexo'=>'a.sexo',
             'porte'=>'a.porte', 'energia'=>'a.energia', 'convivencia'=>'a.convivencia', 'carencia'=>'a.carencia', 'status'=>'a.status'] as $campo=>$coluna) {

@@ -91,7 +91,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
         MaterialPageRoute(builder: (_) => const TesteCompFimScreen()),
       );
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -101,6 +101,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
             ),
           ),
         );
+      }
     } finally {
       if (mounted) setState(() => _salvando = false);
     }

@@ -40,7 +40,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(dados.filtros.single, {
           'acao': 'melhores',
-          if (especie != null) 'tipo': especie,
+          'tipo': ?especie,
         });
         final proxima = especie == 'Gato' ? 'Cachorro' : 'Gato';
         await tester.tap(find.text(proxima == 'Gato' ? 'Gatos' : 'Cachorros'));

@@ -33,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _preferenciaCarregada = true;
     }
     return controller.listarAnimais(
-      filtros: {'acao': 'melhores', if (_tipo != null) 'tipo': _tipo!},
+      filtros: {'acao': 'melhores', 'tipo': ?_tipo},
     );
   }
 
@@ -57,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: FutureBuilder<List<Animal>>(
         future: _consulta,
         builder: (context, snapshot) {
-          if (snapshot.hasError)
+          if (snapshot.hasError) {
             return Center(
               child: TextButton(
                 onPressed: _recarregar,
@@ -68,8 +68,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             );
-          if (!snapshot.hasData)
+          }
+          if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
+          }
           final animais = snapshot.data!;
           return SingleChildScrollView(
             padding: EdgeInsets.all(16.0),

@@ -209,7 +209,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   return FutureBuilder<List<Animal>>(
                     future: _consulta,
                     builder: (context, snapshot) {
-                      if (snapshot.hasError)
+                      if (snapshot.hasError) {
                         return TextButton(
                           onPressed: _recarregar,
                           child: Text(
@@ -218,10 +218,13 @@ class _PerfilScreenState extends State<PerfilScreen> {
                                 : 'Não foi possível carregar os animais.',
                           ),
                         );
-                      if (!snapshot.hasData)
+                      }
+                      if (!snapshot.hasData) {
                         return const Center(child: CircularProgressIndicator());
-                      if (snapshot.data!.isEmpty)
+                      }
+                      if (snapshot.data!.isEmpty) {
                         return const Text('Nenhum Animal Cadastrado');
+                      }
                       return GridView.count(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),

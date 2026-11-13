@@ -47,7 +47,7 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
     body: FutureBuilder<List<Adocao>>(
       future: _consulta,
       builder: (context, snapshot) {
-        if (snapshot.hasError)
+        if (snapshot.hasError) {
           return Center(
             child: TextButton(
               onPressed: _atualizar,
@@ -58,11 +58,14 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
               ),
             ),
           );
-        if (!snapshot.hasData)
+        }
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
         final lista = snapshot.data!;
-        if (lista.isEmpty)
+        if (lista.isEmpty) {
           return const Center(child: Text('Nenhuma solicitação de adoção.'));
+        }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: lista.length,

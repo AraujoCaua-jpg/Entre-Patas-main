@@ -47,10 +47,11 @@ class _AdocaoScreenState extends State<AdocaoScreen> {
         _animal = a;
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         _erro = e is LoginException
             ? e.mensagem
             : 'Não foi possível carregar a solicitação.';
+      }
     } finally {
       if (mounted) setState(() => _carregando = false);
     }
@@ -96,7 +97,7 @@ class _AdocaoScreenState extends State<AdocaoScreen> {
         context,
       ).showSnackBar(const SnackBar(content: Text('Solicitação atualizada.')));
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -104,6 +105,7 @@ class _AdocaoScreenState extends State<AdocaoScreen> {
             ),
           ),
         );
+      }
     } finally {
       if (mounted) setState(() => _ocupado = false);
     }

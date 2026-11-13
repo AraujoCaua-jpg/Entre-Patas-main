@@ -43,10 +43,19 @@ try {
     }
     [$status]=api('animais.php?acao=cadastrar',[...$dados,'imagem'=>'javascript:alert(1)'],$tokens['a']); check($status===400,'Imagem inválida aceita');
     foreach (["q=Pet$s",'id_cliente='.$ids['a'],'estado=SP&porte=Pequeno&tipo=Gato&energia=M%C3%A9dio&sexo=F%C3%AAmea&convivencia=Sim&carencia=N%C3%A3o&cidade='.urlencode("Cidadea$s")] as $filtro) {
-        [$status,$d]=api("animais.php?$filtro",null,$tokens['a']);
+        [$status,$d]=api("animais.php?$filtro",null,$tokens['b']);
         check($status===200 && in_array($id,array_column($d['animais'],'id')),'Filtro falhou: '.$filtro);
         foreach ($d['animais'] as $a) check(!isset($a['email']) && !isset($a['endereco']) && !isset($a['senha']),'Dados privados vazaram');
     }
+    foreach (['listar','buscar','melhores'] as $acao) {
+        foreach (['a','b'] as $usuario) {
+            [$status,$d]=api("animais.php?acao=$acao&q=Pet$s",null,$tokens[$usuario]);
+            check($status===200,'Listagem falhou');
+            check(in_array($id,array_column($d['animais'],'id'))===($usuario==='b'),'Visibilidade por responsavel incorreta: '.$acao);
+        }
+    }
+    [$status,$d]=api('animais.php?acao=usuario',null,$tokens['a']);
+    check($status===200 && in_array($id,array_column($d['animais'],'id')),'Responsavel perdeu acesso aos proprios animais');
     [$status,$d]=api('animais.php?id_cliente='.$ids['b'],null,$tokens['a']); check($status===200 && $d['animais']===[],'Filtro por responsável incorreto');
     [$status,$d]=api('animais.php?q=%25&id_cliente='.$ids['a'],null,$tokens['a']); check($d['animais']===[],'Curinga não escapado');
     [$status]=api('animais.php?pagina=0',null,$tokens['a']); check($status===400,'Página inválida aceita');

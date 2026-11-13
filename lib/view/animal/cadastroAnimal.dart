@@ -92,10 +92,11 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
       vacinado = a.vacinado;
       castrado = a.castrado;
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         _erro = e is LoginException
             ? e.mensagem
             : 'Não foi possível carregar o animal.';
+      }
     } finally {
       if (mounted) setState(() => _carregando = false);
     }
@@ -155,7 +156,7 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
       FocusScope.of(context).unfocus();
       Navigator.pop(context, true);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -165,6 +166,7 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
             ),
           ),
         );
+      }
     } finally {
       if (mounted) setState(() => _salvando = false);
     }

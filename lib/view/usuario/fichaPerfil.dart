@@ -262,17 +262,19 @@ class _AnimaisDoPerfilState extends State<_AnimaisDoPerfil> {
         _mais = animais.length == 50;
       });
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _erro = e is LoginException
               ? e.mensagem
               : 'Não foi possível carregar os animais.';
         });
+      }
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _carregando = false;
         });
+      }
     }
   }
 

@@ -38,7 +38,7 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
     return FutureBuilder<Animal>(
       future: _consulta,
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return Scaffold(
             appBar: AppBar(title: const Text('Ficha do Animal')),
             body: snapshot.hasError
@@ -54,6 +54,7 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
                   )
                 : const Center(child: CircularProgressIndicator()),
           );
+        }
         final animal = snapshot.data!;
         final donoId = animal.idCliente;
         final souDono = donoId == ClientesScope.of(context).clienteLogado?.id;

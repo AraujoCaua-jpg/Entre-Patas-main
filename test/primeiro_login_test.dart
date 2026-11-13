@@ -24,8 +24,9 @@ class DadosPrimeiroLogin extends ClienteController {
 
   @override
   Future<Map<String, dynamic>?> carregarQuestionario() async {
-    if (falhar)
+    if (falhar) {
       throw const LoginException('Não foi possível conferir o teste.');
+    }
     return concluido ? {'id': 1} : null;
   }
 
@@ -99,8 +100,9 @@ void main() {
           find.byType(NavegacaoScreen),
           concluido ? findsOneWidget : findsNothing,
         );
-        if (concluido)
+        if (concluido) {
           expect(find.text('Teste de compatibilidade'), findsNothing);
+        }
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());
         dados.dispose();

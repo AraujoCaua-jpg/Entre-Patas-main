@@ -54,12 +54,13 @@ class _AnimaisCadastradosScreenState extends State<AnimaisCadastradosScreen> {
         _mais = lista.length == 50;
       });
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(
           () => _erro = e is LoginException
               ? e.mensagem
               : 'Não foi possível carregar os animais.',
         );
+      }
     } finally {
       if (mounted) setState(() => _carregando = false);
     }
@@ -79,7 +80,7 @@ class _AnimaisCadastradosScreenState extends State<AnimaisCadastradosScreen> {
           .showSnackBar(const SnackBar(content: Text('Animal apagado!')));
       await _carregar();
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -89,6 +90,7 @@ class _AnimaisCadastradosScreenState extends State<AnimaisCadastradosScreen> {
             ),
           ),
         );
+      }
     }
   }
 
@@ -308,12 +310,13 @@ class _ListaAnimaisState extends State<ListaAnimais> {
         _filtrosAtuais = filtros;
       });
     } catch (e) {
-      if (mounted && versao == _versao)
+      if (mounted && versao == _versao) {
         setState(
           () => _erro = e is LoginException
               ? e.mensagem
               : 'Não foi possível carregar os animais.',
         );
+      }
     } finally {
       if (mounted && versao == _versao) setState(() => _carregando = false);
     }
@@ -347,7 +350,7 @@ class _ListaAnimaisState extends State<ListaAnimais> {
       await ClientesScope.of(context).apagarAnimal(a.id);
       if (mounted) await _buscar();
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -355,6 +358,7 @@ class _ListaAnimaisState extends State<ListaAnimais> {
             ),
           ),
         );
+      }
     }
   }
 
@@ -481,11 +485,12 @@ class _ListaAnimaisState extends State<ListaAnimais> {
             : ListView.builder(
                 itemCount: _animais.length + (_mais ? 1 : 0),
                 itemBuilder: (context, i) {
-                  if (i == _animais.length)
+                  if (i == _animais.length) {
                     return TextButton(
                       onPressed: _carregando ? null : () => _buscar(mais: true),
                       child: const Text('Carregar mais'),
                     );
+                  }
                   final a = _animais[i];
                   return ListTile(
                     leading: CircleAvatar(
