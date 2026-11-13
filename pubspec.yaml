@@ -25,6 +25,7 @@ flutter:
     - assets/logo.png
     - assets/animais.png
     - assets/cachorro.jpg
+    - assets/banners/
 
   fonts:
     - family: NunitoSans

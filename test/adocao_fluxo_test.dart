@@ -146,7 +146,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('teste preserva respostas nas etapas e só conclui após salvar', (
+  testWidgets('refazer inicia vazio e só substitui as respostas após salvar', (
     tester,
   ) async {
     final dados = FluxoDados();
@@ -161,10 +161,44 @@ void main() {
           .first
           .controller!
           .text,
-      '0',
+      '',
     );
+    expect(
+      tester
+          .widgetList<Radio<String>>(find.byType(Radio<String>))
+          .every((radio) => radio.groupValue == null),
+      isTrue,
+    );
+    expect(dados.salvo, isNull);
+    await clicar(tester, 'Gato');
+    await tester.enterText(find.byType(TextField).at(0), '0');
+    await tester.enterText(find.byType(TextField).at(1), '10');
+    tester.widget<Radio<String>>(find.byType(Radio<String>).at(1)).onChanged!(
+      'Fêmea',
+    );
+    final sliders = tester.widgetList<Slider>(find.byType(Slider)).toList();
+    sliders[0].onChanged!(0);
+    sliders[1].onChanged!(1);
+    await tester.pumpAndSettle();
     await clicar(tester, 'Avançar');
+    var radios = tester
+        .widgetList<Radio<String>>(find.byType(Radio<String>))
+        .toList();
+    expect(radios.every((radio) => radio.groupValue == null), isTrue);
+    for (final index in [2, 4, 12, 14]) {
+      radios[index].onChanged!(radios[index].value);
+    }
+    await tester.pumpAndSettle();
     await clicar(tester, 'Avançar');
+    radios = tester
+        .widgetList<Radio<String>>(find.byType(Radio<String>))
+        .toList();
+    expect(radios.every((radio) => radio.groupValue == null), isTrue);
+    expect(dados.salvo, isNull);
+    for (final index in [0, 2, 4, 6, 8, 11]) {
+      radios[index].onChanged!(radios[index].value);
+    }
+    await tester.pumpAndSettle();
     await clicar(tester, 'Avançar');
     expect(dados.salvo, dados.respostas);
     expect(find.text('Teste concluído'), findsOneWidget);

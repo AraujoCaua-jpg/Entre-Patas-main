@@ -76,11 +76,12 @@ void main() {
       final controller = ClienteController(
         authApi: AuthApi(
           client: MockClient((request) async {
-            if (request.url.path.endsWith('login.php'))
+            if (request.url.path.endsWith('login.php')) {
               return http.Response(
                 jsonEncode({'cliente': perfil, 'token': 'token-teste'}),
                 200,
               );
+            }
             return remoto.future;
           }),
         ),

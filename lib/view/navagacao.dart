@@ -45,7 +45,11 @@ class _NavegacaoScreenState extends State<NavegacaoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Image.asset('assets/logo.png', height: 25, fit: BoxFit.contain),
+        toolbarHeight: 88,
+        centerTitle: false,
+        titleSpacing: 24,
+        surfaceTintColor: Colors.transparent,
+        title: Image.asset('assets/logo.png', height: 32, fit: BoxFit.contain),
         backgroundColor: Colors.white,
         actions: [
           IconButton(
@@ -70,30 +74,52 @@ class _NavegacaoScreenState extends State<NavegacaoScreen> {
 
       body: IndexedStack(index: controller.paginaAtual, children: paginas),
 
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: controller.paginaAtual,
+      bottomNavigationBar: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          backgroundColor: const Color(0xFFFFF3ED),
+          indicatorColor: Colors.transparent,
+          iconTheme: WidgetStateProperty.resolveWith(
+            (states) => IconThemeData(
+              size: 30,
+              color: states.contains(WidgetState.selected)
+                  ? const Color(0xFFFF642F)
+                  : const Color(0xFF909090),
+            ),
+          ),
+          labelTextStyle: WidgetStateProperty.resolveWith(
+            (states) => TextStyle(
+              fontSize: 11,
+              color: states.contains(WidgetState.selected)
+                  ? const Color(0xFFFF642F)
+                  : const Color(0xFF909090),
+            ),
+          ),
+        ),
+        child: NavigationBar(
+          selectedIndex: controller.paginaAtual,
 
-        onDestinationSelected: (indice) {
-          controller.mudarPagina(indice);
-        },
+          onDestinationSelected: (indice) {
+            controller.mudarPagina(indice);
+          },
 
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Início',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.search_outlined),
-            selectedIcon: Icon(Icons.search),
-            label: 'Pesquisa',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Perfil',
-          ),
-        ],
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home_outlined),
+              label: 'Início',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.search_outlined),
+              selectedIcon: Icon(Icons.search),
+              label: 'Pesquisa',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person_outline),
+              label: 'Perfil',
+            ),
+          ],
+        ),
       ),
     );
   }
