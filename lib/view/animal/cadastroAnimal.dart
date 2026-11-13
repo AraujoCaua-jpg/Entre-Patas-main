@@ -17,16 +17,16 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
   final nomeController = TextEditingController();
   final idadeController = TextEditingController();
 
-  String? sexo = 'Macho';
+  String? sexo;
   String? tipo;
 
   final descricaoController = TextEditingController();
 
-  double energia = 1;
-  double porte = 1;
+  double? energia;
+  double? porte;
 
-  String? carencia = 'Sim';
-  String? convivencia = 'Sim';
+  String? carencia;
+  String? convivencia;
   String? castrado;
   String? vacinado;
 
@@ -111,6 +111,12 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
       descricaoController,
     ].any((c) => c.text.trim().isEmpty)) {
       erro = 'Preencha todos os campos para continuar.';
+    } else if (sexo == null ||
+        energia == null ||
+        porte == null ||
+        carencia == null ||
+        convivencia == null) {
+      erro = 'Selecione uma opção em todos os campos para continuar.';
     } else if (tipo == null) {
       erro = 'Selecione a espécie do animal.';
     } else if (idade == null || idade < 0 || idade > 2147483647) {
@@ -135,8 +141,8 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
           descricao: descricaoController.text.trim(),
           sexo: sexo!,
           status: _animal?.status ?? 'Disponível',
-          energia: ['Baixo', 'Médio', 'Alto'][energia.round()],
-          porte: ['Pequeno', 'Médio', 'Grande'][porte.round()],
+          energia: ['Baixo', 'Médio', 'Alto'][energia!.round()],
+          porte: ['Pequeno', 'Médio', 'Grande'][porte!.round()],
           convivencia: convivencia!,
           carencia: carencia!,
           vacinado: vacinado,
@@ -383,23 +389,15 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
 
                   SizedBox(height: 8),
 
-                  Slider(
-                    value: energia,
-                    min: 0.0,
-                    max: 2.0,
-                    divisions: 2,
-                    activeColor: AppColors.laranja, // Parte preenchida
-                    inactiveColor: Colors.grey, // Parte não preenchida
-                    thumbColor: Colors.white,
-                    onChanged: (double valor) {
-                      setState(() {
-                        energia = valor;
-                      });
-                    },
-                  ),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [Text('Baixo'), Text('Médio'), Text('Alto')],
+                  DropdownButtonFormField<double>(
+                    initialValue: energia,
+                    hint: const Text('Selecione uma opção'),
+                    items: [
+                      DropdownMenuItem(value: 0.0, child: Text('Baixo')),
+                      DropdownMenuItem(value: 1.0, child: Text('Médio')),
+                      DropdownMenuItem(value: 2.0, child: Text('Alto')),
+                    ],
+                    onChanged: (valor) => setState(() => energia = valor),
                   ),
 
                   SizedBox(height: 20),
@@ -412,23 +410,15 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
 
                   SizedBox(height: 8),
 
-                  Slider(
-                    value: porte,
-                    min: 0.0,
-                    max: 2.0,
-                    divisions: 2,
-                    activeColor: AppColors.verde, // Parte preenchida
-                    inactiveColor: Colors.grey, // Parte não preenchida
-                    thumbColor: Colors.white,
-                    onChanged: (double valor) {
-                      setState(() {
-                        porte = valor;
-                      });
-                    },
-                  ),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [Text('Pequeno'), Text('Médio'), Text('Grande')],
+                  DropdownButtonFormField<double>(
+                    initialValue: porte,
+                    hint: const Text('Selecione uma opção'),
+                    items: [
+                      DropdownMenuItem(value: 0.0, child: Text('Pequeno')),
+                      DropdownMenuItem(value: 1.0, child: Text('Médio')),
+                      DropdownMenuItem(value: 2.0, child: Text('Grande')),
+                    ],
+                    onChanged: (valor) => setState(() => porte = valor),
                   ),
 
                   SizedBox(height: 20),

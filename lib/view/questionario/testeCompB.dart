@@ -12,21 +12,29 @@ class TesteCompBScreen extends StatefulWidget {
 }
 
 class _TesteCompBScreenState extends State<TesteCompBScreen> {
-  String? residencia = 'Casa c/ Quintal';
-  String? sozinho = "5";
-  String? dedicacao = "1";
-  String? convivencia = 'Sim';
+  String? residencia;
+  String? sozinho;
+  String? dedicacao;
+  String? convivencia;
 
   @override
   void initState() {
     super.initState();
-    residencia = widget.respostas['ambiente'] as String? ?? residencia;
-    sozinho = '${widget.respostas['sozinho'] ?? sozinho}';
-    dedicacao = '${widget.respostas['dedicacao'] ?? dedicacao}';
-    convivencia = widget.respostas['animais'] as String? ?? convivencia;
+    residencia = widget.respostas['ambiente'] as String?;
+    sozinho = widget.respostas['sozinho']?.toString();
+    dedicacao = widget.respostas['dedicacao']?.toString();
+    convivencia = widget.respostas['animais'] as String?;
   }
 
   void avancar() {
+    if ([residencia, sozinho, dedicacao, convivencia].contains(null)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Responda todas as perguntas para continuar.'),
+        ),
+      );
+      return;
+    }
     FocusScope.of(context).unfocus();
     Navigator.push(
       context,
@@ -211,7 +219,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                   activeColor: AppColors.laranja,
                   onChanged: (value) {
                     setState(() {
-                      sozinho = value;
+                      sozinho = widget.respostas['sozinho']?.toString();
                     });
                   },
                 ),
@@ -226,7 +234,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                   activeColor: AppColors.laranja,
                   onChanged: (value) {
                     setState(() {
-                      sozinho = value;
+                      sozinho = widget.respostas['sozinho']?.toString();
                     });
                   },
                 ),
@@ -241,7 +249,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                   activeColor: AppColors.laranja,
                   onChanged: (value) {
                     setState(() {
-                      sozinho = value;
+                      sozinho = widget.respostas['sozinho']?.toString();
                     });
                   },
                 ),
@@ -256,7 +264,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                   activeColor: AppColors.laranja,
                   onChanged: (value) {
                     setState(() {
-                      sozinho = value;
+                      sozinho = widget.respostas['sozinho']?.toString();
                     });
                   },
                 ),
@@ -271,7 +279,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                   activeColor: AppColors.laranja,
                   onChanged: (value) {
                     setState(() {
-                      sozinho = value;
+                      sozinho = widget.respostas['sozinho']?.toString();
                     });
                   },
                 ),
@@ -300,7 +308,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                   activeColor: AppColors.laranja,
                   onChanged: (value) {
                     setState(() {
-                      dedicacao = value;
+                      dedicacao = widget.respostas['dedicacao']?.toString();
                     });
                   },
                 ),
@@ -315,7 +323,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                   activeColor: AppColors.laranja,
                   onChanged: (value) {
                     setState(() {
-                      dedicacao = value;
+                      dedicacao = widget.respostas['dedicacao']?.toString();
                     });
                   },
                 ),
@@ -330,7 +338,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                   activeColor: AppColors.laranja,
                   onChanged: (value) {
                     setState(() {
-                      dedicacao = value;
+                      dedicacao = widget.respostas['dedicacao']?.toString();
                     });
                   },
                 ),
@@ -345,7 +353,7 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
                   activeColor: AppColors.laranja,
                   onChanged: (value) {
                     setState(() {
-                      dedicacao = value;
+                      dedicacao = widget.respostas['dedicacao']?.toString();
                     });
                   },
                 ),

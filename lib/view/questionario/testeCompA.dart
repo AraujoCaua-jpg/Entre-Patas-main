@@ -16,10 +16,10 @@ class _TesteCompAScreenState extends State<TesteCompAScreen> {
   final idadeMinController = TextEditingController();
   final idadeMaxController = TextEditingController();
 
-  String? sexo = 'Macho';
+  String? sexo;
   String? tipo;
-  double energia = 1.0;
-  double porte = 1.0;
+  double? energia;
+  double? porte;
 
   Map<String, dynamic> _respostas = {};
   bool _iniciado = false, _carregando = true;
@@ -82,6 +82,8 @@ class _TesteCompAScreenState extends State<TesteCompAScreen> {
       idadeMaxController,
     ].any((controller) => controller.text.trim().isEmpty)) {
       mensagem = 'Preencha todos os campos para continuar.';
+    } else if (sexo == null || energia == null || porte == null) {
+      mensagem = 'Selecione uma opção em todos os campos para continuar.';
     } else if (tipo == null) {
       mensagem = 'Selecione a espécie do animal';
     } else if (idadeMin < 0 ||
@@ -103,8 +105,8 @@ class _TesteCompAScreenState extends State<TesteCompAScreen> {
               'sexo': sexo!,
               'idadeMin': idadeMin,
               'idadeMax': idadeMax,
-              'porte': porte.round(),
-              'energia': energia.round(),
+              'porte': porte!.round(),
+              'energia': energia!.round(),
             },
           ),
         ),
@@ -371,24 +373,15 @@ class _TesteCompAScreenState extends State<TesteCompAScreen> {
 
                   SizedBox(height: 8),
 
-                  Slider(
-                    value: porte,
-                    min: 0.0,
-                    max: 2.0,
-                    divisions: 2,
-                    activeColor: AppColors.verde, // Parte preenchida
-                    inactiveColor: Colors.grey, // Parte não preenchida
-                    thumbColor: Colors.white,
-                    onChanged: (double valor) {
-                      setState(() {
-                        porte = valor;
-                      });
-                    },
-                  ),
-
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [Text('Pqueno'), Text('Médio'), Text('Grande')],
+                  DropdownButtonFormField<double>(
+                    initialValue: porte,
+                    hint: const Text('Selecione uma opção'),
+                    items: [
+                      DropdownMenuItem(value: 0.0, child: Text('Pequeno')),
+                      DropdownMenuItem(value: 1.0, child: Text('Médio')),
+                      DropdownMenuItem(value: 2.0, child: Text('Grande')),
+                    ],
+                    onChanged: (valor) => setState(() => porte = valor),
                   ),
 
                   SizedBox(height: 20),
@@ -408,23 +401,15 @@ class _TesteCompAScreenState extends State<TesteCompAScreen> {
 
                   SizedBox(height: 8),
 
-                  Slider(
-                    value: energia,
-                    min: 0.0,
-                    max: 2.0,
-                    divisions: 2,
-                    activeColor: AppColors.laranja, // Parte preenchida
-                    inactiveColor: Colors.grey, // Parte não preenchida
-                    thumbColor: Colors.white,
-                    onChanged: (double valor) {
-                      setState(() {
-                        energia = valor;
-                      });
-                    },
-                  ),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [Text('Baixo'), Text('Médio'), Text('Alto')],
+                  DropdownButtonFormField<double>(
+                    initialValue: energia,
+                    hint: const Text('Selecione uma opção'),
+                    items: [
+                      DropdownMenuItem(value: 0.0, child: Text('Baixo')),
+                      DropdownMenuItem(value: 1.0, child: Text('Médio')),
+                      DropdownMenuItem(value: 2.0, child: Text('Alto')),
+                    ],
+                    onChanged: (valor) => setState(() => energia = valor),
                   ),
 
                   SizedBox(height: 20),

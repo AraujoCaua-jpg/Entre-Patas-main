@@ -14,29 +14,47 @@ class TesteCompCScreen extends StatefulWidget {
 }
 
 class _TesteCompCScreenState extends State<TesteCompCScreen> {
-  String? imovel = 'Sim';
-  String? apoio = 'Sim';
-  String? compromisso = 'Sim';
-  String? moradores = 'Sim';
-  String? financeiro = '3';
-  String? rotina = 'Sim';
+  String? imovel;
+  String? apoio;
+  String? compromisso;
+  String? moradores;
+  String? financeiro;
+  String? rotina;
 
   bool _salvando = false;
   @override
   void initState() {
     super.initState();
-    String resposta(String k) =>
-        '${widget.respostas[k] ?? 1}' == '1' ? 'Sim' : 'Não';
+    String? resposta(String k) => widget.respostas[k] == null
+        ? null
+        : '${widget.respostas[k]}' == '1'
+        ? 'Sim'
+        : 'Não';
     imovel = resposta('imovel');
     apoio = resposta('apoio');
     compromisso = resposta('compromisso');
     moradores = resposta('moradores');
     rotina = resposta('rotina');
-    financeiro = '${widget.respostas['financeiro'] ?? 3}';
+    financeiro = widget.respostas['financeiro']?.toString();
   }
 
   Future<void> avancar() async {
     if (_salvando) return;
+    if ([
+      imovel,
+      apoio,
+      compromisso,
+      moradores,
+      financeiro,
+      rotina,
+    ].contains(null)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Responda todas as perguntas para continuar.'),
+        ),
+      );
+      return;
+    }
     setState(() => _salvando = true);
     try {
       await ClientesScope.of(context).salvarQuestionario({
@@ -350,7 +368,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                   activeColor: AppColors.laranja,
                   onChanged: (value) {
                     setState(() {
-                      financeiro = value;
+                      financeiro = widget.respostas['financeiro']?.toString();
                     });
                   },
                 ),
@@ -371,7 +389,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                   activeColor: AppColors.laranja,
                   onChanged: (value) {
                     setState(() {
-                      financeiro = value;
+                      financeiro = widget.respostas['financeiro']?.toString();
                     });
                   },
                 ),
@@ -392,7 +410,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
                   activeColor: AppColors.laranja,
                   onChanged: (value) {
                     setState(() {
-                      financeiro = value;
+                      financeiro = widget.respostas['financeiro']?.toString();
                     });
                   },
                 ),
