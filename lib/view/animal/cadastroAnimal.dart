@@ -51,6 +51,7 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
   String? _erro;
   Animal? _animal;
   final imagemController = TextEditingController();
+  String get urlImagem => imagemController.text.trim();
 
   @override
   void didChangeDependencies() {
@@ -590,8 +591,66 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
 
                   SizedBox(height: 20),
 
+                  Row(
+                    children: [
+                      const Text(
+                        'Imagem:',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 20),
+
+                  if (urlImagem.isNotEmpty)
+                  Image.network(
+                    urlImagem,
+
+                    width: 200,
+                    height: 200,
+
+                    fit: BoxFit.cover,
+
+                    // Enquanto carrega
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) {
+                        return child;
+                      }
+
+                      return const SizedBox(
+                        width: 200,
+                        height: 200,
+                        child: Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    },
+
+                    // Se não carregar
+                    errorBuilder: (context, error, stackTrace) {
+                      return const SizedBox(
+                        width: 200,
+                        height: 200,
+                        child: Center(
+                          child: Text(
+                            "Não foi possível carregar a imagem",
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
+                  Text("Prévia da Imagem"),
+                  //https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTk2-tEClIMDpCT_nCBfIk8dVbpN5hxOP9AHQ&s
+
+                  SizedBox(height: 20),
+
                   TextField(
                     controller: imagemController,
+                    onChanged: (valor) {
+                      setState(() {});
+                    },
                     maxLength: 255,
                     decoration: InputDecoration(
                       hintText: 'Link da imagem (opcional)',
