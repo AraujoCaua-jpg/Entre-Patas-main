@@ -391,15 +391,23 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
 
                   SizedBox(height: 8),
 
-                  DropdownButtonFormField<double>(
-                    initialValue: energia,
-                    hint: const Text('Selecione uma opção'),
-                    items: [
-                      DropdownMenuItem(value: 0.0, child: Text('Baixo')),
-                      DropdownMenuItem(value: 1.0, child: Text('Médio')),
-                      DropdownMenuItem(value: 2.0, child: Text('Alto')),
-                    ],
-                    onChanged: (valor) => setState(() => energia = valor),
+                  Slider(
+                    value: energia ?? 0.0,
+                    min: 0.0,
+                    max: 2.0,
+                    divisions: 2,
+                    activeColor: AppColors.laranja, // Parte preenchida
+                    inactiveColor: Colors.grey, // Parte não preenchida
+                    thumbColor: Colors.white,
+                    onChanged: (double valor) {
+                      setState(() {
+                        energia = valor;
+                      });
+                    },
+                  ),
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [Text('Baixo'), Text('Médio'), Text('Alto')],
                   ),
 
                   SizedBox(height: 20),
@@ -412,15 +420,24 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
 
                   SizedBox(height: 8),
 
-                  DropdownButtonFormField<double>(
-                    initialValue: porte,
-                    hint: const Text('Selecione uma opção'),
-                    items: [
-                      DropdownMenuItem(value: 0.0, child: Text('Pequeno')),
-                      DropdownMenuItem(value: 1.0, child: Text('Médio')),
-                      DropdownMenuItem(value: 2.0, child: Text('Grande')),
-                    ],
-                    onChanged: (valor) => setState(() => porte = valor),
+                  Slider(
+                    value: porte ?? 0.0,
+                    min: 0.0,
+                    max: 2.0,
+                    divisions: 2,
+                    activeColor: AppColors.verde, // Parte preenchida
+                    inactiveColor: Colors.grey, // Parte não preenchida
+                    thumbColor: Colors.white,
+                    onChanged: (double valor) {
+                      setState(() {
+                        porte = valor;
+                      });
+                    },
+                  ),
+
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [Text('Pequeno'), Text('Médio'), Text('Grande')],
                   ),
 
                   SizedBox(height: 20),
