@@ -49,3 +49,39 @@ app.*.map.json
 .widget_preview/
 
 /android/build/
+
+/supabase/.temp/
+
+# Local configuration, credentials and deployment caches
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.local.json
+*.local.yaml
+*.local.yml
+*.pem
+*.key
+*.pgpass
+*.crt
+*.cer
+*.p12
+*.pfx
+.pg_service.conf
+pg_service.conf
+.vercel/
+/supabase/.branches/
+
+# Database exports stay outside source control; keep docs/sql/ migrations
+**/backups/
+**/EntrePatas-Backups/
+*.dump
+*.backup
+*.sql.gz
+*.sql.zip
+/schema.sql
+/data.sql
+/auth-data.sql
+/roles.sql
+/inventario-restauracao.txt
+/schema-app-revisao.sql

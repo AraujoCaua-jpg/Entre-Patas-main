@@ -7,7 +7,7 @@ import 'editarAnimal.dart';
 import 'fichaAnimal.dart';
 import '../../controller/clientes_scope.dart';
 import '../../model/animais.dart';
-import '../../service/auth_api.dart';
+import '../../services/login_exception.dart';
 
 class AnimaisCadastradosScreen extends StatefulWidget {
   const AnimaisCadastradosScreen({super.key});
@@ -23,7 +23,15 @@ class _AnimaisCadastradosScreenState extends State<AnimaisCadastradosScreen> {
   int _pagina = 1;
   bool _mais = false;
   List<List<dynamic>> get animais => _animais
-      .map((a) => [a.nome, '${a.idade} ano(s)', a.sexo, a.imageUrl ?? '', a.id])
+      .map(
+        (a) => [
+          a.nome,
+          a.idade == null ? 'Idade não informada' : '${a.idade} ano(s)',
+          a.sexo,
+          a.imageUrl ?? '',
+          a.id,
+        ],
+      )
       .toList();
   @override
   void didChangeDependencies() {
@@ -35,35 +43,56 @@ class _AnimaisCadastradosScreenState extends State<AnimaisCadastradosScreen> {
   }
 
   Future<void> _carregar({bool mais = false}) async {
-    final c = ClientesScope.of(context);
+    final controller = ClientesScope.of(context);
+    final cliente = controller.clienteLogado;
+
+    if (cliente == null) {
+      setState(() {
+        _animais = [];
+        _erro = 'Entre novamente para visualizar seus animais.';
+        _carregando = false;
+        _mais = false;
+      });
+      return;
+    }
+
     setState(() {
       _carregando = true;
       _erro = null;
     });
+
     final pagina = mais ? _pagina + 1 : 1;
+
     try {
-      final lista = await c.listarAnimais(
-        filtros: {
-          'id_cliente': '${c.clienteLogado?.id ?? 0}',
-          'pagina': '$pagina',
-        },
-      );
+      // Busca animais pertencentes ao usuário no Supabase
+      final todos = await controller.listarAnimaisDoClienteSupabase(cliente.id);
+
       if (!mounted) return;
+
+      // Mantém a paginação atual de 50 animais
+      const tamanhoPagina = 50;
+      final inicio = (pagina - 1) * tamanhoPagina;
+
+      final lista = todos.skip(inicio).take(tamanhoPagina).toList();
+
       setState(() {
         _animais = mais ? [..._animais, ...lista] : lista;
         _pagina = pagina;
-        _mais = lista.length == 50;
+        _mais = pagina * tamanhoPagina < todos.length;
       });
-    } catch (e) {
+
+      debugPrint('Animais publicados no Supabase: ${todos.length}');
+    } catch (erro) {
       if (mounted) {
-        setState(
-          () => _erro = e is LoginException
-              ? e.mensagem
-              : 'Não foi possível carregar os animais.',
-        );
+        setState(() {
+          _erro = 'Não foi possível carregar os animais.';
+        });
       }
+      debugPrint('Erro ao carregar animais: $erro');
     } finally {
-      if (mounted) setState(() => _carregando = false);
+      if (mounted) {
+        setState(() => _carregando = false);
+      }
     }
   }
 
@@ -75,7 +104,7 @@ class _AnimaisCadastradosScreenState extends State<AnimaisCadastradosScreen> {
   Future<void> _excluir(BuildContext dialogContext, int id) async {
     Navigator.of(dialogContext).pop();
     try {
-      await ClientesScope.of(context).apagarAnimal(id);
+      await ClientesScope.of(context).apagarAnimalSupabase(id);
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Animal apagado!')));
@@ -293,6 +322,7 @@ class _ListaAnimaisState extends State<ListaAnimais> {
             'convivencia': _convivencia,
             'carencia': _carencia,
             if (widget.meus) 'id_cliente': '${c.clienteLogado?.id ?? 0}',
+            if (widget.meus) 'somenteMeus': 'true',
             if (widget.usuarioId != null) 'id_cliente': '${widget.usuarioId}',
           };
     setState(() {
@@ -504,7 +534,7 @@ class _ListaAnimaisState extends State<ListaAnimais> {
                     ),
                     title: Text(a.nome),
                     subtitle: Text(
-                      '${a.idade} ano(s) • ${a.sexo}\n${a.cidade} - ${a.estado}',
+                      '${a.idade == null ? 'Idade não informada' : '${a.idade} ano(s)'} • ${a.sexo}\n${a.cidade} - ${a.estado}',
                     ),
                     onTap: () => _abrir(FichaAnimalScreen(animalId: a.id)),
                     trailing: widget.meus

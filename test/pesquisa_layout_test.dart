@@ -9,11 +9,16 @@ import 'package:entre_patas/view/principal/pesquisa.dart';
 class PesquisaDados extends ClienteController {
   final filtros = <Map<String, String>>[];
   String? termo;
+  String? tipo;
   @override
-  Future<List<Animal>> listarAnimais({
+  Future<List<Animal>> listarAnimaisSupabase({
+    String? tipo,
     Map<String, String> filtros = const {},
+    int? pagina,
+    bool somenteMeus = false,
   }) async {
-    this.filtros.add(filtros);
+    this.tipo = tipo;
+    this.filtros.add({...filtros, if (tipo != null) 'tipo': tipo});
     return [];
   }
 
@@ -43,7 +48,7 @@ void main() {
       expect(find.text('Explorar novos amigos:'), findsOneWidget);
       await tester.tap(find.text('Cachorros'));
       await tester.pumpAndSettle();
-      expect(dados.filtros.last['tipo'], 'Cachorro');
+      expect(dados.tipo, 'Cachorro');
       await tester.tap(find.byTooltip('Filtros'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Fêmea'));
@@ -52,12 +57,13 @@ void main() {
       await tester.pumpAndSettle();
       expect(dados.filtros.last['sexo'], 'Fêmea');
       expect(dados.filtros.last['porte'], 'Pequeno');
+      expect(dados.tipo, 'Cachorro');
       await tester.tap(find.text('Usuários'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'Ana');
       await tester.pump(const Duration(milliseconds: 350));
       await tester.pumpAndSettle();
-      expect(dados.termo, 'Ana');
+      expect(dados.termo, 'ana');
       expect(find.byTooltip('Filtros'), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());

@@ -3,7 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../core/app_colors.dart';
 import '../../controller/clientes_scope.dart';
 import '../../model/animais.dart';
-import '../../service/auth_api.dart';
+import '../../services/login_exception.dart';
 
 class CadastroAnimalScreen extends StatefulWidget {
   const CadastroAnimalScreen({super.key, this.animalId});
@@ -70,11 +70,11 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
     });
     try {
       final a = await ClientesScope.of(context)
-          .buscarAnimalRemoto(widget.animalId!);
+          .buscarMeuAnimalParaEditarSupabase(widget.animalId!);
       if (!mounted) return;
       _animal = a;
       nomeController.text = a.nome;
-      idadeController.text = '${a.idade}';
+      idadeController.text = a.idade?.toString() ?? '';
       descricaoController.text = a.descricao;
       imagemController.text = a.imageUrl ?? '';
       sexo = a.sexo;
@@ -134,26 +134,31 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
     setState(() => _salvando = true);
     try {
       final c = ClientesScope.of(context);
-      await c.salvarAnimal(
-        Animal(
-          id: widget.animalId ?? 0,
-          nome: nomeController.text.trim(),
-          idade: idade!,
-          imageUrl: imagemController.text.trim(),
-          tipo: tipo!,
-          descricao: descricaoController.text.trim(),
-          sexo: sexo!,
-          status: _animal?.status ?? 'Disponível',
-          energia: ['Baixo', 'Médio', 'Alto'][energia!.round()],
-          porte: ['Pequeno', 'Médio', 'Grande'][porte!.round()],
-          convivencia: convivencia!,
-          carencia: carencia!,
-          vacinado: vacinado,
-          castrado: castrado,
-          idCliente: c.clienteLogado?.id ?? 0,
-        ),
-        editar: widget.animalId != null,
+
+      final animal = Animal(
+        id: widget.animalId ?? 0,
+        nome: nomeController.text.trim(),
+        idade: idade!,
+        imageUrl: imagemController.text.trim(),
+        tipo: tipo!,
+        descricao: descricaoController.text.trim(),
+        sexo: sexo!,
+        status: _animal?.status ?? 'Disponível',
+        energia: ['Baixo', 'Médio', 'Alto'][energia!.round()],
+        porte: ['Pequeno', 'Médio', 'Grande'][porte!.round()],
+        convivencia: convivencia!,
+        carencia: carencia!,
+        vacinado: vacinado,
+        castrado: castrado,
+        idCliente: c.clienteLogado!.id,
       );
+
+      if (widget.animalId == null) {
+        await c.publicarAnimalSupabase(animal);
+      } else {
+        await c.editarAnimalSupabase(animal);
+      }
+
       if (!mounted) return;
       FocusScope.of(context).unfocus();
       Navigator.pop(context, true);

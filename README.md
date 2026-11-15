@@ -1,205 +1,178 @@
 # 🐾 Entre Patas
 
-![Dart](https://img.shields.io/badge/Dart-259acf?style=for-the-badge&logo=dart&logoColor=white)	
-![Flutter](https://img.shields.io/badge/Flutter-259acf?style=for-the-badge&logo=flutter&logoColor=white)	
-![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)
-![XAMPP](https://img.shields.io/badge/XAMPP-FB7A24?style=for-the-badge&logo=xampp&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-259acf?style=for-the-badge&logo=dart&logoColor=white)
+![Flutter](https://img.shields.io/badge/Flutter-259acf?style=for-the-badge&logo=flutter&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 
-## Sobre o projeto
+O **Entre Patas** é um aplicativo de adoção de animais, desenvolvido para o Summit
+da Universidade de Mogi das Cruzes (UMC). Aproxima adotantes, animais e
+organizações de acolhimento com cadastro, teste de compatibilidade e
+acompanhamento das solicitações de adoção.
 
-O **Entre Patas** é um projeto acadêmico de aplicativo para adoção de animais, desenvolvido para apresentação no Summit da Universidade de Mogi das Cruzes (UMC).
+## Aplicativo e backend
 
-A proposta é aproximar adotantes, animais e organizações de acolhimento por meio de uma experiência digital acessível. O aplicativo conta com a proposta de um questionário de compatibilidade, que ajuda o usuário a refletir sobre seu perfil e as necessidades do animal antes de solicitar a adoção.
+O aplicativo atual utiliza **Flutter/Dart e Supabase Auth/PostgreSQL**, com
+permissões de acesso protegidas por RLS e funções RPC. A Home calcula a
+compatibilidade com as respostas do questionário: Rotina 50%, Ambiente 30% e
+Preferências 20%. Animais sem informações suficientes continuam visíveis sem
+uma porcentagem inventada.
 
-O projeto busca contribuir para adoções mais conscientes, oferecendo informações sobre os animais, pesquisa por região e acompanhamento das solicitações.
+Os fluxos implementados incluem cadastro/login, recuperação de senha, perfil,
+questionário, pesquisa de animais e usuários, publicação/edição de animais,
+solicitação/cancelamento/aprovação/recusa e notificações. A disponibilidade no
+ambiente online depende da instalação das respectivas funções e políticas no
+banco; compilar o Flutter não instala essas dependências.
 
-## Objetivos
+**Os SQLs 12, 15 e 10 foram instalados no Supabase de produção em 15/11/2026**,
+com três COMMITs confirmados e **20/20 verificações do SQL 16 aprovadas**.
+As contagens e os fingerprints dos dados foram preservados. Consulte o
+[relatório da instalação](docs/instalacao_producao_2026-11-15.md).
+O build e a publicação do aplicativo não executam migrações.
 
-- Facilitar a descoberta de animais disponíveis para adoção.
-- Apoiar escolhas responsáveis por meio de um teste de compatibilidade.
-- Disponibilizar perfis detalhados dos animais e dos responsáveis pelas publicações.
-- Permitir que adotantes enviem e acompanhem solicitações.
-- Oferecer às organizações recursos para cadastrar e gerenciar animais.
+A confirmação visual dos fluxos no aplicativo publicado continua necessária.
+Nove animais antigos pertencem a responsáveis sem vínculo Auth; esses vínculos
+precisam de regularização comprovada e não são criados automaticamente.
 
-## Funcionalidades previstas
+O backend PHP e seus testes foram preservados para consulta e manutenção do
+legado. Apache, XAMPP, MySQL e `API_BASE_URL` **não são necessários para executar
+o fluxo atual do aplicativo**.
 
-| Área | Funcionalidades |
-|---|---|
-| **Acesso** | Boas-vindas, cadastro, login e recuperação de senha. |
-| **Usuário** | Perfil do adotante e edição de dados. |
-| **Animais** | Listagem, pesquisa, filtros e ficha detalhada. |
-| **Compatibilidade** | Questionário de preferências e indicação de afinidade com os animais. |
-| **Adoção** | Solicitação com identificação do animal, publicador e adotante, data/hora e acompanhamento de status. |
-| **Organizações** | Perfil de abrigo/lar e cadastro e gestão de animais. |
-| **Comunicação** | Notificações sobre atualizações do processo; chat previsto no escopo de telas. |
+## Executar em outro computador
 
-> **Observação:** esta tabela representa o escopo do produto. A existência de uma tela no Figma não comprova que sua lógica esteja implementada no Flutter.
+Pré-requisitos: Git, Chrome e **Flutter 3.50.0**, que inclui o Dart 3.14. Não é
+necessário instalar Dart separadamente. Android/iOS exigem também as ferramentas
+indicadas por `flutter doctor`; suas configurações foram preservadas.
 
-## Telas e experiência do usuário
-
-O protótipo do Entre Patas foi elaborado no Figma, com foco em navegação simples e identidade visual acolhedora. Entre as telas projetadas estão:
-
-- Boas-vindas, login e cadastro;
-- Página inicial com destaques e animais sugeridos;
-- Pesquisa e filtros de animais;
-- Ficha do animal com fotos, descrição, características, localização e compatibilidade;
-- Questionário de compatibilidade;
-- Perfil do adotante e perfil do abrigo;
-- Solicitação e acompanhamento da adoção;
-- Cadastro e gestão de animais;
-- Notificações.
-
-### Exemplo de jornada: adoção do Bolt
-
-1. O usuário encontra Bolt na listagem ou na pesquisa.
-2. Abre a ficha para consultar fotos, descrição, porte, idade, localização e informações de saúde.
-3. Visualiza uma indicação de compatibilidade (por exemplo, **95%**, valor ilustrativo utilizado no protótipo).
-4. Seleciona **“Quero adotar o Bolt”**.
-5. Confere o animal, quem publicou, seus dados e os detalhes da solicitação.
-6. Envia a solicitação e acompanha o andamento até a conclusão do processo.
-
-> Os nomes, percentuais, datas e dados pessoais apresentados nos mockups são exemplos de demonstração, não registros reais.
-
-## Tecnologias e ferramentas
-
-| Tecnologia/Ferramenta | Utilização |
-|---|---|
-| **Flutter** | Desenvolvimento da interface do aplicativo. |
-| **Dart** | Linguagem de programação. |
-| **Figma** | Prototipação UX/UI e navegação entre telas. |
-| **Git e GitHub** | Versionamento e colaboração. |
-| **Trello** | Organização de tarefas e sprints. |
-| **Banco de dados** | Persistência de usuários, animais e adoções. A tecnologia e a integração final ainda precisam ser confirmadas. |
-
-A organização do código em `models` e `controllers` faz parte da abordagem de desenvolvimento discutida pela equipe. A estrutura efetiva do repositório deve ser confirmada no código-fonte.
-
-## Prints do aplicativo
-
-| Tela | Imagem |
-|---|---|
-| Página inicial | `docs/images/home.png` |
-| Login e cadastro | `docs/images/login.png` |
-| Pesquisa de animais | `docs/images/pesquisa.png` |
-| Ficha do animal | `docs/images/ficha-animal.png` |
-| Teste de compatibilidade | `docs/images/compatibilidade.png` |
-| Solicitação de adoção | `docs/images/adocao.png` |
-| Perfil | `docs/images/perfil.png` |
-
-## Planejamento das sprints
-
-| Sprint | Prazo planejado | Entregas previstas |
-|---|---|---|
-| **Sprint 1** | Até 02/11 | Telas do aplicativo; CRUD de usuários e telas de cadastro; CRUD de animais; CRUD de adoção. |
-| **Sprint 2** | Até 09/11 | Conexão com banco de dados; teste de compatibilidade; edição e exibição do perfil; exibição de animais; telas de adoção e notificações. |
-| **Sprint 3** | Até 12/11 | Testes, validação de fluxos e correção de bugs. |
-
-> Os prazos acima correspondem ao planejamento informado pela equipe; não indicam, por si só, a conclusão das entregas.
-
-## Testes recomendados
-
-- Cadastro, autenticação e validação de campos;
-- Criação, consulta, edição e remoção autorizada de registros;
-- Carregamento de animais e filtros de pesquisa;
-- Navegação entre telas e carrossel de fotos;
-- Cálculo e apresentação da compatibilidade;
-- Envio de solicitações sem duplicidade acidental;
-- Registro de data/hora, mudanças de status e notificações;
-- Tratamento de erros e responsividade.
-
-## Estado do projeto
-
-O projeto possui protótipos de diversas telas no Figma e atividades de desenvolvimento em Flutter/Dart.
-
-A apresentação do Summit descreve a idealização como concluída e a prototipação/desenvolvimento como em andamento na versão revisada. A conclusão da integração com banco de dados, dos CRUDs e dos testes precisa ser validada no repositório.
-
-### Fluxo básico de trabalho
-
-```bash
-# Atualize sua branch com as alterações da branch principal
-git pull origin main
-
-# Confira os arquivos modificados
-git status
-
-# Adicione as alterações
-git add .
-
-# Crie um commit
-git commit -m "feat: implementa listagem de animais"
-
-# Envie sua branch para o GitHub
-git push origin <nome-da-branch>
-```
-
-O comando `git pull origin main` pressupõe que a branch principal seja `main`; confirme o nome utilizado pelo grupo. Para evitar conflitos, trabalhem em branches individuais e integrem as alterações por pull request, quando possível.
-
-Revise `git status` antes de adicionar arquivos e não envie senhas, tokens ou arquivos de configuração sensíveis.
-
-### Evidências de participação
-
-- Cada integrante deve usar sua própria conta e configurar `git config user.name` e `git config user.email` com seus dados.
-- Fazer commits frequentes ao longo das sprints, em vez de um único commit no fim.
-- Manter mensagens que descrevam a alteração realizada.
-- Registrar as contribuições de desenvolvimento, prototipação exportada e documentação quando esses arquivos fizerem parte do repositório.
-- Verificar o histórico na aba **Commits** do GitHub ou com `git log --oneline --all`.
-
-> Este README documenta a prática esperada; a frequência e a autoria real dos commits precisam ser comprovadas pelo histórico do repositório. Não se deve criar commits artificiais ou atribuir trabalho a outra pessoa.
-
-## Como executar localmente
-
-Estas são instruções gerais para um projeto Flutter. Dependências, variáveis de ambiente e configurações específicas devem ser verificadas no repositório.
-
-### Pré-requisitos
-
-- Flutter SDK;
-- Dart SDK;
-- Editor compatível, como Visual Studio Code.
-
-### Instalação
-
-
-```bash
-# Clone o repositório (substitua pela URL oficial)
+```powershell
 git clone https://github.com/AraujoCaua-jpg/Entre-Patas-main.git
-
-# Entre na pasta do projeto
 cd Entre-Patas-main
-
-# Instale as dependências
-flutter pub get
-
-# Confira o ambiente
+flutter --version
 flutter doctor
-
-# Execute o aplicativo
-flutter run
+flutter pub get
+flutter run -d chrome --dart-define-from-file=config/production.json
 ```
 
-Caso o aplicativo utilize banco de dados ou serviços externos, configure-os conforme as instruções da equipe antes da execução.
+Mantenha `pubspec.lock` no Git e utilize a versão de Flutter indicada. Não execute
+`flutter pub upgrade` como parte da instalação normal. Caso o SDK não esteja no
+PATH, use o executável `flutter` da instalação correspondente.
 
-## Próximos passos
+### Um mesmo Supabase para os três integrantes
 
-- Finalizar as funcionalidades ainda pendentes no Flutter;
-- Integrar e validar a persistência de dados;
-- Testar o questionário e as regras de compatibilidade;
-- Validar o fluxo completo de solicitação e aprovação de adoções;
-- Realizar testes com usuários e organizações;
-- Preparar uma versão demonstrável para apresentação e avaliação.
+O projeto compartilhado é `https://cyaxnaflvnjnpryryorr.supabase.co`. O arquivo
+`config/production.json` contém somente a URL pública e a chave publicável do
+cliente. O `main.dart` lê `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY` com
+`String.fromEnvironment`; os valores padrão também apontam para esse projeto
+online, portanto `flutter run -d chrome` não depende de localhost.
 
-## Contexto acadêmico
+Cada integrante pode criar ou acessar sua própria conta no app usando o mesmo
+backend. **Não é necessário importar um banco, instalar Docker ou receber convite
+para o painel do Supabase para usar o aplicativo.** As contas de usuários e as
+contas administrativas do painel são diferentes.
 
-Esse projeto desenvolvido para o Curso de Engenharia de Software do 4º Semestre da UMC nas disciplinas de Desenvolvimento de Aplicações e Métodos Ágeis e para o SUMMIT da Revista Científica da UMC
+Convide alguém para o painel somente se precisar administrar o backend, com o
+menor privilégio necessário. Nunca compartilhe a conta administrativa, senhas,
+tokens de acesso, chave `service_role` ou chave `secret` com os usuários do app.
+Somente a URL e a chave pública podem integrar o bundle Web; a proteção dos dados
+depende da autenticação e da RLS, não do sigilo dessa chave pública.
 
----
+Os dados desse ambiente são compartilhados: alterações feitas no app afetam o
+mesmo banco. Testes que criam ou alteram dados e scripts de migração devem ser
+executados no ambiente local isolado, nunca automaticamente em produção.
 
-## 👤 Autores
-Equipe de desenvolvimento e respectivas funções:
+### Outra configuração ou QA local
+
+As variáveis são definidas na compilação, não lidas automaticamente de um `.env`
+no navegador. Para outro ambiente, crie um JSON local ignorado pelo Git com
+`SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY` e passe
+`--dart-define-from-file=<arquivo>`. Não coloque credenciais administrativas
+nesse arquivo nem em qualquer `dart-define`.
+
+`SUPABASE_AUTH_REDIRECT_URL` é opcional para recuperação de senha. Sem essa
+variável, o Web usa a URL atual e o mobile usa `entrepatas://auth-callback`.
+O domínio definitivo e os callbacks permitidos precisam ser revisados no Auth do
+Supabase antes da publicação; não houve alteração automática dessas configurações.
+
+## Validação e build Web
+
+```powershell
+flutter pub get
+flutter analyze
+flutter test
+flutter build web --release --dart-define-from-file=config/production.json
+git diff --check
+```
+
+O resultado Web fica em `build/web`. O comando acima compila para o Supabase
+online sem executar migrações nem gravar dados. Um build feito com configuração
+de QA em `127.0.0.1` não é um build de produção.
+
+A validação final de 15/11/2026 registrou **258 testes aprovados, nenhuma falha e
+dois casos ignorados** por uma funcionalidade de alteração de e-mail desabilitada.
+O release Web de produção compilou e abriu no Chrome isolado sem erros de runtime.
+O analisador retornou 0 erros, 0 avisos e 113 informações de estilo/depreciação
+(o comando padrão termina com exit 1 por essas informações). Consulte o
+[relatório final de entrega](docs/qa_entrega_flutter_web_2026-11-15.md).
+Fluxos autenticados e gravações no Supabase real ainda precisam de validação
+manual autorizada; testes locais não substituem essa confirmação.
+
+### Vercel
+
+O repositório prepara a configuração em `vercel.json`:
+
+- Framework: **Other**.
+- Build: `node scripts/build_web.mjs`.
+- Saída: `build/web`.
+- SDK de build: Flutter **3.50.0**, fixado pelo script.
+- Configuração do cliente: `config/production.json`, somente valores públicos.
+
+O script prepara o SDK em cache quando necessário, instala as dependências pelo
+lockfile e gera o build Web. Ele rejeita outro endpoint Supabase, chaves
+administrativas e um SDK divergente. A configuração de rotas permite que o
+aplicativo seja aberto por URL direta. Confira o
+[checklist de publicação](docs/publicacao_github_vercel.md), incluindo os
+callbacks de Auth do domínio definitivo. **Preparar esses arquivos não publica
+na Vercel.**
+
+## Estrutura e arquivos que devem ser preservados
+
+| Caminho | Finalidade |
+| --- | --- |
+| `lib/controller/`, `lib/model/`, `lib/services/`, `lib/view/` | Estado, modelos, integração Supabase e telas do app. |
+| `lib/service/` | Validação de senha ativa e clientes PHP legados cobertos por testes. |
+| `assets/`, `web/`, `android/`, `ios/` | Recursos, fontes e configurações das plataformas. |
+| `test/` | Regressões Flutter, fixtures e verificações SQL/legadas. |
+| `docs/`, `docs/sql/` | Relatórios de QA, instruções e SQLs de inspeção/migração para revisão. |
+| `supabase/functions/` | Funções de backend, incluindo exclusão de conta; nunca substituir por código administrativo no Flutter. |
+| `backend/` | Implementação PHP legada preservada. |
+| `pubspec.yaml`, `pubspec.lock` | Dependências e suas versões resolvidas. |
+
+`build/`, `.dart_tool/`, caches, logs descartáveis e `supabase/.temp/` são
+artefatos locais ignorados pelo Git. Backups/dumps de banco, `.env`, tokens e
+chaves privadas não devem entrar no repositório. Preserve os SQLs de instalação
+e manutenção; eles não são descartáveis por não serem compilados pelo Flutter.
+
+Não execute `supabase db push`, `db reset` nem os SQLs 05, 10, 20 ou 30 em produção
+como etapa de instalação do app. Qualquer instalação do backend exige revisão
+separada, backup recuperável e validação das permissões.
+
+## Colaboração
+
+Cada integrante deve usar sua própria conta do GitHub e uma branch por tarefa.
+Revise `git status` e o diff antes de selecionar arquivos para um commit e
+integre as mudanças por pull request. Não envie builds, caches ou credenciais.
+Mensagens e autoria devem refletir contribuições reais; não crie commits
+artificiais para simular participação.
+
+## Contexto acadêmico e autores
+
+Projeto do 4º semestre de Engenharia de Software da UMC, nas disciplinas de
+Desenvolvimento de Aplicações e Métodos Ágeis e para o SUMMIT da Revista
+Científica da UMC. O protótipo de UX/UI foi elaborado no Figma.
 
 | Integrante | Atuação apresentada | GitHub |
-|---|---|---|
-| Cauã Araújo Marques | Desenvolvimento e integração | <a href="https://github.com/AraujoCaua-jpg"><img src="https://img.shields.io/badge/AraujoCaua-181717?style=for-the-badge&logo=github&logoColor=white" alt="AraujoCaua-jpg"></a> |
-| Lucas Alves Siqueira | UX/UI Design e prototipação | <a href="https://github.com/LucasSiq31"><img src="https://img.shields.io/badge/LucasSiq31-181717?style=for-the-badge&logo=github&logoColor=white" alt="LucasSiq31"></a> |
-| Yasmim Camilli da Silva Pacheco | Planejamento e desenvolvimento | <a href="https://github.com/YasmimPacheco"><img src="https://img.shields.io/badge/YasmimPacheco-181717?style=for-the-badge&logo=github&logoColor=white" alt="YasmimPacheco"></a> |
+| --- | --- | --- |
+| Cauã Araújo Marques | Desenvolvimento e integração | [AraujoCaua-jpg](https://github.com/AraujoCaua-jpg) |
+| Lucas Alves Siqueira | UX/UI Design e prototipação | [LucasSiq31](https://github.com/LucasSiq31) |
+| Yasmim Camilli da Silva Pacheco | Planejamento e desenvolvimento | [YasmimPacheco](https://github.com/YasmimPacheco) |
 
 **Orientadores:** Alessandra da Silva Martins e Higor Barreto Campos.

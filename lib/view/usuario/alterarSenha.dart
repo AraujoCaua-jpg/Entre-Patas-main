@@ -1,16 +1,26 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../controller/clientes_scope.dart';
-import '../../service/auth_api.dart';
-import '../../service/clientes_api.dart';
+import '../../services/login_exception.dart';
 import '../../service/validacao_senha.dart';
+import '../../services/supabase_auth_service.dart';
 import '../autenticacao/login.dart';
 import '../core/app_colors.dart';
 import '../core/scrollable_screen_body.dart';
 
 class AlterarSenhaScreen extends StatefulWidget {
-  const AlterarSenhaScreen({super.key, this.recuperacao = false});
+  const AlterarSenhaScreen({
+    super.key,
+    this.recuperacao = false,
+    this.emailRecuperacao,
+    this.recuperacaoPorLink = false,
+  });
   final bool recuperacao;
+  final String? emailRecuperacao;
+  final bool recuperacaoPorLink;
   @override
   State<AlterarSenhaScreen> createState() => _AlterarSenhaScreenState();
 }
@@ -19,18 +29,48 @@ class _AlterarSenhaScreenState extends State<AlterarSenhaScreen> {
   final atual = TextEditingController();
   final nova = TextEditingController();
   final confirmacao = TextEditingController();
-  final api = ClientesApi();
+  final _auth = SupabaseAuthService();
   bool salvando = false;
   bool mostrarSenha = false;
+  bool _aguardandoReautenticacao = false;
+  String _senhaAtualConfirmada = '';
+  bool _linkConfirmado = false;
+  StreamSubscription<AuthState>? _recuperacaoSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.recuperacaoPorLink && _auth.recuperacaoConfirmada) {
+      _linkConfirmado = true;
+      atual.text = 'Confirmado pelo link';
+    }
+    if (widget.recuperacao) {
+      _recuperacaoSubscription = Supabase.instance.client.auth.onAuthStateChange
+          .listen((estado) {
+            if (!mounted ||
+                salvando ||
+                estado.event != AuthChangeEvent.passwordRecovery ||
+                !_auth.recuperacaoConfirmada ||
+                _auth.validandoCodigoRecuperacao) {
+              return;
+            }
+            setState(() {
+              _linkConfirmado = true;
+              atual.text = 'Confirmado pelo link';
+            });
+          }, onError: (Object erro, StackTrace stack) {});
+    }
+  }
 
   Map<String, bool> get requisitos => requisitosSenha(nova.text);
 
   @override
   void dispose() {
+    unawaited(_recuperacaoSubscription?.cancel());
     atual.dispose();
     nova.dispose();
     confirmacao.dispose();
-    api.close();
+    _senhaAtualConfirmada = '';
     super.dispose();
   }
 
@@ -38,7 +78,10 @@ class _AlterarSenhaScreenState extends State<AlterarSenhaScreen> {
     if (salvando) return;
     if (nova.text != confirmacao.text ||
         nova.text.isEmpty ||
-        atual.text.isEmpty) {
+        (atual.text.isEmpty &&
+            (!widget.recuperacao ||
+                !_auth.recuperacaoConfirmada ||
+                _aguardandoReautenticacao))) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Preencha os campos e confirme a mesma senha.'),
@@ -56,11 +99,37 @@ class _AlterarSenhaScreenState extends State<AlterarSenhaScreen> {
     setState(() => salvando = true);
     try {
       if (widget.recuperacao) {
-        await api.recuperar(atual.text, nova.text);
+        if (!_auth.recuperacaoConfirmada) {
+          final email = widget.emailRecuperacao;
+          if (email == null) {
+            throw const LoginException(
+              'Abra o link recebido por e-mail para recuperar sua senha.',
+            );
+          }
+          await _auth.verificarCodigoRecuperacao(email, atual.text.trim());
+          controller.limparSessao();
+        }
+        await _auth.redefinirSenha(
+          nova.text,
+          codigoReautenticacao: _aguardandoReautenticacao
+              ? atual.text.trim()
+              : null,
+        );
       } else {
-        await controller.alterarSenha(atual.text, nova.text);
+        if (!_aguardandoReautenticacao) {
+          _senhaAtualConfirmada = atual.text;
+        }
+        await controller.alterarSenha(
+          _senhaAtualConfirmada,
+          nova.text,
+          codigoReautenticacao: _aguardandoReautenticacao
+              ? atual.text.trim()
+              : null,
+        );
       }
       if (!mounted) return;
+      _senhaAtualConfirmada = '';
+      if (widget.recuperacao) controller.limparSessao();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Senha atualizada. Entre novamente.')),
       );
@@ -69,6 +138,33 @@ class _AlterarSenhaScreenState extends State<AlterarSenhaScreen> {
         MaterialPageRoute(builder: (_) => const LoginScreen()),
         (_) => false,
       );
+    } on ReautenticacaoNecessariaException {
+      try {
+        await _auth.solicitarCodigoReautenticacao();
+        if (!mounted) return;
+        setState(() {
+          _aguardandoReautenticacao = true;
+          atual.clear();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Digite o código de reautenticação enviado ao seu e-mail.',
+            ),
+          ),
+        );
+      } on LoginException catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.mensagem)));
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível enviar o código. Tente novamente.'),
+          ),
+        );
+      }
     } on LoginException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -87,11 +183,15 @@ class _AlterarSenhaScreenState extends State<AlterarSenhaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final titulo = widget.recuperacao
+    final titulo = _aguardandoReautenticacao
+        ? 'Digite o código de reautenticação'
+        : widget.recuperacao
         ? 'Digite o código recebido por e-mail'
         : 'Confirme sua senha atual';
 
-    final labelAtual = widget.recuperacao
+    final labelAtual = _aguardandoReautenticacao
+        ? 'Código de reautenticação'
+        : widget.recuperacao
         ? 'Código de recuperação'
         : 'Senha atual';
 
@@ -199,7 +299,14 @@ class _AlterarSenhaScreenState extends State<AlterarSenhaScreen> {
                   const SizedBox(height: 20),
                   TextField(
                     controller: atual,
-                    obscureText: !widget.recuperacao && !mostrarSenha,
+                    readOnly:
+                        _linkConfirmado &&
+                        _auth.recuperacaoConfirmada &&
+                        !_aguardandoReautenticacao,
+                    obscureText:
+                        !widget.recuperacao &&
+                        !_aguardandoReautenticacao &&
+                        !mostrarSenha,
                     decoration: InputDecoration(
                       hintText: labelAtual,
                       prefixIcon: const Icon(

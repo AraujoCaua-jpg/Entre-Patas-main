@@ -6,7 +6,8 @@ import '../core/app_colors.dart';
 import '../core/usuario_resumo.dart';
 import '../../controller/clientes_scope.dart';
 import '../../model/animais.dart';
-import '../../service/auth_api.dart';
+import '../../services/compatibilidade_service.dart';
+import '../../services/login_exception.dart';
 import 'animaisCadastrados.dart';
 import 'compatibilidade_animal.dart';
 
@@ -19,9 +20,37 @@ class FichaAnimalScreen extends StatefulWidget {
 
 class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
   Future<Animal>? _consulta;
+
+  Future<Animal> _buscarAnimalComCompatibilidade() async {
+    final controller = ClientesScope.of(context);
+
+    // Busca os dados do animal no Supabase.
+    final animal = await controller.buscarAnimalPorIdSupabase(widget.animalId);
+
+    final meuId = controller.clienteLogado?.id;
+
+    // Não calcula compatibilidade para animais
+    // cadastrados pelo próprio usuário.
+    if (meuId == null || animal.idCliente == meuId) {
+      animal.compatibilidade = null;
+      return animal;
+    }
+
+    // Busca o questionário do usuário conectado.
+    final questionario = await controller.buscarMeuQuestionarioSupabase();
+
+    // Utiliza exatamente o mesmo algoritmo da Home.
+    animal.compatibilidade = CompatibilidadeService.calcular(
+      animal,
+      questionario,
+    );
+
+    return animal;
+  }
+
   void _recarregar() {
-    final consulta = ClientesScope.of(context)
-        .buscarAnimalRemoto(widget.animalId);
+    if (!mounted) return;
+    final consulta = _buscarAnimalComCompatibilidade();
     setState(() {
       _consulta = consulta;
     });
@@ -30,7 +59,18 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _consulta ??= ClientesScope.of(context).buscarAnimalRemoto(widget.animalId);
+
+    // O controller notifica os ouvintes após salvar o questionário.
+    // Reconsulta o Supabase para não reutilizar percentuais antigos.
+    _consulta = _buscarAnimalComCompatibilidade();
+  }
+
+  @override
+  void didUpdateWidget(covariant FichaAnimalScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.animalId != widget.animalId) {
+      _consulta = _buscarAnimalComCompatibilidade();
+    }
   }
 
   @override
@@ -38,7 +78,9 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
     return FutureBuilder<Animal>(
       future: _consulta,
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+        if (snapshot.connectionState != ConnectionState.done ||
+            snapshot.hasError ||
+            !snapshot.hasData) {
           return Scaffold(
             appBar: AppBar(title: const Text('Ficha do Animal')),
             body: snapshot.hasError
@@ -141,7 +183,7 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        '${animal.idade} ano(s) - ${animal.sexo}',
+                        '${animal.idade == null ? 'Idade não informada' : '${animal.idade} ano(s)'} - ${animal.sexo}',
                         style: TextStyle(fontSize: 14),
                       ),
                     ),

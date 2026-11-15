@@ -1,96 +1,189 @@
-import 'dart:async';
-
-import '../service/clientes_api.dart';
-import '../service/animais_api.dart';
-import '../model/animais.dart';
-import '../model/adocao.dart';
-
 import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/supabase_service.dart';
+import '../services/supabase_auth_service.dart';
+import '../services/login_exception.dart';
+
+import '../model/animais.dart';
+import '../model/adocao.dart';
 import '../model/cliente.dart';
-import '../service/auth_api.dart';
 
 class ClienteController extends ChangeNotifier {
-  ClienteController({AuthApi? authApi}) : _authApi = authApi ?? AuthApi();
-  final AuthApi _authApi;
-  String? _token;
-  final _dadosApi = ClientesApi();
-  final _animaisApi = AnimaisApi();
+  ClienteController({SupabaseAuthService? supabaseAuthService})
+    : _supabaseAuthServiceInicial = supabaseAuthService;
+
+  final SupabaseAuthService? _supabaseAuthServiceInicial;
+  late final SupabaseAuthService _supabaseAuthService =
+      _supabaseAuthServiceInicial ?? SupabaseAuthService();
+  Future<void>? _logoutPendente;
+  int _versaoSessao = 0;
+
+  late final _supabaseService = SupabaseService();
+
   bool _autenticando = false;
   final List<Cliente> clientes = [];
   int? _clienteLogadoId;
+  List<Adocao> _adocoesNotificacoes = [];
   List<Adocao> _notificacoes = [];
+  final Set<(int, String)> _notificacoesLidas = {};
+  int? _clienteNotificacoes;
   int _versaoNotificacoes = 0;
-  List<Adocao> get notificacoes => List.unmodifiable(_notificacoes);
-  int get totalNotificacoes => _notificacoes.length;
+
+  List<Adocao> get notificacoes =>
+      clienteLogado != null && _clienteNotificacoes == clienteLogado?.id
+      ? List.unmodifiable(_notificacoes)
+      : const [];
+  int get totalNotificacoes => notificacoes.length;
+
   Future<List<Adocao>> atualizarNotificacoes() async {
-    final token = _sessao;
+    final cliente = clienteLogado;
+    if (cliente == null) {
+      throw const LoginException('Entre novamente para continuar.');
+    }
+    final versaoSessao = _versaoSessao;
+    if (_clienteNotificacoes != cliente.id) {
+      _limparNotificacoes();
+      _clienteNotificacoes = cliente.id;
+    }
     final versao = ++_versaoNotificacoes;
-    final dados = await _dadosApi.requisicao('notificacoes.php', token: token);
-    if (_token != token || versao != _versaoNotificacoes) return notificacoes;
-    _notificacoes = (dados['adocoes'] as List)
-        .map((d) => Adocao.fromJson(d as Map<String, dynamic>))
-        .toList();
+    final adocoes = await listarAdocoes();
+    if (versaoSessao != _versaoSessao || clienteLogado?.id != cliente.id) {
+      throw const LoginException('Entre novamente para continuar.');
+    }
+    if (versao != _versaoNotificacoes) {
+      // A consulta ainda responde à tela que a iniciou; só a versão mais
+      // recente pode substituir o cache usado pelo badge.
+      return List.unmodifiable(adocoes);
+    }
+    _adocoesNotificacoes = List.of(adocoes);
+    _notificacoes = adocoes.where((adocao) {
+      final recebida = adocao.idDono == cliente.id
+          ? const {'Aguardando', 'Cancelado'}.contains(adocao.status)
+          : adocao.idCliente == cliente.id &&
+                const {'Aceito', 'Recusado'}.contains(adocao.status);
+      return recebida &&
+          !_notificacoesLidas.contains((adocao.id, adocao.status));
+    }).toList();
     notifyListeners();
-    return notificacoes;
+    // A tela também é o histórico de adoções. O badge usa apenas as novas.
+    return List.unmodifiable(_adocoesNotificacoes);
   }
 
   Future<void> lerNotificacao(Adocao adocao) async {
-    final token = _sessao;
-    await _dadosApi.requisicao(
-      'notificacoes.php',
-      token: token,
-      dados: {'id': adocao.id, 'status': adocao.status},
-    );
-    if (_token != token) return;
-    _versaoNotificacoes++;
+    final cliente = clienteLogado;
+    if (cliente == null ||
+        (adocao.idDono != cliente.id && adocao.idCliente != cliente.id)) {
+      throw const LoginException('Entre novamente para continuar.');
+    }
+    if (_clienteNotificacoes != cliente.id) {
+      _limparNotificacoes();
+      _clienteNotificacoes = cliente.id;
+    }
+    // O SQL instalado não persiste leitura de notificações. Mantém a versão
+    // exibida em memória nesta sessão, sem alterar o histórico nem usar PHP.
+    _notificacoesLidas.add((adocao.id, adocao.status));
     _notificacoes.removeWhere(
       (a) => a.id == adocao.id && a.status == adocao.status,
     );
     notifyListeners();
   }
 
+  void _limparNotificacoes() {
+    _versaoNotificacoes++;
+    _clienteNotificacoes = null;
+    _adocoesNotificacoes = [];
+    _notificacoes = [];
+    _notificacoesLidas.clear();
+  }
+
   Cliente? get clienteLogado =>
       _clienteLogadoId == null ? null : buscarCliente(_clienteLogadoId!);
+
+  Future<Cliente> carregarMeuPerfilSupabase() async {
+    final versaoSessao = _versaoSessao;
+    final usuario = Supabase.instance.client.auth.currentUser;
+
+    if (usuario == null) {
+      throw const LoginException('Entre novamente para continuar.');
+    }
+
+    final dados = await Supabase.instance.client
+        .from('cliente')
+        .select()
+        .eq('auth_user_id', usuario.id)
+        .maybeSingle();
+
+    // Uma consulta iniciada antes do logout não pode restaurar o perfil antigo.
+    if (versaoSessao != _versaoSessao ||
+        Supabase.instance.client.auth.currentUser?.id != usuario.id) {
+      throw const LoginException('Entre novamente para continuar.');
+    }
+
+    if (dados == null || dados['ativo'] != true) {
+      throw const LoginException('Perfil não encontrado ou inativo.');
+    }
+
+    final cliente = Cliente(
+      id: (dados['id'] as num).toInt(),
+      nome: dados['nome'] as String? ?? '',
+      sobrenome: dados['sobrenome'] as String? ?? '',
+      email: dados['email'] as String? ?? '',
+      telefone: dados['telefone'] as String? ?? '',
+      usuario: dados['usuario'] as String? ?? '',
+      cidadeDeResidencia: dados['cidadeDeResidencia'] as String? ?? '',
+      estado: dados['estado'] as String?,
+      endereco: dados['endereco'] as String?,
+      imageUrl: dados['imagem'] as String?,
+      larDeAdocao: dados['larDeAdocao'] == true,
+      questionarioPendente:
+          dados['questionario_pendente'] == true ||
+          dados['questionario_pendente'] == 1 ||
+          // O trigger legado usa default 0. Cadastros do app continuam
+          // obrigados a responder; respostas já salvas têm precedência.
+          usuario.userMetadata?['origem_cadastro'] == 'entre_patas',
+    );
+
+    _clienteLogadoId = cliente.id;
+    _atualizar(cliente);
+
+    return cliente;
+  }
 
   Future<void> entrar(String email, String senha) async {
     if (_autenticando) return;
     _autenticando = true;
+
     try {
-      final sessao = await _authApi.entrar(email, senha);
-      clientes.removeWhere((cliente) => cliente.id == sessao.cliente.id);
-      clientes.add(sessao.cliente);
-      _clienteLogadoId = sessao.cliente.id;
-      _token = sessao.token;
-      notifyListeners();
+      final resposta = await _supabaseAuthService.entrar(email, senha);
+      if (resposta.user == null || resposta.session == null) {
+        throw const LoginException('Não foi possível iniciar a sessão.');
+      }
+      _limparNotificacoes();
+      await carregarMeuPerfilSupabase();
     } finally {
       _autenticando = false;
     }
   }
 
-  Future<void> sair() async {
-    final token = _token;
-    limparSessao();
-    if (token != null) {
-      // Não bloqueia a saída local se o servidor estiver indisponível.
-      unawaited(_authApi.sair(token).catchError((Object _) {}));
-    }
+  Future<void> sair() {
+    return _logoutPendente ??= _sairDoSupabase().whenComplete(() {
+      _logoutPendente = null;
+    });
   }
 
-  @override
-  void dispose() {
-    _authApi.close();
-    _dadosApi.close();
-    _animaisApi.close();
-    super.dispose();
+  Future<void> _sairDoSupabase() async {
+    await _supabaseAuthService.sair();
+    limparSessao();
   }
 
   // Cadastrar cliente
   void cadastrarCliente(Cliente cliente) {
     clientes.add(cliente);
     notifyListeners();
+
     developer.log('Cliente cadastrado com sucesso!');
   }
 
@@ -99,12 +192,16 @@ class ClienteController extends ChangeNotifier {
     return clientes;
   }
 
-  // Consulta em memória; não autentica nem verifica senhas.
+  // Buscar cliente pelo e-mail
   Cliente? buscarPorEmail(String email) {
     final procurado = email.trim().toLowerCase();
+
     for (final cliente in clientes) {
-      if (cliente.email.trim().toLowerCase() == procurado) return cliente;
+      if (cliente.email.trim().toLowerCase() == procurado) {
+        return cliente;
+      }
     }
+
     return null;
   }
 
@@ -115,6 +212,7 @@ class ClienteController extends ChangeNotifier {
         return cliente;
       }
     }
+
     return null;
   }
 
@@ -125,6 +223,7 @@ class ClienteController extends ChangeNotifier {
         return cliente;
       }
     }
+
     return null;
   }
 
@@ -146,6 +245,7 @@ class ClienteController extends ChangeNotifier {
     cliente.estado = novosDados.estado;
     cliente.endereco = novosDados.endereco;
     cliente.larDeAdocao = novosDados.larDeAdocao;
+
     notifyListeners();
 
     developer.log('Cliente atualizado com sucesso!');
@@ -159,107 +259,270 @@ class ClienteController extends ChangeNotifier {
     clientes.removeWhere((cliente) => cliente.id == id);
 
     if (clientes.length < quantidadeAnterior) {
-      if (_clienteLogadoId == id) _clienteLogadoId = null;
+      if (_clienteLogadoId == id) {
+        _clienteLogadoId = null;
+      }
+
       notifyListeners();
     }
 
     return clientes.length < quantidadeAnterior;
   }
 
-  String get _sessao =>
-      _token ?? (throw const LoginException('Entre novamente para continuar.'));
   void _atualizar(Cliente c) {
     clientes.removeWhere((outro) => outro.id == c.id);
+
     clientes.add(c);
     notifyListeners();
   }
 
+  // Atualizar perfil
   Future<Cliente> atualizarPerfil() async {
-    final c = await _dadosApi.perfil(_sessao);
+    final versaoSessao = _versaoSessao;
+    final c = await _supabaseService.buscarMeuPerfilSupabase();
+    if (versaoSessao != _versaoSessao) {
+      throw const LoginException('Entre novamente para editar seu perfil.');
+    }
+    _clienteLogadoId = c.id;
     _atualizar(c);
     return c;
   }
 
-  Future<Cliente> buscarClienteRemoto(int id, {bool basico = false}) =>
-      _dadosApi.buscarId(_sessao, id, basico: basico);
+  // Buscar cliente remoto
+  Future<Cliente> buscarClienteRemoto(int id, {bool basico = false}) async {
+    final dados = basico
+        ? await _supabaseService.buscarResumoResponsavel(id)
+        : await _supabaseService.buscarPerfilPublicoSupabase(id);
+    return Cliente.fromJson({
+      ...dados,
+      'cidadeDeResidencia': dados['cidade'] ?? '',
+      'larDeAdocao': dados['lar_de_adocao'] ?? false,
+    });
+  }
+
   Future<List<Animal>> listarAnimais({
     Map<String, String> filtros = const {},
-  }) => _animaisApi.listar(_sessao, filtros: filtros);
-  Future<Animal> buscarAnimalRemoto(int id) => _animaisApi.buscar(_sessao, id);
-  Future<Animal> salvarAnimal(Animal animal, {bool editar = false}) =>
-      _animaisApi.salvar(_sessao, animal, editar: editar);
-  Future<void> apagarAnimal(int id) => _animaisApi.apagar(_sessao, id);
-  Future<Map<String, dynamic>?> carregarQuestionario() async =>
-      (await _dadosApi.requisicao(
-            'questionario.php',
-            token: _sessao,
-          ))['questionario']
-          as Map<String, dynamic>?;
-  Future<void> salvarQuestionario(Map<String, dynamic> dados) async {
-    await _dadosApi.requisicao(
-      'questionario.php',
-      token: _sessao,
-      dados: dados,
+  }) async {
+    final pagina = int.tryParse(filtros['pagina'] ?? '') ?? 1;
+    return listarAnimaisSupabase(
+      filtros: filtros,
+      pagina: filtros.containsKey('pagina') ? pagina : null,
+      somenteMeus: filtros['somenteMeus'] == 'true',
     );
+  }
+
+  Future<List<Animal>> listarAnimaisSupabase({
+    String? tipo,
+    Map<String, String> filtros = const {},
+    int? pagina,
+    bool somenteMeus = false,
+  }) async {
+    if (pagina == null) {
+      return _supabaseService.buscarAnimaisModel(tipo: tipo, filtros: filtros);
+    }
+    final dados = await _supabaseService.buscarAnimais(
+      tipo: tipo,
+      filtros: filtros,
+      pagina: pagina,
+      somenteMeus: somenteMeus,
+    );
+    return dados.map(Animal.fromJson).toList();
+  }
+
+  Future<List<Animal>> listarAnimaisDoClienteSupabase(int clienteId) async {
+    return _supabaseService.buscarAnimaisDoCliente(clienteId);
+  }
+
+  // Buscar animal por ID
+  Future<Animal> buscarAnimalRemoto(int id) =>
+      _supabaseService.buscarAnimalPorIdSupabase(id);
+
+  Future<Animal> buscarAnimalPorIdSupabase(int animalId) {
+    return _supabaseService.buscarAnimalPorIdSupabase(animalId);
+  }
+
+  Future<Map<String, dynamic>> buscarResumoResponsavelSupabase(int clienteId) {
+    return _supabaseService.buscarResumoResponsavel(clienteId);
+  }
+
+  // Salvar animal
+  Future<Animal> salvarAnimal(Animal animal, {bool editar = false}) async {
+    if (editar) {
+      await editarAnimalSupabase(animal);
+    } else {
+      await publicarAnimalSupabase(animal);
+    }
+    return animal;
+  }
+
+  Future<void> publicarAnimalSupabase(Animal animal) async {
+    await _supabaseService.publicarAnimal(animal);
     notifyListeners();
   }
 
+  Future<Animal> buscarMeuAnimalParaEditarSupabase(int animalId) {
+    return _supabaseService.buscarMeuAnimalParaEditar(animalId);
+  }
+
+  Future<void> editarAnimalSupabase(Animal animal) async {
+    await _supabaseService.editarAnimalSupabase(animal);
+    notifyListeners();
+  }
+
+  // Apagar animal
+  Future<void> apagarAnimal(int id) => apagarAnimalSupabase(id);
+
+  Future<void> apagarAnimalSupabase(int animalId) async {
+    await _supabaseService.excluirMeuAnimalSupabase(animalId);
+    notifyListeners();
+  }
+
+  // Carregar questionário
+  Future<Map<String, dynamic>?> carregarQuestionario() async {
+    final versaoSessao = _versaoSessao;
+    final clienteId = clienteLogado?.id;
+    final respostas = await _supabaseService.buscarMeuQuestionarioSupabase();
+    if (versaoSessao != _versaoSessao) {
+      throw const LoginException('Entre novamente para continuar.');
+    }
+    if (respostas != null && clienteLogado?.id == clienteId) {
+      clienteLogado?.questionarioPendente = false;
+    }
+    return respostas;
+  }
+
+  // Salvar questionário
+  Future<void> salvarQuestionario(Map<String, dynamic> dados) async {
+    final versaoSessao = _versaoSessao;
+    final clienteId = clienteLogado?.id;
+    await _supabaseService.salvarQuestionarioSupabase(dados);
+    if (versaoSessao != _versaoSessao) {
+      throw const LoginException('Entre novamente para continuar.');
+    }
+    if (clienteLogado?.id == clienteId) {
+      clienteLogado?.questionarioPendente = false;
+    }
+    notifyListeners();
+  }
+
+  // Listar adoções
   Future<List<Adocao>> listarAdocoes() async =>
-      ((await _dadosApi.requisicao('adocoes.php', token: _sessao))['adocoes']
-              as List)
-          .map((d) => Adocao.fromJson(d as Map<String, dynamic>))
-          .toList();
-  Future<Adocao> buscarAdocao(int id) async => Adocao.fromJson(
-    (await _dadosApi.requisicao(
-          'adocoes.php?acao=id&id=$id',
-          token: _sessao,
-        ))['adocao']
-        as Map<String, dynamic>,
-  );
-  Future<Adocao> solicitarAdocao(int animalId) async => Adocao.fromJson(
-    (await _dadosApi.requisicao(
-          'adocoes.php?acao=solicitar',
-          token: _sessao,
-          dados: {'id_animal': animalId},
-        ))['adocao']
-        as Map<String, dynamic>,
-  );
+      _supabaseService.listarAdocoesSupabase();
+
+  // Buscar adoção
+  Future<Adocao> buscarAdocao(int id) =>
+      _supabaseService.buscarAdocaoSupabase(id);
+
+  // Solicitar adoção
+  Future<Adocao> solicitarAdocao(int animalId) async {
+    final versaoSessao = _versaoSessao;
+    final resultado = await _supabaseService.solicitarAdocaoSupabase(animalId);
+    if (versaoSessao != _versaoSessao) {
+      throw const LoginException('Entre novamente para continuar.');
+    }
+    notifyListeners();
+    return resultado;
+  }
+
+  // Responder adoção
   Future<Adocao> responderAdocao(int id, String acao) async {
-    final d = Adocao.fromJson(
-      (await _dadosApi.requisicao(
-            'adocoes.php?acao=$acao&id=$id',
-            token: _sessao,
-            dados: {},
-          ))['adocao']
-          as Map<String, dynamic>,
-    );
+    final versaoSessao = _versaoSessao;
+    final d = await _supabaseService.responderAdocaoSupabase(id, acao);
+    if (versaoSessao != _versaoSessao) {
+      throw const LoginException('Entre novamente para continuar.');
+    }
+
     notifyListeners();
     return d;
   }
 
+  // Pesquisar clientes
   Future<List<Cliente>> pesquisarClientes(String termo) =>
-      _dadosApi.pesquisar(_sessao, termo);
+      _supabaseService.pesquisarClientesSupabase(termo);
+
+  // Editar cliente remoto
   Future<bool> editarClienteRemoto(Cliente c) async {
-    final atualizado = await _dadosApi.editar(_sessao, c);
+    if (clienteLogado?.id != c.id) {
+      throw const LoginException('Entre novamente para editar seu perfil.');
+    }
+    final versaoSessao = _versaoSessao;
+    final usuario = Supabase.instance.client.auth.currentUser;
+    final novoEmail = c.email.trim().toLowerCase();
+    final atualizado = await _supabaseService.editarMeuPerfilSupabase(c);
+    if (versaoSessao != _versaoSessao ||
+        usuario == null ||
+        Supabase.instance.client.auth.currentUser?.id != usuario.id) {
+      throw const LoginException('Entre novamente para editar seu perfil.');
+    }
+
     _atualizar(atualizado);
+    if (novoEmail != usuario.email?.trim().toLowerCase()) {
+      try {
+        // A confirmação do Auth sincroniza cliente.email no banco, não no PATCH.
+        await _supabaseAuthService.solicitarAlteracaoEmail(novoEmail);
+      } on LoginException catch (erro) {
+        throw LoginException(
+          'Os outros dados do perfil foram salvos. '
+          'A alteração do e-mail não foi concluída: ${erro.mensagem}',
+        );
+      }
+    }
     return true;
   }
 
+  // Limpar sessão
   void limparSessao() {
-    _notificacoes = [];
-    _token = null;
+    _versaoSessao++;
+    _limparNotificacoes();
     _clienteLogadoId = null;
     clientes.clear();
+
     notifyListeners();
   }
 
-  Future<void> apagarConta() async {
-    await _dadosApi.apagar(_sessao);
+  // Apagar conta
+  Future<bool> apagarConta(String senha) async {
+    final limpezaStoragePendente = await _supabaseAuthService.apagarConta(
+      senha,
+    );
+    limparSessao();
+    return limpezaStoragePendente;
+  }
+
+  // Alterar senha
+  Future<void> alterarSenha(
+    String atual,
+    String nova, {
+    String? codigoReautenticacao,
+  }) async {
+    await _supabaseAuthService.alterarSenha(
+      atual,
+      nova,
+      codigoReautenticacao: codigoReautenticacao,
+    );
+
     limparSessao();
   }
 
-  Future<void> alterarSenha(String atual, String nova) async {
-    await _dadosApi.alterarSenha(_sessao, atual, nova);
-    limparSessao();
+  Future<Map<String, dynamic>> buscarPerfilPublicoSupabase(int clienteId) {
+    return _supabaseService.buscarPerfilPublicoSupabase(clienteId);
+  }
+
+  Future<List<Animal>> listarAnimaisDisponiveisDoClienteSupabase(
+    int clienteId, {
+    int pagina = 1,
+  }) {
+    return _supabaseService.listarAnimaisDisponiveisDoClienteSupabase(
+      clienteId,
+      pagina: pagina,
+    );
+  }
+
+  Future<void> cadastrarClienteSupabase(Cliente cliente, String senha) async {
+    await _supabaseService.cadastrarClienteSupabase(cliente, senha);
+  }
+
+  Future<Map<String, dynamic>?> buscarMeuQuestionarioSupabase() async {
+    return await _supabaseService.buscarMeuQuestionarioSupabase();
   }
 }

@@ -11,12 +11,15 @@ class DadosEspecie extends ClienteController {
   final filtros = <Map<String, String>>[];
 
   @override
-  Future<Map<String, dynamic>?> carregarQuestionario() async =>
-      tipo == null ? null : {'tipo': tipo};
+  Future<Map<String, dynamic>?> buscarMeuQuestionarioSupabase() async =>
+      tipo == null ? null : {'id_cliente': 1, 'tipo': tipo};
 
   @override
-  Future<List<Animal>> listarAnimais({
+  Future<List<Animal>> listarAnimaisSupabase({
+    String? tipo,
     Map<String, String> filtros = const {},
+    int? pagina,
+    bool somenteMeus = false,
   }) async {
     this.filtros.add(filtros);
     return [];
@@ -73,15 +76,15 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(dados.filtros.single, {'acao': 'melhores', 'tipo': ?especie});
-      expect(find.text('Seus melhores Matches'), findsOneWidget);
+      expect(dados.filtros, hasLength(1));
+      expect(find.text('Amiguinhos disponíveis'), findsOneWidget);
       expect(
         find.text('Faça o teste para descobrir seus matches'),
         especie == null ? findsOneWidget : findsNothing,
       );
       dados.responder(especie == 'Gato' ? 'Cachorro' : 'Gato');
       await tester.pumpAndSettle();
-      expect(dados.filtros.last, {'acao': 'melhores', 'tipo': dados.tipo!});
+      expect(dados.filtros, hasLength(2));
       expect(
         find.text('Faça o teste para descobrir seus matches'),
         findsNothing,

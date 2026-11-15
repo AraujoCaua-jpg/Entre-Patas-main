@@ -1,7 +1,5 @@
 import 'dart:convert';
-import 'dart:async';
 
-import 'package:entre_patas/controller/cliente_controller.dart';
 import 'package:entre_patas/service/auth_api.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -20,7 +18,7 @@ void main() {
     'larDeAdocao': true,
   };
 
-  test('entra sem cadastro em memória e encerra a sessão com token', () async {
+  test('endpoint PHP legado valida perfil e usa o token ao sair', () async {
     final api = AuthApi(
       client: MockClient((request) async {
         if (request.url.path.endsWith('login.php')) {
@@ -38,19 +36,15 @@ void main() {
         return http.Response('{"mensagem":"Sessao encerrada"}', 200);
       }),
     );
-    final controller = ClienteController(authApi: api);
-    addTearDown(controller.dispose);
-    expect(controller.clienteLogado, isNull);
-    await controller.entrar(' login@example.com ', ' Senha!123 ');
-    expect(controller.clienteLogado?.id, 7);
-    expect(controller.clienteLogado?.larDeAdocao, true);
-    await controller.sair();
-    expect(controller.clienteLogado, isNull);
+    addTearDown(api.close);
+    final sessao = await api.entrar(' login@example.com ', ' Senha!123 ');
+    expect(sessao.cliente.id, 7);
+    expect(sessao.cliente.larDeAdocao, true);
+    await api.sair(sessao.token);
   });
 
-  test('senha incorreta não autentica e mostra o erro da API', () async {
-    final controller = ClienteController(
-      authApi: AuthApi(
+  test('endpoint PHP legado recusa credenciais inválidas', () async {
+    final api = AuthApi(
         client: MockClient((_) async {
           return http.Response(
             '{"erro":"Credenciais inválidas"}',
@@ -58,41 +52,28 @@ void main() {
             headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }),
-      ),
     );
-    addTearDown(controller.dispose);
+    addTearDown(api.close);
     await expectLater(
-      controller.entrar('login@example.com', 'errada'),
+      api.entrar('login@example.com', 'errada'),
       throwsA(isA<LoginException>()),
     );
-    expect(controller.clienteLogado, isNull);
-    expect(controller.clientes, isEmpty);
   });
 
   test(
-    'logout limpa sessão imediatamente mesmo com servidor lento ou offline',
+    'endpoint PHP legado aguarda resposta ao encerrar sessão',
     () async {
-      final remoto = Completer<http.Response>();
-      final controller = ClienteController(
-        authApi: AuthApi(
-          client: MockClient((request) async {
-            if (request.url.path.endsWith('login.php')) {
-              return http.Response(
-                jsonEncode({'cliente': perfil, 'token': 'token-teste'}),
-                200,
-              );
-            }
-            return remoto.future;
-          }),
-        ),
+      var autorizado = false;
+      final api = AuthApi(
+        client: MockClient((request) async {
+          expect(request.url.path, endsWith('logout.php'));
+          autorizado = request.headers['Authorization'] == 'Bearer token';
+          return http.Response('{"mensagem":"Sessao encerrada"}', 200);
+        }),
       );
-      addTearDown(controller.dispose);
-      await controller.entrar('login@example.com', 'Senha!123');
-      await controller.sair().timeout(const Duration(seconds: 1));
-      expect(controller.clienteLogado, isNull);
-      expect(controller.clientes, isEmpty);
-      remoto.complete(http.Response('{"erro":"Indisponível"}', 503));
-      await Future<void>.delayed(Duration.zero);
+      addTearDown(api.close);
+      await api.sair('token');
+      expect(autorizado, isTrue);
     },
   );
 

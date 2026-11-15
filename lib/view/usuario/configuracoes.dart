@@ -6,6 +6,7 @@ import 'package:entre_patas/view/autenticacao/bemVindo.dart';
 import 'package:entre_patas/view/usuario/alterarSenha.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../services/login_exception.dart';
 import '../core/app_colors.dart';
 import '../questionario/testeComp.dart';
 import 'editarPerfil.dart';
@@ -13,13 +14,27 @@ import 'editarPerfil.dart';
 class ConfiguracoesScreen extends StatelessWidget {
   const ConfiguracoesScreen({super.key});
 
-  void apagar(BuildContext context) {
-    showDialog(
+  Future<void> apagar(BuildContext context) async {
+    final senhaController = TextEditingController();
+    final senha = await showDialog<String>(
       context: context,
       builder: (BuildContext dialogContext) {
         return AppDialog(
           title: const Text('Apagar conta'),
-          content: const Text('Tem certeza que deseja apagar sua conta?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Tem certeza que deseja apagar sua conta?'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: senhaController,
+                obscureText: true,
+                textInputAction: TextInputAction.done,
+                decoration: const InputDecoration(labelText: 'Senha atual'),
+              ),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () {
@@ -31,38 +46,8 @@ class ConfiguracoesScreen extends StatelessWidget {
               ),
             ),
             ElevatedButton(
-              onPressed: () async {
-                Navigator.of(dialogContext).pop();
-                try {
-                  await ClientesScope.of(context).apagarConta();
-                } catch (_) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Não foi possível apagar a conta. Tente novamente.',
-                        ),
-                      ),
-                    );
-                  }
-                  return;
-                }
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Conta apagada!'),
-                    duration: Duration(seconds: 3),
-                  ),
-                );
-
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const BemVindoScreen(), //HOME
-                  ),
-                  (Route<dynamic> route) => false,
-                );
-              },
+              onPressed: () =>
+                  Navigator.of(dialogContext).pop(senhaController.text),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.laranja,
                 padding: const EdgeInsets.all(16),
@@ -72,6 +57,44 @@ class ConfiguracoesScreen extends StatelessWidget {
           ],
         );
       },
+    );
+    senhaController.dispose();
+    if (senha == null || !context.mounted) return;
+
+    var limpezaStoragePendente = false;
+    try {
+      limpezaStoragePendente = await ClientesScope.of(context)
+          .apagarConta(senha);
+    } catch (erro) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              erro is LoginException
+                  ? erro.mensagem
+                  : 'Não foi possível apagar a conta. Tente novamente.',
+            ),
+          ),
+        );
+      }
+      return;
+    }
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          limpezaStoragePendente
+              ? 'Conta apagada. A limpeza de alguns arquivos será concluída pelo servidor.'
+              : 'Conta apagada!',
+        ),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const BemVindoScreen()),
+      (Route<dynamic> route) => false,
     );
   }
 

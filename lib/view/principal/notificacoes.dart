@@ -2,7 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../controller/clientes_scope.dart';
 import '../../model/adocao.dart';
-import '../../service/auth_api.dart';
+import '../../services/login_exception.dart';
 import '../animal/adocao.dart';
 import '../core/app_colors.dart';
 
@@ -14,13 +14,20 @@ class NotificacoesScreen extends StatefulWidget {
 
 class _NotificacoesScreenState extends State<NotificacoesScreen> {
   Future<List<Adocao>>? _consulta;
+  int? _clienteConsulta;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _consulta ??= ClientesScope.of(context).atualizarNotificacoes();
+    final controller = ClientesScope.of(context);
+    final clienteId = controller.clienteLogado?.id;
+    if (_consulta == null || _clienteConsulta != clienteId) {
+      _clienteConsulta = clienteId;
+      _consulta = controller.atualizarNotificacoes();
+    }
   }
 
   void _atualizar() {
+    if (!mounted) return;
     final consulta = ClientesScope.of(context).atualizarNotificacoes();
     setState(() {
       _consulta = consulta;
@@ -47,6 +54,9 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
     body: FutureBuilder<List<Adocao>>(
       future: _consulta,
       builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
         if (snapshot.hasError) {
           return Center(
             child: TextButton(
@@ -62,9 +72,10 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
-        final lista = ClientesScope.of(context).notificacoes;
+        // Mantém o histórico acessível; o controller usa só as novas no badge.
+        final lista = snapshot.data!;
         if (lista.isEmpty) {
-          return const Center(child: Text('Nenhuma notificação nova.'));
+          return const Center(child: Text('Nenhuma solicitação de adoção.'));
         }
         return ListView.builder(
           padding: const EdgeInsets.all(16),

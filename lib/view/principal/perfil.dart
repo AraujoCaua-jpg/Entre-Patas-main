@@ -6,8 +6,9 @@ import '../usuario/configuracoes.dart';
 import '../usuario/editarPerfil.dart';
 import '../animal/animaisCadastrados.dart';
 import '../animal/fichaAnimal.dart';
+import '../core/foto_perfil_avatar.dart';
 import '../../model/animais.dart';
-import '../../service/auth_api.dart';
+import '../../services/login_exception.dart';
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -18,10 +19,13 @@ class PerfilScreen extends StatefulWidget {
 class _PerfilScreenState extends State<PerfilScreen> {
   Future<List<Animal>>? _consulta;
   void _recarregar() {
-    final c = ClientesScope.of(context);
-    final consulta = c.listarAnimais(
-      filtros: {'id_cliente': '${c.clienteLogado?.id ?? 0}'},
-    );
+    final controller = ClientesScope.of(context);
+    final cliente = controller.clienteLogado;
+
+    if (cliente == null) return;
+
+    final consulta = controller.listarAnimaisDoClienteSupabase(cliente.id);
+
     setState(() {
       _consulta = consulta;
     });
@@ -30,7 +34,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_consulta == null) _recarregar();
+    // Atualiza os animais também após adoções e exclusões em outras telas.
+    _recarregar();
   }
 
   @override
@@ -66,14 +71,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
               ],
             ),
 
-            CircleAvatar(
+            FotoPerfilAvatar(
+              url: cliente.imageUrl,
               radius: 100,
-              backgroundImage: cliente.imageUrl?.isNotEmpty == true
-                  ? NetworkImage(cliente.imageUrl!)
-                  : null,
-              child: cliente.imageUrl?.isNotEmpty == true
-                  ? null
-                  : const Icon(Icons.person, size: 80),
+              iconSize: 80,
             ),
             SizedBox(height: 10),
 
@@ -249,7 +250,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
                                 },
                                 child: _PetCard(
                                   name: a.nome,
-                                  age: '${a.idade} ano(s)',
+                                  age: a.idade == null
+                                      ? 'Idade não informada'
+                                      : '${a.idade} ano(s)',
                                   gender: a.sexo,
                                   match: (a.compatibilidade?['total'] as num?)
                                       ?.toInt(),

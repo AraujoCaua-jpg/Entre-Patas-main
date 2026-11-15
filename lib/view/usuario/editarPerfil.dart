@@ -1,6 +1,4 @@
-import '../../service/auth_api.dart';
-
-import 'package:flutter/services.dart' show Uint8List;
+import '../../services/login_exception.dart';
 
 import '../core/foto_perfil_picker.dart';
 
@@ -10,6 +8,7 @@ import '../../model/cliente.dart';
 import '../../controller/clientes_scope.dart';
 import '../core/app_colors.dart';
 import '../core/telefone_formatter.dart';
+import '../../services/foto_perfil_url.dart';
 
 class EditarPerfilScreen extends StatefulWidget {
   const EditarPerfilScreen({super.key});
@@ -22,9 +21,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   int? _clienteId;
   bool _dadosCarregados = false;
   bool _salvando = false;
-  Uint8List? _foto;
   String? _fotoUrl;
-  bool _selecionandoFoto = false;
 
   @override
   void didChangeDependencies() {
@@ -119,7 +116,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   }
 
   Future<void> editarConta() async {
-    if (_salvando || _selecionandoFoto) return;
+    if (_salvando) return;
     final controller = ClientesScope.of(context);
     final cliente = controller.clienteLogado;
     if (cliente == null || cliente.id != _clienteId) {
@@ -153,6 +150,8 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       mensagem = 'Use apenas letras, números e underline (_).';
     } else if (larDeAdocao && enderecoController.text.trim().isEmpty) {
       mensagem = 'Informe o endereço do lar de adoção.';
+    } else if (_fotoUrl != null && !FotoPerfilUrl.valida(_fotoUrl)) {
+      mensagem = 'Digite um link de imagem válido (http ou https).';
     } else if (controller.listarClientes().any(
       (outro) =>
           outro.id != cliente.id &&
@@ -179,7 +178,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             usuario: usuarioController.text.trim(),
             cidadeDeResidencia: cidadeController.text.trim(),
             imageUrl: _fotoUrl,
-            fotoCadastro: _foto,
             estado: estado,
             larDeAdocao: larDeAdocao,
             endereco: larDeAdocao ? enderecoController.text.trim() : null,
@@ -187,9 +185,21 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         );
         if (!mounted || !atualizado) return;
         FocusScope.of(context).unfocus();
+        final emailPendente =
+            emailController.text.trim().toLowerCase() !=
+            controller.clienteLogado?.email.trim().toLowerCase();
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
-          ..showSnackBar(const SnackBar(content: Text('Perfil atualizado!')));
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                emailPendente
+                    ? 'Perfil atualizado! Confirme a alteração de e-mail '
+                          'pelas mensagens enviadas pelo Supabase.'
+                    : 'Perfil atualizado!',
+              ),
+            ),
+          );
         Navigator.pop(context, true);
       } on LoginException catch (e) {
         if (mounted) {
@@ -237,11 +247,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             FotoPerfilPicker(
               url: _fotoUrl,
               enabled: !_salvando && _clienteId != null,
-              onChanged: (foto) => setState(() {
-                _foto = foto;
-                if (foto == null) _fotoUrl = null;
-              }),
-              onBusy: (ocupado) => setState(() => _selecionandoFoto = ocupado),
+              onChanged: (url) => setState(() => _fotoUrl = url),
             ),
             const SizedBox(height: 24),
             Row(
@@ -498,9 +504,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             SizedBox(
               height: 62,
               child: ElevatedButton(
-                onPressed: _salvando || _selecionandoFoto || _clienteId == null
-                    ? null
-                    : editarConta,
+                onPressed: _salvando || _clienteId == null ? null : editarConta,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.laranja,
                   foregroundColor: Colors.white,

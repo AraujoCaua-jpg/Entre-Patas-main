@@ -4,7 +4,8 @@ import 'package:material_ui/material_ui.dart';
 import '../../controller/clientes_scope.dart';
 import '../../model/adocao.dart';
 import '../../model/animais.dart';
-import '../../service/auth_api.dart';
+import '../../services/login_exception.dart';
+import '../../services/compatibilidade_service.dart';
 import '../core/app_colors.dart';
 import '../core/usuario_resumo.dart';
 import '../usuario/editarPerfil.dart';
@@ -22,39 +23,76 @@ class _AdocaoScreenState extends State<AdocaoScreen> {
   Adocao? _adocao;
   bool _iniciado = false, _carregando = true, _ocupado = false;
   String? _erro;
+  int? _clienteConsulta;
+  int _versaoConsulta = 0;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_iniciado) {
+    final clienteId = ClientesScope.of(context).clienteLogado?.id;
+    if (!_iniciado || _clienteConsulta != clienteId) {
       _iniciado = true;
+      _clienteConsulta = clienteId;
+      _carregar();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant AdocaoScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.animalId != widget.animalId ||
+        oldWidget.adocaoId != widget.adocaoId) {
       _carregar();
     }
   }
 
   Future<void> _carregar() async {
+    final versao = ++_versaoConsulta;
+    final c = ClientesScope.of(context);
     setState(() {
       _carregando = true;
       _erro = null;
+      _animal = null;
+      _adocao = null;
     });
     try {
-      final c = ClientesScope.of(context);
+      if (c.clienteLogado == null) {
+        throw const LoginException('Entre novamente para continuar.');
+      }
       if (widget.adocaoId != null) {
         final d = await c.buscarAdocao(widget.adocaoId!);
-        if (!mounted) return;
+        if (!mounted || versao != _versaoConsulta) return;
         _adocao = d;
       } else {
-        final a = await c.buscarAnimalRemoto(widget.animalId!);
-        if (!mounted) return;
+        final a = await c.buscarAnimalPorIdSupabase(widget.animalId!);
+        if (!mounted || versao != _versaoConsulta) return;
+        if (a.cidade.isEmpty || a.estado.isEmpty) {
+          final responsavel = await c.buscarPerfilPublicoSupabase(a.idCliente);
+          a.cidade =
+              (responsavel['cidade'] ??
+                      responsavel['cidadeDeResidencia'] ??
+                      a.cidade)
+                  .toString();
+          a.estado = (responsavel['estado'] ?? a.estado).toString();
+        }
+        a.compatibilidade = a.idCliente == c.clienteLogado?.id
+            ? null
+            : CompatibilidadeService.calcular(
+                a,
+                await c.buscarMeuQuestionarioSupabase(),
+              );
+        if (!mounted || versao != _versaoConsulta) return;
         _animal = a;
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && versao == _versaoConsulta) {
         _erro = e is LoginException
             ? e.mensagem
             : 'Não foi possível carregar a solicitação.';
       }
     } finally {
-      if (mounted) setState(() => _carregando = false);
+      if (mounted && versao == _versaoConsulta) {
+        setState(() => _carregando = false);
+      }
     }
   }
 
@@ -86,19 +124,20 @@ class _AdocaoScreenState extends State<AdocaoScreen> {
       ),
     );
     if (confirmou != true || !mounted) return;
+    final versao = _versaoConsulta;
     setState(() => _ocupado = true);
     try {
       final c = ClientesScope.of(context);
       final resultado = acao == 'solicitar'
           ? await c.solicitarAdocao(_animal!.id)
           : await c.responderAdocao(_adocao!.id, acao);
-      if (!mounted) return;
+      if (!mounted || versao != _versaoConsulta) return;
       setState(() => _adocao = resultado);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Solicitação atualizada.')));
     } catch (e) {
-      if (mounted) {
+      if (mounted && versao == _versaoConsulta) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -149,6 +188,7 @@ class _AdocaoScreenState extends State<AdocaoScreen> {
     final d = _adocao?.detalhes ?? <String, dynamic>{};
     final nome = d['animal_nome'] as String? ?? _animal?.nome ?? '';
     final imagem = d['animal_imagem'] as String? ?? _animal?.imageUrl ?? '';
+    final idade = d['animal_idade'] ?? _animal?.idade;
     final dono = _adocao?.idDono ?? _animal?.idCliente;
     final souDono = dono == c?.id;
     final status = _adocao?.status ?? 'Ainda não enviada';
@@ -217,7 +257,7 @@ class _AdocaoScreenState extends State<AdocaoScreen> {
                           children: [
                             Text(nome, style: const TextStyle(fontSize: 24)),
                             Text(
-                              '${d['animal_idade'] ?? _animal?.idade} ano(s) - ${d['animal_sexo'] ?? _animal?.sexo}',
+                              '${idade == null ? 'Idade não informada' : '$idade ano(s)'} - ${d['animal_sexo'] ?? _animal?.sexo}',
                             ),
                             Text(
                               '${d['cidadeDeResidencia'] ?? _animal?.cidade} - ${d['estado'] ?? _animal?.estado}',
@@ -277,7 +317,10 @@ class _AdocaoScreenState extends State<AdocaoScreen> {
                     ],
                   ),
                 ),
-                if (_adocao == null && !souDono && _animal?.status != 'Adotado')
+                if (_adocao == null &&
+                    c != null &&
+                    !souDono &&
+                    _animal?.status == 'Disponível')
                   _botao('Enviar solicitação', () => _acao('solicitar')),
                 if (_adocao == null && souDono)
                   const Padding(

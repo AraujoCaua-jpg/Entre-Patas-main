@@ -5,7 +5,8 @@ import 'package:material_ui/material_ui.dart';
 import '../core/app_colors.dart';
 import '../../controller/clientes_scope.dart';
 import '../../model/animais.dart';
-import '../../service/auth_api.dart';
+import '../../services/compatibilidade_service.dart';
+import '../../services/login_exception.dart';
 import '../animal/fichaAnimal.dart';
 import '../questionario/testeComp.dart';
 
@@ -21,6 +22,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   Future<List<Animal>>? _consulta;
   bool _temQuestionario = false;
+  bool _questionarioDisponivel = false;
 
   @override
   void didChangeDependencies() {
@@ -31,16 +33,60 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<List<Animal>> _carregar() async {
     final controller = ClientesScope.of(context);
-    final respostas = await controller.carregarQuestionario();
+
+    // Busca as respostas do usuário autenticado.
+    final questionario = await controller.buscarMeuQuestionarioSupabase();
+
+    // Busca os animais disponíveis no Supabase.
+    final animais = await controller.listarAnimaisSupabase();
+
     if (!mounted) return [];
-    _temQuestionario = respostas != null;
-    final tipo = respostas?['tipo'];
-    return controller.listarAnimais(
-      filtros: {
-        'acao': 'melhores',
-        if (tipo == 'Cachorro' || tipo == 'Gato') 'tipo': tipo as String,
-      },
-    );
+
+    _temQuestionario = questionario != null;
+    _questionarioDisponivel = true;
+
+    // Se ainda não respondeu ao teste,
+    // não exibe recomendações sem cálculo.
+    if (questionario == null) {
+      return [];
+    }
+
+    final meuId = (questionario['id_cliente'] as num).toInt();
+
+    // Exclui animais cadastrados pelo próprio usuário.
+    final disponiveis = animais
+        .where((animal) => animal.idCliente != meuId)
+        .toList();
+
+    // Calcula a compatibilidade individualmente.
+    for (final animal in disponiveis) {
+      animal.compatibilidade = CompatibilidadeService.calcular(
+        animal,
+        questionario,
+      );
+    }
+
+    // Ordena pela maior compatibilidade.
+    // Em caso de empate, usa nome e depois ID.
+    disponiveis.sort((a, b) {
+      final pontuacaoA = (a.compatibilidade?['total'] as num?)?.toInt() ?? -1;
+
+      final pontuacaoB = (b.compatibilidade?['total'] as num?)?.toInt() ?? -1;
+
+      final porPontuacao = pontuacaoB.compareTo(pontuacaoA);
+
+      if (porPontuacao != 0) return porPontuacao;
+
+      final porNome = a.nome.compareTo(b.nome);
+
+      if (porNome != 0) return porNome;
+
+      return a.id.compareTo(b.id);
+    });
+
+    debugPrint('Home: ${disponiveis.length} animais classificados');
+
+    return disponiveis;
   }
 
   Future<void> _recarregar() async {
@@ -77,11 +123,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 const _BannerHome(),
                 const SizedBox(height: 8),
                 const Text(
-                  'Seus melhores Matches',
+                  'Amiguinhos disponíveis',
                   style: TextStyle(fontSize: 14, height: 1.2),
                 ),
                 const Text(
-                  'Amiguinhos que combinam com você!',
+                  'Encontre seu melhor amigo aqui!',
                   style: TextStyle(fontSize: 10, color: AppColors.cinzaEscuro),
                 ),
                 const SizedBox(height: 8),
@@ -116,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (!_temQuestionario)
+                        if (_questionarioDisponivel && !_temQuestionario)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 12),
                             child: TextButton.icon(
@@ -404,7 +450,9 @@ class _PetCard extends StatelessWidget {
                 ),
                 _detail(
                   Icons.pets_outlined,
-                  '${animal.idade} ${animal.idade == 1 ? 'ano' : 'anos'}',
+                  animal.idade == null
+                      ? 'Idade não informada'
+                      : '${animal.idade} ${animal.idade == 1 ? 'ano' : 'anos'}',
                 ),
                 _detail(
                   animal.sexo == 'Fêmea' ? Icons.female : Icons.male,

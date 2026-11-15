@@ -1,0 +1,938 @@
+import 'dart:async';
+
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../model/animais.dart';
+import '../model/adocao.dart';
+import '../model/cliente.dart';
+import 'foto_perfil_url.dart';
+import 'login_exception.dart';
+
+class SupabaseService {
+  final SupabaseClient _client = Supabase.instance.client;
+
+  Future<List<Adocao>> listarAdocoesSupabase() async {
+    final dados = await _executarAdocaoRpc('listar_minhas_adocoes');
+    if (dados is! List) {
+      throw const LoginException('Não foi possível carregar as solicitações.');
+    }
+    return dados.map((item) => _converterAdocao(item)).toList();
+  }
+
+  Future<Adocao> buscarAdocaoSupabase(int adocaoId) async {
+    _validarIdAdocao(adocaoId);
+    return _converterAdocao(
+      await _executarAdocaoRpc(
+        'buscar_minha_adocao',
+        params: {'p_adocao_id': adocaoId},
+      ),
+    );
+  }
+
+  Future<Adocao> solicitarAdocaoSupabase(int animalId) async {
+    _validarIdAdocao(animalId);
+    return _converterAdocao(
+      await _executarAdocaoRpc(
+        'solicitar_adocao',
+        params: {'p_animal_id': animalId},
+      ),
+    );
+  }
+
+  Future<Adocao> responderAdocaoSupabase(int adocaoId, String acao) async {
+    _validarIdAdocao(adocaoId);
+    if (!const {'aceitar', 'recusar', 'cancelar'}.contains(acao)) {
+      throw const LoginException('Você não pode realizar esta ação.');
+    }
+    return _converterAdocao(
+      await _executarAdocaoRpc(
+        'responder_adocao',
+        params: {'p_adocao_id': adocaoId, 'p_acao': acao},
+      ),
+    );
+  }
+
+  void _validarIdAdocao(int id) {
+    if (id <= 0) throw const LoginException('ID inválido.');
+  }
+
+  Adocao _converterAdocao(dynamic dados) {
+    try {
+      return Adocao.fromJson(Map<String, dynamic>.from(dados as Map));
+    } catch (_) {
+      throw const LoginException('Não foi possível carregar a solicitação.');
+    }
+  }
+
+  Future<dynamic> _executarRpcNaSessaoAtual(
+    String nome, {
+    Map<String, dynamic> params = const {},
+  }) async {
+    final sessao = _client.auth.currentSession;
+    if (sessao == null || _client.auth.currentUser == null) {
+      throw const LoginException('Entre novamente para continuar.');
+    }
+    var sessaoSubstituida = false;
+    var sessaoObservada = false;
+    final inicioObservado = Completer<void>();
+    final alteracoesAuth = _client.auth.onAuthStateChange.listen(
+      (estado) {
+        // O SDK reproduz o histórico. Só observa mudanças posteriores ao
+        // evento da instância de sessão na qual esta operação começou.
+        if (!sessaoObservada) {
+          sessaoObservada = identical(estado.session, sessao);
+          if (sessaoObservada) inicioObservado.complete();
+          return;
+        }
+        if (estado.event == AuthChangeEvent.signedOut ||
+            ((estado.event == AuthChangeEvent.signedIn ||
+                    estado.event == AuthChangeEvent.passwordRecovery) &&
+                !identical(estado.session, sessao))) {
+          sessaoSubstituida = true;
+        }
+      },
+      // A RPC trata seus próprios erros; uma falha transitória de renovação
+      // não deve gerar uma exceção não tratada neste observador temporário.
+      onError: (Object _) {},
+    );
+    void validarSessao() {
+      if (sessaoSubstituida ||
+          _client.auth.currentUser?.id != sessao.user.id ||
+          _client.auth.currentSession == null) {
+        throw const LoginException('Entre novamente para continuar.');
+      }
+    }
+
+    try {
+      await inicioObservado.future.timeout(
+        const Duration(seconds: 3),
+        onTimeout: () =>
+            throw const LoginException('Entre novamente para continuar.'),
+      );
+      // Drena os eventos reproduzidos antes de enviar uma operação. Isso
+      // também detecta uma troca de sessão ocorrida durante a assinatura.
+      await Future<void>.delayed(Duration.zero);
+      validarSessao();
+      final dados = await _client.rpc(nome, params: params);
+      // Renovar o token mantém a sessão. Logout ou um novo login, inclusive
+      // da mesma conta, invalidam a resposta iniciada na sessão anterior.
+      await Future<void>.delayed(Duration.zero);
+      validarSessao();
+      return dados;
+    } finally {
+      await alteracoesAuth.cancel();
+    }
+  }
+
+  Future<dynamic> _executarAdocaoRpc(
+    String nome, {
+    Map<String, dynamic> params = const {},
+  }) async {
+    try {
+      // O banco identifica adotante e responsável pelo auth.uid(). O app envia
+      // somente o identificador do animal/pedido e a ação, nunca status ou donos.
+      return await _executarRpcNaSessaoAtual(nome, params: params);
+    } on LoginException {
+      rethrow;
+    } on PostgrestException catch (erro) {
+      throw _erroAdocao(erro);
+    } catch (_) {
+      throw const LoginException(
+        'Não foi possível concluir a solicitação de adoção. '
+        'Confira a conexão e tente novamente.',
+      );
+    }
+  }
+
+  LoginException _erroAdocao(PostgrestException erro) {
+    if (const {'PGRST202', '42883', 'PGRST205', '42P01'}.contains(erro.code)) {
+      return const LoginException(
+        'As solicitações de adoção ainda precisam ser configuradas no Supabase.',
+      );
+    }
+    if (erro.code == '23505') {
+      return const LoginException(
+        'Já existe uma solicitação em andamento ou aprovada para este animal.',
+      );
+    }
+    const mensagensConhecidas = {
+      'ID inválido.',
+      'Entre novamente para continuar.',
+      'Perfil não encontrado ou inativo.',
+      'Solicitação não encontrada.',
+      'Animal não encontrado.',
+      'Você não pode solicitar a adoção do próprio animal.',
+      'Este animal não está disponível para adoção.',
+      'Você já possui uma solicitação em andamento para este animal.',
+      'Você não pode realizar esta ação.',
+      'Esta solicitação já foi finalizada.',
+      'Não é possível aprovar esta adoção.',
+    };
+    if (const {
+          'PT400',
+          'PT401',
+          'PT403',
+          'PT404',
+          'PT409',
+          'P0001',
+        }.contains(erro.code) &&
+        mensagensConhecidas.contains(erro.message)) {
+      return LoginException(erro.message);
+    }
+    if (const {
+      'PT401',
+      'PGRST301',
+      'PGRST302',
+      'PGRST303',
+    }.contains(erro.code)) {
+      return const LoginException('Entre novamente para continuar.');
+    }
+    if (erro.code == '42501' || erro.code == 'PT403') {
+      return const LoginException('Você não pode realizar esta ação.');
+    }
+    return const LoginException(
+      'Não foi possível concluir a solicitação de adoção. Tente novamente.',
+    );
+  }
+
+  // Ativar somente após configurar a sincronização do e-mail confirmado no banco.
+  static const alteracaoEmailHabilitada = bool.fromEnvironment(
+    'SUPABASE_PROFILE_EMAIL_SYNC_ENABLED',
+    defaultValue: false,
+  );
+
+  Future<Cliente> buscarMeuPerfilSupabase() async {
+    final usuario = _client.auth.currentUser;
+    if (usuario == null) {
+      throw const LoginException('Entre novamente para editar seu perfil.');
+    }
+    try {
+      final dados = await _client
+          .from('cliente')
+          .select()
+          .eq('auth_user_id', usuario.id)
+          .eq('ativo', true)
+          .maybeSingle();
+      if (_client.auth.currentUser?.id != usuario.id) {
+        throw const LoginException('Entre novamente para editar seu perfil.');
+      }
+      if (dados == null) {
+        throw const LoginException('Perfil não encontrado ou inativo.');
+      }
+      final imagemBanco = dados['imagem']?.toString();
+      final imagemAuth =
+          usuario.userMetadata?['imagem']?.toString() ??
+          usuario.userMetadata?['avatar_url']?.toString();
+      final imagem = FotoPerfilUrl.valida(imagemBanco)
+          ? imagemBanco
+          : FotoPerfilUrl.valida(imagemAuth)
+          ? imagemAuth
+          : null;
+      return Cliente.fromJson({...dados, 'imagem': imagem});
+    } on PostgrestException catch (erro) {
+      throw _erroPerfil(erro);
+    }
+  }
+
+  Future<Cliente> editarMeuPerfilSupabase(Cliente cliente) async {
+    final usuario = _client.auth.currentUser;
+    if (usuario == null) {
+      throw const LoginException('Entre novamente para editar seu perfil.');
+    }
+    _validarPerfil(cliente);
+    final novoEmail = cliente.email.trim().toLowerCase();
+    if (novoEmail != usuario.email?.trim().toLowerCase() &&
+        !alteracaoEmailHabilitada) {
+      throw const LoginException(
+        'A alteração de e-mail ainda precisa ser habilitada com segurança. '
+        'Mantenha seu e-mail atual para salvar os outros dados.',
+      );
+    }
+    final imagem = cliente.imageUrl?.trim();
+
+    try {
+      // Lista explícita: e-mail é gerenciado pelo Auth, nunca por este PATCH.
+      final dados = await _client
+          .from('cliente')
+          .update({
+            'nome': cliente.nome.trim(),
+            'sobrenome': cliente.sobrenome.trim(),
+            'telefone': cliente.telefone.replaceAll(RegExp(r'\D'), ''),
+            'usuario': cliente.usuario.trim(),
+            'cidadeDeResidencia': cliente.cidadeDeResidencia.trim(),
+            'estado': cliente.estado,
+            'larDeAdocao': cliente.larDeAdocao,
+            'endereco': cliente.larDeAdocao ? cliente.endereco?.trim() : null,
+            'imagem': (imagem?.isNotEmpty ?? false) ? imagem : null,
+          })
+          .eq('id', cliente.id)
+          .eq('auth_user_id', usuario.id)
+          .eq('ativo', true)
+          .select()
+          .maybeSingle();
+      if (_client.auth.currentUser?.id != usuario.id) {
+        throw const LoginException('Entre novamente para editar seu perfil.');
+      }
+      if (dados == null) {
+        throw const LoginException('Perfil não encontrado ou sem permissão.');
+      }
+      return Cliente.fromJson(dados);
+    } on PostgrestException catch (erro) {
+      throw _erroPerfil(erro);
+    }
+  }
+
+  LoginException _erroPerfil(PostgrestException erro) {
+    if (erro.code == '23505') {
+      return const LoginException(
+        'E-mail, telefone ou nome de usuário já cadastrado.',
+      );
+    }
+    if (erro.code == '42501') {
+      return const LoginException(
+        'Você não tem permissão para editar este perfil.',
+      );
+    }
+    if (erro.code == '23514' || erro.code == '22001') {
+      return const LoginException('Confira os dados informados no perfil.');
+    }
+    return const LoginException(
+      'Não foi possível atualizar o perfil. Confira a conexão e tente novamente.',
+    );
+  }
+
+  void _validarPerfil(Cliente cliente) {
+    final campos = {
+      'nome': (cliente.nome, 50),
+      'sobrenome': (cliente.sobrenome, 100),
+      'e-mail': (cliente.email, 100),
+      'usuário': (cliente.usuario, 50),
+      'cidade': (cliente.cidadeDeResidencia, 100),
+    };
+    for (final campo in campos.entries) {
+      final texto = campo.value.$1.trim();
+      if (texto.isEmpty || texto.runes.length > campo.value.$2) {
+        throw LoginException('Confira o campo ${campo.key}.');
+      }
+    }
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(cliente.email.trim())) {
+      throw const LoginException('Digite um e-mail válido.');
+    }
+    if (!RegExp(r'^\d{10,11}$')
+        .hasMatch(cliente.telefone.replaceAll(RegExp(r'\D'), ''))) {
+      throw const LoginException('Digite um telefone com DDD.');
+    }
+    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(cliente.usuario.trim())) {
+      throw const LoginException('Use apenas letras, números e underline (_).');
+    }
+    const estados = {
+      'AC',
+      'AL',
+      'AP',
+      'AM',
+      'BA',
+      'CE',
+      'DF',
+      'ES',
+      'GO',
+      'MA',
+      'MT',
+      'MS',
+      'MG',
+      'PA',
+      'PB',
+      'PR',
+      'PE',
+      'PI',
+      'RJ',
+      'RN',
+      'RS',
+      'RO',
+      'RR',
+      'SC',
+      'SP',
+      'SE',
+      'TO',
+    };
+    if (!estados.contains(cliente.estado)) {
+      throw const LoginException('Selecione o estado.');
+    }
+    if (cliente.larDeAdocao && (cliente.endereco?.trim().isEmpty ?? true)) {
+      throw const LoginException('Informe o endereço do lar de adoção.');
+    }
+    if ((cliente.endereco?.runes.length ?? 0) > 255 ||
+        (cliente.imageUrl?.runes.length ?? 0) > 255) {
+      throw const LoginException(
+        'Endereço e imagem devem ter até 255 caracteres.',
+      );
+    }
+    if (cliente.imageUrl != null &&
+        cliente.imageUrl!.trim().isNotEmpty &&
+        !FotoPerfilUrl.valida(cliente.imageUrl)) {
+      throw const LoginException(
+        'Digite um link de imagem válido (http ou https).',
+      );
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> buscarAnimais({
+    String? tipo,
+    Map<String, String> filtros = const {},
+    int pagina = 1,
+    int? clienteId,
+    bool somenteMeus = false,
+    int? animalId,
+  }) async {
+    final estado = filtros['estado']?.trim() ?? '';
+    final cidade = filtros['cidade']?.trim() ?? '';
+
+    if (estado.isNotEmpty && cidade.isNotEmpty) {
+      final dados = await _client.rpc('ep_animais_perto_de_mim');
+
+      return (dados as List)
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+    }
+
+    final usuario = _client.auth.currentUser;
+    int? meuClienteId;
+
+    if (usuario != null) {
+      final perfil = await _client
+          .from('cliente')
+          .select('id')
+          .eq('auth_user_id', usuario.id)
+          .maybeSingle();
+
+      if (perfil != null) {
+        meuClienteId = int.tryParse('${perfil['id']}');
+      }
+    }
+
+    var consulta = _client.from('animal').select();
+
+    final idFiltro = clienteId ?? int.tryParse(filtros['id_cliente'] ?? '');
+
+    if (somenteMeus) {
+      if (meuClienteId == null) {
+        throw const LoginException('Perfil não encontrado.');
+      }
+      consulta = consulta.eq('id_cliente', meuClienteId).eq('ativo', true);
+    } else {
+      consulta = consulta.eq('ativo', true).eq('status', 'Disponível');
+
+      if (idFiltro != null) {
+        consulta = consulta.eq('id_cliente', idFiltro);
+      } else if (meuClienteId != null) {
+        consulta = consulta.neq('id_cliente', meuClienteId);
+      }
+    }
+
+    if (animalId != null) {
+      consulta = consulta.eq('id', animalId);
+    }
+
+    final tipoFiltro = tipo ?? filtros['tipo'];
+
+    if (tipoFiltro != null && tipoFiltro.isNotEmpty) {
+      if (tipoFiltro == 'Outros') {
+        consulta = consulta.not('tipo', 'in', '("Cachorro","Gato")');
+      } else {
+        consulta = consulta.eq('tipo', tipoFiltro);
+      }
+    }
+
+    final termo = filtros['q']?.trim() ?? '';
+    if (termo.isNotEmpty) {
+      consulta = consulta.ilike('nome', '%$termo%');
+    }
+
+    for (final campo in [
+      'sexo',
+      'porte',
+      'energia',
+      'convivencia',
+      'carencia',
+    ]) {
+      final valor = filtros[campo];
+      if (valor != null && valor.isNotEmpty) {
+        consulta = consulta.eq(campo, valor);
+      }
+    }
+
+    if (somenteMeus && (filtros['status']?.isNotEmpty ?? false)) {
+      consulta = consulta.eq('status', filtros['status']!);
+    }
+
+    final inicio = ((pagina < 1 ? 1 : pagina) - 1) * 50;
+
+    final dados = await consulta.order('nome').range(inicio, inicio + 49);
+
+    return dados.map((item) => Map<String, dynamic>.from(item)).toList();
+  }
+
+  Future<List<Animal>> buscarAnimaisModel({
+    String? tipo,
+    Map<String, String> filtros = const {},
+  }) async {
+    final todos = <Animal>[];
+    for (var pagina = 1; pagina <= 1000; pagina++) {
+      final dados = await buscarAnimais(
+        tipo: tipo,
+        filtros: filtros,
+        pagina: pagina,
+      );
+      todos.addAll(dados.map(Animal.fromJson));
+      if (dados.length < 50) return todos;
+    }
+    throw const LoginException(
+      'Há muitos animais para carregar de uma só vez. Use a pesquisa paginada.',
+    );
+  }
+
+  Future<List<Animal>> buscarAnimaisDoCliente(int clienteId) async {
+    final todos = <Animal>[];
+    for (var pagina = 1; pagina <= 1000; pagina++) {
+      final dados = await buscarAnimais(
+        pagina: pagina,
+        clienteId: clienteId,
+        somenteMeus: true,
+      );
+      todos.addAll(dados.map(Animal.fromJson));
+      if (dados.length < 50) return todos;
+    }
+    throw const LoginException(
+      'Há muitos animais para carregar de uma só vez. Use a paginação.',
+    );
+  }
+
+  Future<void> publicarAnimal(Animal animal) async {
+    final usuario = _client.auth.currentUser;
+
+    if (usuario == null) {
+      throw Exception('Entre novamente para publicar um animal.');
+    }
+
+    // Busca o perfil vinculado à conta autenticada
+    final perfil = await _client
+        .from('cliente')
+        .select('id, ativo')
+        .eq('auth_user_id', usuario.id)
+        .maybeSingle();
+
+    if (perfil == null || perfil['ativo'] != true) {
+      throw Exception('Perfil não encontrado ou inativo.');
+    }
+
+    // Publica o animal no Supabase
+    final dados = await _client
+        .from('animal')
+        .insert({
+          ...animal.toJson(),
+          'id_cliente': perfil['id'],
+          'ativo': true,
+          'status': 'Disponível',
+        })
+        .select()
+        .single();
+    animal.id = (dados['id'] as num).toInt();
+    animal.idCliente = (dados['id_cliente'] as num).toInt();
+  }
+
+  Future<Animal> buscarMeuAnimalParaEditar(int animalId) async {
+    final usuario = _client.auth.currentUser;
+    if (usuario == null) {
+      throw Exception('Entre novamente.');
+    }
+
+    final perfil = await _client
+        .from('cliente')
+        .select('id')
+        .eq('auth_user_id', usuario.id)
+        .maybeSingle();
+
+    if (perfil == null) {
+      throw Exception('Perfil não encontrado.');
+    }
+
+    final dados = await _client
+        .from('animal')
+        .select()
+        .eq('id', animalId)
+        .eq('id_cliente', perfil['id'])
+        .maybeSingle();
+
+    if (dados == null) {
+      throw Exception('Animal não encontrado ou sem permissão.');
+    }
+
+    return Animal.fromJson(dados);
+  }
+
+  Future<void> editarAnimalSupabase(Animal animal) async {
+    final usuario = _client.auth.currentUser;
+    if (usuario == null) {
+      throw Exception('Entre novamente.');
+    }
+
+    final perfil = await _client
+        .from('cliente')
+        .select('id')
+        .eq('auth_user_id', usuario.id)
+        .eq('ativo', true)
+        .maybeSingle();
+
+    if (perfil == null) {
+      throw Exception('Perfil não encontrado ou inativo.');
+    }
+
+    final atualizado = await _client
+        .from('animal')
+        .update({
+          'nome': animal.nome,
+          'idade': animal.idade,
+          'imagem': animal.imageUrl,
+          'tipo': animal.tipo,
+          'descricao': animal.descricao,
+          'sexo': animal.sexo,
+          'energia': animal.energia,
+          'porte': animal.porte,
+          'convivencia': animal.convivencia,
+          'carencia': animal.carencia,
+          'vacinado': animal.vacinado,
+          'castrado': animal.castrado,
+        })
+        .eq('id', animal.id)
+        .eq('id_cliente', perfil['id'])
+        .select('id')
+        .maybeSingle();
+
+    if (atualizado == null) {
+      throw Exception('Animal não encontrado ou sem permissão para editar.');
+    }
+  }
+
+  Future<void> excluirMeuAnimalSupabase(int animalId) async {
+    if (animalId <= 0) {
+      throw const LoginException('ID inválido.');
+    }
+    try {
+      // A RPC valida o proprietário pelo Auth e desativa sem conceder ao
+      // cliente permissão para alterar ativo ou apagar o histórico do animal.
+      final dados = await _executarRpcNaSessaoAtual(
+        'excluir_meu_animal',
+        params: {'p_animal_id': animalId},
+      );
+      if (dados is! Map || dados['id'] != animalId || dados['ativo'] != false) {
+        throw const LoginException(
+          'Não foi possível confirmar a exclusão do animal.',
+        );
+      }
+    } on LoginException {
+      rethrow;
+    } on PostgrestException catch (erro) {
+      if (const {
+        'PGRST202',
+        '42883',
+        'PGRST205',
+        '42P01',
+      }.contains(erro.code)) {
+        throw const LoginException(
+          'A exclusão de animais ainda precisa ser configurada no Supabase.',
+        );
+      }
+      const mensagensConhecidas = {
+        'ID inválido.',
+        'Entre novamente para continuar.',
+        'Perfil não encontrado ou inativo.',
+        'Animal não encontrado ou sem permissão para excluir.',
+      };
+      if (const {'PT400', 'PT401', 'PT403', 'PT404'}.contains(erro.code) &&
+          mensagensConhecidas.contains(erro.message)) {
+        throw LoginException(erro.message);
+      }
+      if (const {
+        'PT401',
+        'PGRST301',
+        'PGRST302',
+        'PGRST303',
+      }.contains(erro.code)) {
+        throw const LoginException('Entre novamente para continuar.');
+      }
+      if (erro.code == '42501' || erro.code == 'PT403') {
+        throw const LoginException(
+          'Animal não encontrado ou sem permissão para excluir.',
+        );
+      }
+      throw const LoginException(
+        'Não foi possível excluir o animal. Tente novamente.',
+      );
+    } catch (_) {
+      throw const LoginException(
+        'Não foi possível excluir o animal. Tente novamente.',
+      );
+    }
+  }
+
+  Future<Animal> buscarAnimalPorIdSupabase(int animalId) async {
+    if (animalId <= 0) {
+      throw const LoginException('ID inválido.');
+    }
+    // A ficha consulta o ID diretamente. Disponibilidade e propriedade são
+    // verificadas pela RLS, sem os filtros de recomendação/pesquisa do feed.
+    final dados = await _client
+        .from('animal')
+        .select()
+        .eq('id', animalId)
+        .maybeSingle();
+    if (dados == null) {
+      throw const LoginException('Animal não encontrado ou indisponível.');
+    }
+    return Animal.fromJson(dados);
+  }
+
+  Future<Map<String, dynamic>> buscarResumoResponsavel(int clienteId) async {
+    return _buscarRegistroPublicoRpc(
+      'buscar_resumo_responsavel',
+      clienteId,
+      indisponivel: 'Responsável não encontrado.',
+      invalido: 'Dados do responsável inválidos.',
+    );
+  }
+
+  Future<Map<String, dynamic>> buscarPerfilPublicoSupabase(
+    int clienteId,
+  ) async {
+    return _buscarRegistroPublicoRpc(
+      'buscar_perfil_publico',
+      clienteId,
+      indisponivel: 'Perfil público indisponível.',
+      invalido: 'Dados do perfil público inválidos.',
+    );
+  }
+
+  Future<Map<String, dynamic>> _buscarRegistroPublicoRpc(
+    String nome,
+    int clienteId, {
+    required String indisponivel,
+    required String invalido,
+  }) async {
+    if (clienteId <= 0) {
+      throw const LoginException('ID inválido.');
+    }
+    try {
+      // A RPC decide a visibilidade. O perfil consultado pode ser legado,
+      // sem vínculo Auth e sem animais; somente o solicitante precisa de sessão.
+      final resultado = await _executarRpcNaSessaoAtual(
+        nome,
+        params: {'p_cliente_id': clienteId},
+      );
+      if (resultado is! List) throw LoginException(invalido);
+      if (resultado.isEmpty) throw LoginException(indisponivel);
+      if (resultado.length != 1) throw LoginException(invalido);
+      final dados = resultado.single;
+      if (dados is! Map || dados.keys.any((chave) => chave is! String)) {
+        throw LoginException(invalido);
+      }
+      final id = dados['id'];
+      if (id is! num ||
+          !id.isFinite ||
+          id <= 0 ||
+          id != id.truncateToDouble() ||
+          id != clienteId) {
+        throw LoginException(invalido);
+      }
+      const textosPublicos = {
+        'nome',
+        'sobrenome',
+        'usuario',
+        'imagem',
+        'cidade',
+        'estado',
+      };
+      for (final campo in textosPublicos) {
+        final valor = dados[campo];
+        if (valor != null && valor is! String) {
+          throw LoginException(invalido);
+        }
+      }
+      final lar = dados['lar_de_adocao'];
+      if (lar != null && lar is! bool) throw LoginException(invalido);
+      // Não propaga contatos ou outros campos privados inesperados na resposta.
+      return {
+        'id': id,
+        for (final campo in textosPublicos)
+          if (dados.containsKey(campo)) campo: dados[campo],
+        if (dados.containsKey('lar_de_adocao')) 'lar_de_adocao': lar,
+      };
+    } on LoginException {
+      rethrow;
+    } on PostgrestException catch (erro) {
+      if (const {
+        'PGRST202',
+        '42883',
+        'PGRST205',
+        '42P01',
+      }.contains(erro.code)) {
+        throw const LoginException(
+          'A consulta de perfis públicos ainda precisa ser configurada no Supabase.',
+        );
+      }
+      if (const {
+        'PT401',
+        'PGRST301',
+        'PGRST302',
+        'PGRST303',
+      }.contains(erro.code)) {
+        throw const LoginException('Entre novamente para continuar.');
+      }
+      if (erro.code == '42501' || erro.code == 'PT403') {
+        throw const LoginException(
+          'Você não tem permissão para consultar este perfil.',
+        );
+      }
+      if (erro.code == 'PT404') throw LoginException(indisponivel);
+      throw const LoginException(
+        'Não foi possível consultar os dados públicos no Supabase.',
+      );
+    } catch (_) {
+      throw const LoginException(
+        'Não foi possível consultar os dados públicos no Supabase.',
+      );
+    }
+  }
+
+  Future<List<Animal>> listarAnimaisDisponiveisDoClienteSupabase(
+    int clienteId, {
+    int pagina = 1,
+  }) async {
+    final dados = await buscarAnimais(pagina: pagina, clienteId: clienteId);
+    return dados.map(Animal.fromJson).toList();
+  }
+
+  Future<List<Cliente>> pesquisarClientesSupabase(String termo) async {
+    final dados = await _executarBuscaRpc('buscar_clientes_publicos', {
+      'p_termo': termo.trim(),
+    });
+    if (dados is! List) {
+      throw const LoginException(
+        'Não foi possível pesquisar usuários no Supabase.',
+      );
+    }
+    return dados
+        .map((item) => Cliente.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+  }
+
+  Future<dynamic> _executarBuscaRpc(
+    String nome,
+    Map<String, dynamic> parametros,
+  ) async {
+    try {
+      return await _client.rpc(nome, params: parametros);
+    } on PostgrestException catch (erro) {
+      if (const {
+        'PGRST202',
+        '42883',
+        'PGRST205',
+        '42P01',
+      }.contains(erro.code)) {
+        throw const LoginException(
+          'A pesquisa Supabase ainda precisa ser configurada no banco.',
+        );
+      }
+      if (erro.code == 'PT400' || erro.code == 'PT403') {
+        throw LoginException(erro.message);
+      }
+      throw const LoginException(
+        'Não foi possível consultar os dados públicos no Supabase.',
+      );
+    }
+  }
+
+  Future<void> cadastrarClienteSupabase(Cliente cliente, String senha) async {
+    final imagem = cliente.imageUrl?.trim();
+    if (imagem != null && imagem.isNotEmpty && !FotoPerfilUrl.valida(imagem)) {
+      throw const LoginException(
+        'Digite um link de imagem válido (http ou https).',
+      );
+    }
+
+    final resultado = await _client.auth.signUp(
+      email: cliente.email.trim().toLowerCase(),
+      password: senha,
+      data: {
+        'origem_cadastro': 'entre_patas',
+        'nome': cliente.nome.trim(),
+        'sobrenome': cliente.sobrenome.trim(),
+        'telefone': cliente.telefone.replaceAll(RegExp(r'\D'), ''),
+        'usuario': cliente.usuario.trim(),
+        'estado': cliente.estado,
+        'cidade': cliente.cidadeDeResidencia.trim(),
+        'larDeAdocao': cliente.larDeAdocao,
+        'endereco': cliente.larDeAdocao ? cliente.endereco?.trim() : null,
+        'imagem': (imagem?.isNotEmpty ?? false) ? imagem : null,
+      },
+    );
+
+    if (resultado.user == null) {
+      throw Exception('Não foi possível iniciar o cadastro.');
+    }
+  }
+
+  Future<void> salvarQuestionarioSupabase(Map<String, dynamic> dados) async {
+    // Identifica o usuário autenticado no Supabase.
+    final usuario = _client.auth.currentUser;
+
+    if (usuario == null) {
+      throw Exception('Você precisa estar conectado para salvar o teste.');
+    }
+
+    // Encontra o perfil desse usuário na tabela cliente.
+    final perfil = await _client
+        .from('cliente')
+        .select('id')
+        .eq('auth_user_id', usuario.id)
+        .maybeSingle();
+
+    if (perfil == null) {
+      throw Exception('Perfil do usuário não encontrado.');
+    }
+
+    // Salva as respostas vinculadas ao cliente.
+    // Se ele já tiver um questionário, atualiza o existente.
+    await _client.from('questionario').upsert({
+      ...dados,
+      'id_cliente': perfil['id'],
+    }, onConflict: 'id_cliente');
+  }
+
+  Future<Map<String, dynamic>?> buscarMeuQuestionarioSupabase() async {
+    // Identifica o usuário conectado.
+    final usuario = _client.auth.currentUser;
+
+    if (usuario == null) {
+      throw Exception('Usuário não autenticado.');
+    }
+
+    // Localiza o perfil desse usuário.
+    final perfil = await _client
+        .from('cliente')
+        .select('id')
+        .eq('auth_user_id', usuario.id)
+        .maybeSingle();
+
+    if (perfil == null) {
+      throw Exception('Perfil não encontrado.');
+    }
+
+    // Busca somente o questionário do usuário.
+    final questionario = await _client
+        .from('questionario')
+        .select()
+        .eq('id_cliente', perfil['id'])
+        .maybeSingle();
+
+    return questionario;
+  }
+}

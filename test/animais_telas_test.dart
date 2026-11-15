@@ -32,19 +32,69 @@ class DadosAnimais extends ClienteController {
     castrado: 'Não',
   );
   @override
-  Future<List<Animal>> listarAnimais({
+  Cliente get clienteLogado => Cliente(
+    id: 1,
+    nome: 'Ana',
+    sobrenome: 'Silva',
+    email: 'ana@example.com',
+    telefone: '11999999999',
+    cidadeDeResidencia: 'Mogi',
+    usuario: 'ana',
+  );
+
+  @override
+  Future<List<Animal>> listarAnimaisDoClienteSupabase(int clienteId) async {
+    filtros.add({'id_cliente': '$clienteId'});
+    return [animal];
+  }
+
+  @override
+  Future<List<Animal>> listarAnimaisSupabase({
+    String? tipo,
     Map<String, String> filtros = const {},
+    int? pagina,
+    bool somenteMeus = false,
   }) async {
     this.filtros.add(filtros);
     return [animal];
   }
 
   @override
-  Future<Animal> buscarAnimalRemoto(int id) async => animal;
+  Future<Animal> buscarAnimalPorIdSupabase(int id) async => animal;
+
+  @override
+  Future<Animal> buscarMeuAnimalParaEditarSupabase(int id) async => animal;
+
+  @override
+  Future<Map<String, dynamic>?> buscarMeuQuestionarioSupabase() async => {
+    'id_cliente': 2,
+    'tipo': 'Gato',
+    'sexo': 'Fêmea',
+    'idadeMin': 0,
+    'idadeMax': 10,
+    'porte': 0,
+    'energia': 1,
+    'ambiente': 'Apartamento',
+    'sozinho': 5,
+    'dedicacao': 4,
+    'animais': 'Não',
+    'imovel': 1,
+    'apoio': 1,
+    'compromisso': 1,
+    'moradores': 1,
+    'financeiro': 3,
+    'rotina': 1,
+  };
+
   @override
   Future<Animal> salvarAnimal(Animal animal, {bool editar = false}) async {
     salvo = animal;
     return animal;
+  }
+
+  @override
+  Future<void> editarAnimalSupabase(Animal animal) async {
+    salvo = animal;
   }
 }
 
@@ -62,8 +112,14 @@ class DadosFicha extends DadosAnimais {
     usuario: 'ana',
   );
   @override
-  Future<Cliente> buscarClienteRemoto(int id, {bool basico = false}) async =>
-      clienteLogado;
+  Future<Map<String, dynamic>> buscarResumoResponsavelSupabase(
+    int clienteId,
+  ) async => {
+    'id': clienteId,
+    'nome': 'Ana',
+    'usuario': 'ana',
+    'imagem': null,
+  };
 }
 
 void main() {

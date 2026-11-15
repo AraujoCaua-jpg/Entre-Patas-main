@@ -15,6 +15,8 @@ class DadosPerfil extends ClienteController {
   Future<Map<String, dynamic>?> carregarQuestionario() async => null;
   int consultas = 0, consultasNotificacoes = 0;
   bool falhar = false;
+
+  void simularAlteracaoDeAnimal() => notifyListeners();
   @override
   Cliente get clienteLogado => Cliente(
     id: 1,
@@ -26,8 +28,22 @@ class DadosPerfil extends ClienteController {
     usuario: 'ana',
   );
   @override
-  Future<List<Animal>> listarAnimais({
+  Future<List<Animal>> listarAnimaisDoClienteSupabase(int clienteId) async {
+    consultas++;
+    if (falhar) throw const LoginException('Falha temporária');
+    return [];
+  }
+
+  @override
+  Future<Map<String, dynamic>?> buscarMeuQuestionarioSupabase() async =>
+      {'id_cliente': 1};
+
+  @override
+  Future<List<Animal>> listarAnimaisSupabase({
+    String? tipo,
     Map<String, String> filtros = const {},
+    int? pagina,
+    bool somenteMeus = false,
   }) async {
     consultas++;
     if (falhar) throw const LoginException('Falha temporária');
@@ -42,6 +58,35 @@ class DadosPerfil extends ClienteController {
 }
 
 void main() {
+  testWidgets('perfil recarrega após alteração de animal em outra tela', (
+    tester,
+  ) async {
+    final dados = DadosPerfil();
+    await tester.pumpWidget(
+      ClientesScope(
+        controller: dados,
+        child: const MaterialApp(home: PerfilScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(dados.consultas, 1);
+
+    dados.falhar = true;
+    dados.simularAlteracaoDeAnimal();
+    await tester.pumpAndSettle();
+    expect(dados.consultas, 2);
+    expect(find.text('Falha temporária'), findsOneWidget);
+
+    dados.falhar = false;
+    dados.simularAlteracaoDeAnimal();
+    await tester.pumpAndSettle();
+    expect(dados.consultas, 3);
+    expect(find.text('Nenhum Animal Cadastrado'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    dados.dispose();
+  });
+
   testWidgets('perfil abre e recarrega após voltar de animais publicados', (
     tester,
   ) async {

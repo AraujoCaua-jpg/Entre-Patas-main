@@ -4,12 +4,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../model/cliente.dart';
+import '../services/login_exception.dart';
 import 'cliente_api.dart';
 
-class LoginException implements Exception {
-  const LoginException(this.mensagem);
-  final String mensagem;
-}
+export '../services/login_exception.dart';
 
 class SessaoAutenticada {
   const SessaoAutenticada(this.cliente, this.token);

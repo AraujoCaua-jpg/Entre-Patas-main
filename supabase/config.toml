@@ -1,0 +1,4 @@
+project_id = "entre-patas"
+
+[functions.excluir-conta]
+verify_jwt = false
