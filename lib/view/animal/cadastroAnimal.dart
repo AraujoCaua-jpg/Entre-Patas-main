@@ -40,6 +40,7 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
   }
 
   void mudarTipo(String estado) {
+    if (widget.animalId != null) return;
     setState(() {
       tipo = estado;
     });
@@ -297,65 +298,90 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
 
                   SizedBox(height: 8),
 
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => mudarTipo("Cachorro"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: tipo == "Cachorro"
-                                ? AppColors.laranja
-                                : AppColors.rosa,
-                            foregroundColor: tipo == "Cachorro"
-                                ? Colors.white
-                                : AppColors.laranja,
-                            elevation: 0,
-                            fixedSize: const Size(double.infinity, 80),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.pets),
-                              SizedBox(width: 10),
-                              Text('Cachorro', style: TextStyle(fontSize: 24)),
-                            ],
-                          ),
+                  if (widget.animalId != null)
+                    TextFormField(
+                      initialValue: tipo,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(
+                          Icons.pets,
+                          color: AppColors.laranja,
+                        ),
+                        suffixIcon: const Icon(
+                          Icons.lock_outline,
+                          color: AppColors.cinzaEscuro,
+                        ),
+                        filled: true,
+                        fillColor: AppColors.rosa,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
                         ),
                       ),
-
-                      SizedBox(width: 8),
-
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => mudarTipo("Gato"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: tipo == "Gato"
-                                ? AppColors.verde
-                                : AppColors.verdeClaro,
-                            foregroundColor: tipo == "Gato"
-                                ? Colors.white
-                                : AppColors.verde,
-                            elevation: 0,
-                            fixedSize: const Size(double.infinity, 80),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                    )
+                  else
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => mudarTipo("Cachorro"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: tipo == "Cachorro"
+                                  ? AppColors.laranja
+                                  : AppColors.rosa,
+                              foregroundColor: tipo == "Cachorro"
+                                  ? Colors.white
+                                  : AppColors.laranja,
+                              elevation: 0,
+                              fixedSize: const Size(double.infinity, 80),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.pets),
+                                SizedBox(width: 10),
+                                Text(
+                                  'Cachorro',
+                                  style: TextStyle(fontSize: 24),
+                                ),
+                              ],
                             ),
                           ),
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.pets),
-                              SizedBox(width: 10),
-                              Text('Gato', style: TextStyle(fontSize: 24)),
-                            ],
+                        ),
+
+                        SizedBox(width: 8),
+
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => mudarTipo("Gato"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: tipo == "Gato"
+                                  ? AppColors.verde
+                                  : AppColors.verdeClaro,
+                              foregroundColor: tipo == "Gato"
+                                  ? Colors.white
+                                  : AppColors.verde,
+                              elevation: 0,
+                              fixedSize: const Size(double.infinity, 80),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.pets),
+                                SizedBox(width: 10),
+                                Text('Gato', style: TextStyle(fontSize: 24)),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
 
                   SizedBox(height: 20),
 
@@ -593,53 +619,48 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
 
                   Row(
                     children: [
-                      const Text(
-                        'Imagem:',
-                        style: TextStyle(fontSize: 18),
-                      ),
+                      const Text('Imagem:', style: TextStyle(fontSize: 18)),
                     ],
                   ),
 
                   SizedBox(height: 20),
 
                   if (urlImagem.isNotEmpty)
-                  Image.network(
-                    urlImagem,
+                    Image.network(
+                      urlImagem,
 
-                    width: 200,
-                    height: 200,
+                      width: 200,
+                      height: 200,
 
-                    fit: BoxFit.cover,
+                      fit: BoxFit.cover,
 
-                    // Enquanto carrega
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) {
-                        return child;
-                      }
+                      // Enquanto carrega
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) {
+                          return child;
+                        }
 
-                      return const SizedBox(
-                        width: 200,
-                        height: 200,
-                        child: Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    },
+                        return const SizedBox(
+                          width: 200,
+                          height: 200,
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      },
 
-                    // Se não carregar
-                    errorBuilder: (context, error, stackTrace) {
-                      return const SizedBox(
-                        width: 200,
-                        height: 200,
-                        child: Center(
-                          child: Text(
-                            "Não foi possível carregar a imagem",
-                            textAlign: TextAlign.center,
+                      // Se não carregar
+                      errorBuilder: (context, error, stackTrace) {
+                        return const SizedBox(
+                          width: 200,
+                          height: 200,
+                          child: Center(
+                            child: Text(
+                              "Não foi possível carregar a imagem",
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
+                        );
+                      },
+                    ),
 
                   Text("Prévia da Imagem"),
                   //https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTk2-tEClIMDpCT_nCBfIk8dVbpN5hxOP9AHQ&s

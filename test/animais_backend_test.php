@@ -60,6 +60,10 @@ try {
     [$status,$d]=api('animais.php?q=%25&id_cliente='.$ids['a'],null,$tokens['a']); check($d['animais']===[],'Curinga não escapado');
     [$status]=api('animais.php?pagina=0',null,$tokens['a']); check($status===400,'Página inválida aceita');
     $dados['nome']="Editado$s"; $dados['idade']=3;
+    [$status]=api("animais.php?acao=editar&id=$id",[...$dados,'tipo'=>'Cachorro'],$tokens['a']);
+    check($status===400,'Edicao permitiu mudar a especie');
+    [$status,$d]=api("animais.php?acao=id&id=$id",null,$tokens['a']);
+    check($d['animal']['tipo']==='Gato','Especie mudou apos tentativa rejeitada');
     $dados['vacinado']='Não'; $dados['castrado']='Sim';
     [$status,$d]=api("animais.php?acao=editar&id=$id",$dados,$tokens['a']); check($status===200 && $d['animal']['nome']===$dados['nome'],'Edição falhou');
     [$status,$d]=api("animais.php?acao=id&id=$id",null,$tokens['a']); check($d['animal']['idade']===3,'Edição não persistiu');

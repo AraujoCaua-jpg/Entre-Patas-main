@@ -64,9 +64,21 @@ try {
     [$status]=api("adocoes.php?acao=id&id=$pedido",null,$tokens['fora']); check($status===404,'Solicitação privada exposta');
     [$status,$d]=api('adocoes.php',null,$tokens['fora']); check($d['adocoes']===[],'Lista expôs pedidos alheios');
     [$status,$d]=api("adocoes.php?acao=id&id=$pedido",null,$tokens['dono']); check($status===200 && $d['adocao']['solicitante_email']==="a$s@example.com",'Responsável não recebe contato');
+    [$status]=api('notificacoes.php'); check($status===401,'Notificacoes sem sessao expostas');
+    [$status,$d]=api('notificacoes.php',null,$tokens['dono']); check($status===200 && count($d['adocoes'])===2,'Contagem inicial incorreta');
+    [$status,$d]=api('notificacoes.php',null,$tokens['a']); check($status===200 && $d['adocoes']===[],'Pedido proprio gerou notificacao');
+    [$status]=api('notificacoes.php',['id'=>$pedido,'status'=>'Aguardando'],$tokens['fora']); check($status===404,'Terceiro marcou leitura');
+    [$status]=api('notificacoes.php',['id'=>$pedido,'status'=>'Aguardando'],$tokens['dono']); check($status===200,'Leitura falhou');
+    api('notificacoes.php',['id'=>$pedido,'status'=>'Aguardando'],$tokens['dono']);
+    [$status,$d]=api('notificacoes.php',null,$tokens['dono']); check(count($d['adocoes'])===1,'Leitura nao persistiu ou duplicou');
     [$status]=api("adocoes.php?acao=aceitar&id=$pedido",[],$tokens['a']); check($status===403,'Solicitante aprovou pedido');
     [$status]=api("adocoes.php?acao=cancelar&id=$pedido",[],$tokens['dono']); check($status===403,'Responsável cancelou pelo solicitante');
     [$status,$d]=api("adocoes.php?acao=aceitar&id=$pedido",[],$tokens['dono']); check($status===200 && $d['adocao']['status']==='Aceito','Aprovação falhou');
+    [$status,$d]=api('notificacoes.php',null,$tokens['a']); check($status===200 && count($d['adocoes'])===1 && $d['adocoes'][0]['status']==='Aceito','Resposta nao gerou notificacao');
+    api('notificacoes.php',['id'=>$pedido,'status'=>'Aguardando'],$tokens['a']);
+    [$status,$d]=api('notificacoes.php',null,$tokens['a']); check(count($d['adocoes'])===1,'Leitura antiga ocultou resposta nova');
+    api('notificacoes.php',['id'=>$pedido,'status'=>'Aceito'],$tokens['a']);
+    [$status,$d]=api('notificacoes.php',null,$tokens['a']); check($d['adocoes']===[],'Resposta lida continuou pendente');
     [$status,$d]=api("animais.php?acao=id&id=$animalId",null,$tokens['a']); check($d['animal']['status']==='Adotado','Animal não marcado adotado');
     foreach (['listar','buscar','melhores'] as $listagem) {
         [$status,$d]=api("animais.php?acao=$listagem&q=Pet$s",null,$tokens['a']);
@@ -89,6 +101,7 @@ try {
 } finally {
     foreach ($tokens as $token) api('logout.php',[],$token);
     foreach ($ids as $id) {
+        $pdo->prepare('DELETE FROM notificacao_lida WHERE id_cliente=?')->execute([$id]);
         $pdo->prepare('DELETE FROM adocao WHERE id_cliente=? OR id_dono=?')->execute([$id,$id]);
         $pdo->prepare('DELETE FROM questionario WHERE id_cliente=?')->execute([$id]);
     }

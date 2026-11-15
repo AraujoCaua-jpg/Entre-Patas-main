@@ -114,9 +114,11 @@ try {
     $dados = animal_dados(json_decode(file_get_contents('php://input'), true));
     if ($acao === 'cadastrar' && $dados['status'] === 'Adotado') resposta(400, ['erro'=>'A adoção deve ser aprovada pela solicitação.']);
     if ($acao === 'editar') {
-        $q = $pdo->prepare('SELECT status FROM animal WHERE id=?');
+        $q = $pdo->prepare('SELECT status, tipo FROM animal WHERE id=?');
         $q->execute([$id]);
-        $anterior = $q->fetchColumn();
+        $salvo = $q->fetch();
+        $anterior = $salvo['status'];
+        if ($dados['tipo'] !== $salvo['tipo']) resposta(400, ['erro'=>'A espécie do animal não pode ser alterada após o cadastro.']);
         if ($dados['status'] === 'Adotado' && $anterior !== 'Adotado') resposta(400, ['erro'=>'A adoção deve ser aprovada pela solicitação.']);
         if ($anterior === 'Adotado') $dados['status'] = 'Adotado';
     }

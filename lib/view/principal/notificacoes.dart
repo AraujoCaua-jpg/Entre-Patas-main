@@ -17,11 +17,11 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _consulta ??= ClientesScope.of(context).listarAdocoes();
+    _consulta ??= ClientesScope.of(context).atualizarNotificacoes();
   }
 
   void _atualizar() {
-    final consulta = ClientesScope.of(context).listarAdocoes();
+    final consulta = ClientesScope.of(context).atualizarNotificacoes();
     setState(() {
       _consulta = consulta;
     });
@@ -62,9 +62,9 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
-        final lista = snapshot.data!;
+        final lista = ClientesScope.of(context).notificacoes;
         if (lista.isEmpty) {
-          return const Center(child: Text('Nenhuma solicitação de adoção.'));
+          return const Center(child: Text('Nenhuma notificação nova.'));
         }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
@@ -86,6 +86,20 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
                 ),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () async {
+                  try {
+                    await ClientesScope.of(context).lerNotificacao(a);
+                  } catch (_) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Não foi possível marcar a notificação como lida. Tente novamente.',
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+                  if (!context.mounted) return;
                   await Navigator.push(
                     context,
                     MaterialPageRoute(

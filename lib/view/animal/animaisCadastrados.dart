@@ -1,3 +1,4 @@
+import 'package:entre_patas/view/core/app_dialog.dart';
 import 'package:entre_patas/view/core/app_colors.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -98,7 +99,7 @@ class _AnimaisCadastradosScreenState extends State<AnimaisCadastradosScreen> {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
+        return AppDialog(
           title: const Text('Deletar'),
           content: const Text(
             'Tem certeza que deseja apagar este animal do sistema?',
@@ -330,7 +331,7 @@ class _ListaAnimaisState extends State<ListaAnimais> {
   Future<void> _apagar(Animal a) async {
     final confirmou = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => AppDialog(
         title: const Text('Apagar animal'),
         content: Text('Deseja apagar ${a.nome}?'),
         actions: [

@@ -78,13 +78,7 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
         }
         final encontrados = await controller.listarAnimais(filtros: filtros);
         if (mounted && versao == _versao) {
-          setState(
-            () => _pets = _categoria == 'Outros'
-                ? encontrados
-                      .where((a) => a.tipo != 'Cachorro' && a.tipo != 'Gato')
-                      .toList()
-                : encontrados,
-          );
+          setState(() => _pets = encontrados);
         }
       }
     } catch (e) {
@@ -130,22 +124,79 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      clipBehavior: Clip.antiAlias,
       builder: (context) => StatefulBuilder(
         builder: (context, atualizar) => SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Filtrar pets', style: TextStyle(fontSize: 22)),
-                const SizedBox(height: 16),
-                const Text('Sexo'),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: _rosa,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(Icons.tune, color: _laranja),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Filtrar pets',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF60483E),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Fechar filtros',
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close, color: Color(0xFF92583F)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Sexo',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF60483E),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
+                  runSpacing: 8,
                   children: [
                     for (final opcao in ['Todos', 'Macho', 'Fêmea'])
                       ChoiceChip(
+                        selectedColor: _rosa,
+                        backgroundColor: AppColors.fundo,
+                        checkmarkColor: _laranja,
+                        labelStyle: TextStyle(
+                          color: opcao == (sexo ?? 'Todos')
+                              ? _laranja
+                              : const Color(0xFF60483E),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        side: BorderSide(
+                          color: opcao == (sexo ?? 'Todos') ? _laranja : _rosa,
+                        ),
                         label: Text(opcao),
                         selected: opcao == (sexo ?? 'Todos'),
                         onSelected: (_) => atualizar(
@@ -154,13 +205,39 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
                       ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                const Text('Porte'),
+                const SizedBox(height: 24),
+                const Text(
+                  'Porte',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF60483E),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
+                  runSpacing: 8,
                   children: [
                     for (final opcao in ['Todos', 'Pequeno', 'Médio', 'Grande'])
                       ChoiceChip(
+                        selectedColor: _rosa,
+                        backgroundColor: AppColors.fundo,
+                        checkmarkColor: _laranja,
+                        labelStyle: TextStyle(
+                          color: opcao == (porte ?? 'Todos')
+                              ? _laranja
+                              : const Color(0xFF60483E),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        side: BorderSide(
+                          color: opcao == (porte ?? 'Todos') ? _laranja : _rosa,
+                        ),
                         label: Text(opcao),
                         selected: opcao == (porte ?? 'Todos'),
                         onSelected: (_) => atualizar(
@@ -169,20 +246,39 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
                       ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                Wrap(
-                  spacing: 12,
+                const SizedBox(height: 28),
+                Row(
                   children: [
-                    TextButton(
-                      onPressed: () => atualizar(() {
-                        sexo = null;
-                        porte = null;
-                      }),
-                      child: const Text('Limpar filtros'),
+                    Expanded(
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: _laranja,
+                          minimumSize: const Size(0, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: () => atualizar(() {
+                          sexo = null;
+                          porte = null;
+                        }),
+                        child: const Text('Limpar filtros'),
+                      ),
                     ),
-                    FilledButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Aplicar'),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.laranja,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Aplicar'),
+                      ),
                     ),
                   ],
                 ),
@@ -294,73 +390,64 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
               ),
               if (!_usuariosAtivos) ...[
                 const SizedBox(height: 12),
-                LayoutBuilder(
-                  builder: (context, constraints) => SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        for (final item in [
-                          ('Todos', Icons.grid_view_outlined),
-                          ('Cachorros', Icons.pets_outlined),
-                          ('Gatos', Icons.pets),
-                          ('Outros', Icons.cruelty_free_outlined),
-                          ('Perto de mim', Icons.location_on_outlined),
-                        ])
-                          SizedBox(
-                            width: (constraints.maxWidth / 5).clamp(
-                              56.0,
-                              144.0,
-                            ),
-                            child: Semantics(
-                              selected: _categoria == item.$1,
-                              button: true,
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() => _categoria = item.$1);
-                                  _buscar();
-                                },
-                                borderRadius: BorderRadius.circular(24),
-                                child: Column(
-                                  children: [
-                                    Container(
-                                      width: 46,
-                                      height: 46,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: _rosa,
-                                        border: _categoria == item.$1
-                                            ? Border.all(
-                                                color: _laranja,
-                                                width: 1.5,
-                                              )
-                                            : null,
-                                      ),
-                                      child: Icon(
-                                        item.$2,
-                                        size: 22,
-                                        color: _categoria == item.$1
-                                            ? _laranja
-                                            : const Color(0xFF92583F),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      item.$1,
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: _categoria == item.$1
-                                            ? _laranja
-                                            : const Color(0xFF60483E),
-                                      ),
-                                    ),
-                                  ],
+                Row(
+                  children: [
+                    for (final item in [
+                      ('Todos', Icons.grid_view_outlined),
+                      ('Cachorros', Icons.pets_outlined),
+                      ('Gatos', Icons.pets),
+                      ('Perto de mim', Icons.location_on_outlined),
+                    ])
+                      Expanded(
+                        child: Semantics(
+                          selected: _categoria == item.$1,
+                          button: true,
+                          child: InkWell(
+                            onTap: () {
+                              setState(() => _categoria = item.$1);
+                              _buscar();
+                            },
+                            borderRadius: BorderRadius.circular(24),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 46,
+                                  height: 46,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: _rosa,
+                                    border: _categoria == item.$1
+                                        ? Border.all(
+                                            color: _laranja,
+                                            width: 1.5,
+                                          )
+                                        : null,
+                                  ),
+                                  child: Icon(
+                                    item.$2,
+                                    size: 22,
+                                    color: _categoria == item.$1
+                                        ? _laranja
+                                        : const Color(0xFF92583F),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  item.$1,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: _categoria == item.$1
+                                        ? _laranja
+                                        : const Color(0xFF60483E),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                      ],
-                    ),
-                  ),
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 18),
                 _banner(),
@@ -539,13 +626,23 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
         ),
         Expanded(
           flex: 5,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.asset(
-              'assets/cachorro.jpg',
-              height: double.infinity,
-              width: double.infinity,
-              fit: BoxFit.cover,
+          child: Center(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppColors.laranja,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(2),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset(
+                    'assets/cachorro.jpg',
+                    fit: BoxFit.contain,
+                    alignment: Alignment.center,
+                  ),
+                ),
+              ),
             ),
           ),
         ),

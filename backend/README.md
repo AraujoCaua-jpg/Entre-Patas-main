@@ -1,5 +1,17 @@
 # API local do Entre Patas
 
+## Contador de notificações
+
+Execute `C:\xampp\php\php.exe backend\migrar_notificacoes.php` para criar
+o controle de leitura por usuário. Publique juntos `adocoes.php`,
+`adocao_consulta.php` e `notificacoes.php` na pasta da API.
+No servidor online, importe `notificacoes.sql` no banco configurado.
+
+O sino conta solicitações recebidas e respostas de adoção ainda não lidas.
+Enquanto a navegação está aberta, consulta novas notificações a cada 15 segundos.
+Abrir uma notificação remove o aviso da lista e do contador, sem apagar a adoção.
+A leitura fica salva por usuário e status; uma nova resposta gera outro aviso.
+
 Copie os arquivos PHP e `.htaccess` desta pasta para `C:\xampp\htdocs\entrepatas-api`.
 Mantenha Apache e MySQL ligados. O banco `entrepatas` deve ter as tabelas originais
 e `cliente.id` com AUTO_INCREMENT. Não coloque dumps com dados reais no repositório.
@@ -202,8 +214,9 @@ recebem novos pedidos. As solicitações permanecem como histórico.
 
 Antes do envio, a tela confirma o compartilhamento de nome, e-mail e telefone
 do solicitante com o responsável. Esses dados só aparecem nos detalhes/listas
-das duas partes. Notificações são consultadas ao abrir a tela ou tocar em
-Atualizar; não há push ou e-mail automático de adoção.
+das duas partes. Notificações são consultadas a cada 15 segundos enquanto a
+navegação está aberta, ao abrir a tela ou tocar em Atualizar; não há push ou
+e-mail automático de adoção.
 
 Para conferir visualmente com duas contas:
 

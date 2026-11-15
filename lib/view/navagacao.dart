@@ -1,4 +1,9 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
+
+import '../controller/clientes_scope.dart';
+import '../controller/cliente_controller.dart';
 
 import '../controller/navegacao_controller.dart';
 import './principal/home.dart';
@@ -15,6 +20,34 @@ class NavegacaoScreen extends StatefulWidget {
 
 class _NavegacaoScreenState extends State<NavegacaoScreen> {
   final NavegacaoController controller = NavegacaoController();
+  Timer? _timer;
+  ClienteController? _clientes;
+  bool _consultando = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _clientes = ClientesScope.of(context);
+    if (_timer == null) {
+      _atualizarNotificacoes();
+      _timer = Timer.periodic(
+        const Duration(seconds: 15),
+        (_) => _atualizarNotificacoes(),
+      );
+    }
+  }
+
+  Future<void> _atualizarNotificacoes() async {
+    if (_consultando || _clientes?.clienteLogado == null) return;
+    _consultando = true;
+    try {
+      await _clientes!.atualizarNotificacoes();
+    } catch (_) {
+      // Mantém a última contagem e tenta novamente na próxima atualização.
+    } finally {
+      _consultando = false;
+    }
+  }
 
   final List<Widget> paginas = const [
     HomeScreen(),
@@ -36,6 +69,7 @@ class _NavegacaoScreenState extends State<NavegacaoScreen> {
 
   @override
   void dispose() {
+    _timer?.cancel();
     controller.removeListener(atualizarTela);
     controller.dispose();
     super.dispose();
@@ -53,17 +87,25 @@ class _NavegacaoScreenState extends State<NavegacaoScreen> {
         backgroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: const Icon(
-              Icons.notifications_outlined,
-              color: Color(0xFFD96C3F),
+            tooltip: 'Notificações: ${_clientes?.totalNotificacoes ?? 0} novas',
+            icon: Badge(
+              isLabelVisible: (_clientes?.totalNotificacoes ?? 0) > 0,
+              backgroundColor: const Color(0xFFD96C3F),
+              textColor: Colors.white,
+              label: Text('${_clientes?.totalNotificacoes ?? 0}'),
+              child: const Icon(
+                Icons.notifications_outlined,
+                color: Color(0xFFD96C3F),
+              ),
             ),
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const NotificacoesScreen(),
                 ),
               );
+              if (mounted) await _atualizarNotificacoes();
             },
           ),
         ],

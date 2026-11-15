@@ -1,3 +1,5 @@
+import 'package:entre_patas/view/core/app_dialog.dart';
+
 import '../../core/scrollable_screen_body.dart';
 
 import '../login.dart';
@@ -123,7 +125,7 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
         barrierDismissible: false,
         builder: (context) => PopScope(
           canPop: false,
-          child: AlertDialog(
+          child: AppDialog(
             title: const Text('Cadastro concluído'),
             content: const Text('Usuário cadastrado com sucesso!'),
             actions: [

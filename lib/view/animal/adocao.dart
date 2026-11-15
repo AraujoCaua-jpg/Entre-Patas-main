@@ -1,3 +1,4 @@
+import 'package:entre_patas/view/core/app_dialog.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../controller/clientes_scope.dart';
@@ -61,7 +62,7 @@ class _AdocaoScreenState extends State<AdocaoScreen> {
     if (_ocupado) return;
     final confirmou = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => AppDialog(
         title: Text(
           acao == 'solicitar' ? 'Enviar solicitação?' : 'Confirmar ação?',
         ),

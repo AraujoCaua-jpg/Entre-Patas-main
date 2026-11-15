@@ -1,3 +1,5 @@
+import 'package:entre_patas/view/core/app_dialog.dart';
+
 import '../../controller/clientes_scope.dart';
 
 import 'package:entre_patas/view/autenticacao/bemVindo.dart';
@@ -15,7 +17,7 @@ class ConfiguracoesScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
+        return AppDialog(
           title: const Text('Apagar conta'),
           content: const Text('Tem certeza que deseja apagar sua conta?'),
           actions: [

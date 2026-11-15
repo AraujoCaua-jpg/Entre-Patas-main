@@ -45,7 +45,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _recarregar() async {
     final consulta = _carregar();
-    setState(() => _consulta = consulta);
+    setState(() {
+      _consulta = consulta;
+    });
     await consulta;
   }
 

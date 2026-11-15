@@ -21,6 +21,36 @@ class ClienteController extends ChangeNotifier {
   bool _autenticando = false;
   final List<Cliente> clientes = [];
   int? _clienteLogadoId;
+  List<Adocao> _notificacoes = [];
+  int _versaoNotificacoes = 0;
+  List<Adocao> get notificacoes => List.unmodifiable(_notificacoes);
+  int get totalNotificacoes => _notificacoes.length;
+  Future<List<Adocao>> atualizarNotificacoes() async {
+    final token = _sessao;
+    final versao = ++_versaoNotificacoes;
+    final dados = await _dadosApi.requisicao('notificacoes.php', token: token);
+    if (_token != token || versao != _versaoNotificacoes) return notificacoes;
+    _notificacoes = (dados['adocoes'] as List)
+        .map((d) => Adocao.fromJson(d as Map<String, dynamic>))
+        .toList();
+    notifyListeners();
+    return notificacoes;
+  }
+
+  Future<void> lerNotificacao(Adocao adocao) async {
+    final token = _sessao;
+    await _dadosApi.requisicao(
+      'notificacoes.php',
+      token: token,
+      dados: {'id': adocao.id, 'status': adocao.status},
+    );
+    if (_token != token) return;
+    _versaoNotificacoes++;
+    _notificacoes.removeWhere(
+      (a) => a.id == adocao.id && a.status == adocao.status,
+    );
+    notifyListeners();
+  }
 
   Cliente? get clienteLogado =>
       _clienteLogadoId == null ? null : buscarCliente(_clienteLogadoId!);
@@ -216,6 +246,7 @@ class ClienteController extends ChangeNotifier {
   }
 
   void limparSessao() {
+    _notificacoes = [];
     _token = null;
     _clienteLogadoId = null;
     clientes.clear();

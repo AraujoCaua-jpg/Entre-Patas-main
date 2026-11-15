@@ -13,7 +13,7 @@ import 'package:entre_patas/view/principal/notificacoes.dart';
 class DadosPerfil extends ClienteController {
   @override
   Future<Map<String, dynamic>?> carregarQuestionario() async => null;
-  int consultas = 0, notificacoes = 0;
+  int consultas = 0, consultasNotificacoes = 0;
   bool falhar = false;
   @override
   Cliente get clienteLogado => Cliente(
@@ -35,8 +35,8 @@ class DadosPerfil extends ClienteController {
   }
 
   @override
-  Future<List<Adocao>> listarAdocoes() async {
-    notificacoes++;
+  Future<List<Adocao>> atualizarNotificacoes() async {
+    consultasNotificacoes++;
     return [];
   }
 }
@@ -79,10 +79,11 @@ void main() {
       );
       await tester.pumpAndSettle();
       dados.falhar = false;
-      await tester.tap(find.text('Falha temporária'));
+      await tester.ensureVisible(find.text('Tentar novamente'));
+      await tester.tap(find.text('Tentar novamente'));
       await tester.pumpAndSettle();
       expect(dados.consultas, 2);
-      expect(find.text('Nenhum Animal Cadastrado'), findsOneWidget);
+      expect(find.text('Nenhum amiguinho disponível no momento.'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       dados.dispose();
@@ -101,7 +102,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Atualizar'));
     await tester.pumpAndSettle();
-    expect(dados.notificacoes, 2);
+    expect(dados.consultasNotificacoes, 2);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     dados.dispose();

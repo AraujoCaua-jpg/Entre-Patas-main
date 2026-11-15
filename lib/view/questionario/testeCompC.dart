@@ -1,3 +1,4 @@
+import 'package:entre_patas/view/core/app_dialog.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../core/app_colors.dart';
@@ -71,7 +72,7 @@ class _TesteCompCScreenState extends State<TesteCompCScreen> {
           financeiro == '1') {
         await showDialog<void>(
           context: context,
-          builder: (ctx) => AlertDialog(
+          builder: (ctx) => AppDialog(
             title: const Text('Aviso'),
             content: const Text(
               'Algumas respostas indicam pontos para preparar antes da adoção. Converse com o responsável pelo animal.',
