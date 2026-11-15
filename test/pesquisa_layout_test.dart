@@ -46,6 +46,31 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Explorar novos amigos:'), findsOneWidget);
+      expect(find.text('Outros'), findsNothing);
+      for (final item in [
+        (Icons.grid_view_outlined, 'Todos'),
+        (Icons.pets_outlined, 'Cachorros'),
+        (Icons.pets, 'Gatos'),
+        (Icons.location_on_outlined, 'Perto de mim'),
+      ]) {
+        final categoria = find.ancestor(
+          of: find.text(item.$2),
+          matching: find.byType(InkWell),
+        );
+        expect(
+          (tester
+                      .getCenter(
+                        find.descendant(
+                          of: categoria,
+                          matching: find.byIcon(item.$1),
+                        ),
+                      )
+                      .dx -
+                  tester.getCenter(find.text(item.$2)).dx)
+              .abs(),
+          lessThan(1),
+        );
+      }
       await tester.tap(find.text('Cachorros'));
       await tester.pumpAndSettle();
       expect(dados.tipo, 'Cachorro');

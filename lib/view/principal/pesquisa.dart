@@ -424,7 +424,6 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
                       ('Todos', Icons.grid_view_outlined),
                       ('Cachorros', Icons.pets_outlined),
                       ('Gatos', Icons.pets),
-                      ('Outros', Icons.cruelty_free_outlined),
                       ('Perto de mim', Icons.location_on_outlined),
                     ])
                       Expanded(
@@ -438,6 +437,8 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
                             },
                             borderRadius: BorderRadius.circular(24),
                             child: Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Container(
                                   width: 46,
