@@ -1,11 +1,52 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../controller/clientes_scope.dart';
-import '../../model/cliente.dart';
+
 import '../../model/animais.dart';
-import '../../service/auth_api.dart';
+import '../../services/login_exception.dart';
 import '../animal/fichaAnimal.dart';
 import '../core/app_colors.dart';
+import '../core/foto_perfil_avatar.dart';
+
+class _PerfilPublico {
+  final int id;
+  final String nome;
+  final String sobrenome;
+  final String usuario;
+  final String? imageUrl;
+  final String cidadeDeResidencia;
+  final String? estado;
+  final bool larDeAdocao;
+
+  const _PerfilPublico({
+    required this.id,
+    required this.nome,
+    required this.sobrenome,
+    required this.usuario,
+    required this.imageUrl,
+    required this.cidadeDeResidencia,
+    required this.estado,
+    required this.larDeAdocao,
+  });
+
+  // Informações privadas não aparecem no perfil público.
+  String? get endereco => null;
+  String get telefone => '';
+  String get email => '';
+
+  factory _PerfilPublico.fromMap(Map<String, dynamic> dados) {
+    return _PerfilPublico(
+      id: (dados['id'] as num).toInt(),
+      nome: (dados['nome'] ?? '').toString(),
+      sobrenome: (dados['sobrenome'] ?? '').toString(),
+      usuario: (dados['usuario'] ?? '').toString(),
+      imageUrl: dados['imagem']?.toString(),
+      cidadeDeResidencia: (dados['cidade'] ?? '').toString(),
+      estado: dados['estado']?.toString(),
+      larDeAdocao: dados['lar_de_adocao'] == true,
+    );
+  }
+}
 
 class FichaPerfilScreen extends StatefulWidget {
   const FichaPerfilScreen({super.key, this.clienteId});
@@ -15,13 +56,13 @@ class FichaPerfilScreen extends StatefulWidget {
 }
 
 class _FichaPerfilScreenState extends State<FichaPerfilScreen> {
-  Future<Cliente>? _consulta;
+  Future<Map<String, dynamic>>? _consulta;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (widget.clienteId != null) {
       _consulta ??= ClientesScope.of(context)
-          .buscarClienteRemoto(widget.clienteId!);
+          .buscarPerfilPublicoSupabase(widget.clienteId!);
     }
   }
 
@@ -31,23 +72,26 @@ class _FichaPerfilScreenState extends State<FichaPerfilScreen> {
     if (oldWidget.clienteId != widget.clienteId) {
       _consulta = widget.clienteId == null
           ? null
-          : ClientesScope.of(context).buscarClienteRemoto(widget.clienteId!);
+          : ClientesScope.of(context)
+                .buscarPerfilPublicoSupabase(widget.clienteId!);
     }
   }
 
   void _recarregar() {
     final consulta = ClientesScope.of(context)
-        .buscarClienteRemoto(widget.clienteId!);
+        .buscarPerfilPublicoSupabase(widget.clienteId!);
     setState(() {
       _consulta = consulta;
     });
   }
 
   @override
-  Widget build(BuildContext context) => FutureBuilder<Cliente>(
+  Widget build(BuildContext context) => FutureBuilder<Map<String, dynamic>>(
     future: _consulta,
     builder: (context, snapshot) {
-      final c = snapshot.data;
+      final c = snapshot.data == null
+          ? null
+          : _PerfilPublico.fromMap(snapshot.data!);
       return Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
@@ -93,32 +137,12 @@ class _FichaPerfilScreenState extends State<FichaPerfilScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
                     children: [
                       Center(
-                        child: SizedBox(
-                          width: 112,
-                          height: 112,
-                          child: ClipOval(
-                            child: (c.imageUrl ?? '').isEmpty
-                                ? const ColoredBox(
-                                    color: AppColors.rosaClaro,
-                                    child: Icon(
-                                      Icons.person,
-                                      size: 62,
-                                      color: AppColors.laranja,
-                                    ),
-                                  )
-                                : Image.network(
-                                    c.imageUrl!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, _, _) => const ColoredBox(
-                                      color: AppColors.rosaClaro,
-                                      child: Icon(
-                                        Icons.person,
-                                        size: 62,
-                                        color: AppColors.laranja,
-                                      ),
-                                    ),
-                                  ),
-                          ),
+                        child: FotoPerfilAvatar(
+                          url: c.imageUrl,
+                          radius: 56,
+                          backgroundColor: AppColors.rosaClaro,
+                          foregroundColor: AppColors.laranja,
+                          iconSize: 62,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -248,12 +272,9 @@ class _AnimaisDoPerfilState extends State<_AnimaisDoPerfil> {
       _erro = null;
     });
     try {
-      final animais = await c.listarAnimais(
-        filtros: {
-          'id_cliente': '${widget.clienteId}',
-          'status': 'Disponível',
-          'pagina': '$pagina',
-        },
+      final animais = await c.listarAnimaisDisponiveisDoClienteSupabase(
+        widget.clienteId,
+        pagina: pagina,
       );
       if (!mounted) return;
       setState(() {
@@ -440,7 +461,12 @@ class _AnimalPerfilCard extends StatelessWidget {
                   style: const TextStyle(fontSize: 14),
                 ),
                 _detalhe(Icons.pets_outlined, animal.tipo),
-                _detalhe(Icons.access_time, '${animal.idade} ano(s)'),
+                _detalhe(
+                  Icons.access_time,
+                  animal.idade == null
+                      ? 'Idade não informada'
+                      : '${animal.idade} ano(s)',
+                ),
                 _detalhe(
                   animal.sexo == 'Fêmea' ? Icons.female : Icons.male,
                   animal.sexo,

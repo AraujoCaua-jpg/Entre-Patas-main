@@ -1,5 +1,7 @@
-import '../../service/clientes_api.dart';
-import '../../service/auth_api.dart';
+import 'package:flutter/foundation.dart';
+
+import '../../services/login_exception.dart';
+import '../../services/supabase_auth_service.dart';
 import '../core/scrollable_screen_body.dart';
 
 import 'package:material_ui/material_ui.dart';
@@ -17,6 +19,7 @@ class EsqueciSenhaScreen extends StatefulWidget {
 
 class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
   final TextEditingController emailController = TextEditingController();
+  bool _enviando = false;
 
   @override
   void dispose() {
@@ -25,6 +28,7 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
   }
 
   Future<void> verificarEmail() async {
+    if (_enviando) return;
     final email = emailController.text.trim();
 
     if (email.isEmpty) {
@@ -43,16 +47,35 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
       return;
     }
 
-    final api = ClientesApi();
+    const redirecionamentoConfigurado = String.fromEnvironment(
+      'SUPABASE_AUTH_REDIRECT_URL',
+    );
+    final redirecionamento = redirecionamentoConfigurado.isNotEmpty
+        ? redirecionamentoConfigurado
+        : kIsWeb
+        ? Uri.base.replace(query: '', fragment: '').toString()
+        : 'entrepatas://auth-callback';
+    setState(() => _enviando = true);
     try {
-      final mensagem = await api.solicitarRecuperacao(email);
+      await SupabaseAuthService().solicitarRecuperacao(
+        email,
+        redirectTo: redirecionamento,
+      );
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(mensagem)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Se o e-mail estiver cadastrado, você receberá as instruções '
+            'para recuperar sua senha.',
+          ),
+        ),
+      );
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => const AlterarSenhaScreen(recuperacao: true),
+          settings: const RouteSettings(name: '/recuperar-senha'),
+          builder: (context) =>
+              AlterarSenhaScreen(recuperacao: true, emailRecuperacao: email),
         ),
       );
     } on LoginException catch (e) {
@@ -69,7 +92,7 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
         );
       }
     } finally {
-      api.close();
+      if (mounted) setState(() => _enviando = false);
     }
   }
 
@@ -168,7 +191,7 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
                   child: SizedBox(
                     height: 62,
                     child: ElevatedButton(
-                      onPressed: verificarEmail,
+                      onPressed: _enviando ? null : verificarEmail,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.laranja,
                         foregroundColor: Colors.white,

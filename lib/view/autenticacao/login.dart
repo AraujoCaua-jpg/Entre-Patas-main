@@ -1,10 +1,9 @@
-import '../../service/auth_api.dart';
-import '../core/scrollable_screen_body.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../controller/clientes_scope.dart';
-
+import '../../services/login_exception.dart';
+import '../core/scrollable_screen_body.dart';
 import '../core/app_colors.dart';
 import '../navagacao.dart';
 import '../questionario/testeComp.dart';
@@ -34,7 +33,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> entrar() async {
     if (_entrando) return;
-    if (emailController.text.trim().isEmpty || senhaController.text.isEmpty) {
+
+    final email = emailController.text.trim();
+    final senha = senhaController.text;
+
+    if (email.isEmpty || senha.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Preencha e-mail e senha para continuar.'),
@@ -42,29 +45,42 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       return;
     }
-    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-        .hasMatch(emailController.text.trim())) {
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Digite um e-mail válido.')));
       return;
     }
-    final controller = ClientesScope.of(context);
+
     FocusScope.of(context).unfocus();
     setState(() => _entrando = true);
+
     try {
-      await controller.entrar(emailController.text, senhaController.text);
-      final precisaTeste =
-          controller.clienteLogado?.questionarioPendente ?? false;
-      final questionario = precisaTeste
+      final controller = ClientesScope.of(context);
+      await controller.entrar(email, senha);
+
+      if (!mounted) return;
+
+      senhaController.clear();
+
+      // Verifica se o usuário já concluiu
+      // o teste de compatibilidade.
+      final perfil = controller.clienteLogado;
+      if (perfil == null) {
+        throw const LoginException('Perfil não encontrado ou inativo.');
+      }
+      final questionario = perfil.questionarioPendente
           ? await controller.carregarQuestionario()
           : null;
+
       if (!mounted) return;
-      senhaController.clear();
+
+      // Se não existe questionário, abre o teste.
+      // Caso contrário, abre a Home.
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (_) => precisaTeste && questionario == null
+          builder: (_) => perfil.questionarioPendente && questionario == null
               ? const TesteCompScreen()
               : const NavegacaoScreen(),
         ),
@@ -72,17 +88,27 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } on LoginException catch (erro) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(erro.mensagem)));
-    } catch (_) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(erro.mensagem)));
+    } on AuthException catch (erro) {
       if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro no login: ${erro.message}')));
+    } catch (erro) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Não foi possível entrar. Tente novamente.'),
         ),
       );
     } finally {
-      if (mounted) setState(() => _entrando = false);
+      if (mounted) {
+        setState(() => _entrando = false);
+      }
     }
   }
 

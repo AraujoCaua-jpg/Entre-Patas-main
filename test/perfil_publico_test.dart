@@ -2,7 +2,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:entre_patas/controller/cliente_controller.dart';
 import 'package:entre_patas/controller/clientes_scope.dart';
-import 'package:entre_patas/model/cliente.dart';
 import 'package:entre_patas/model/animais.dart';
 import 'package:entre_patas/view/usuario/fichaPerfil.dart';
 import 'package:entre_patas/view/animal/fichaAnimal.dart';
@@ -10,7 +9,8 @@ import 'package:entre_patas/view/animal/fichaAnimal.dart';
 class PerfilPublicoDados extends ClienteController {
   PerfilPublicoDados({this.lar = true, this.vazio = false});
   final bool lar, vazio;
-  Map<String, String>? filtrosRecebidos;
+  int? clienteConsultado;
+  int? paginaConsultada;
   final animal = Animal(
     id: 8,
     nome: 'Lua',
@@ -26,23 +26,23 @@ class PerfilPublicoDados extends ClienteController {
     idCliente: 7,
   );
   @override
-  Future<Cliente> buscarClienteRemoto(int id, {bool basico = false}) async =>
-      Cliente(
-        id: id,
-        nome: 'Juliana',
-        sobrenome: 'Dias',
-        email: lar ? 'juliana@example.com' : '',
-        telefone: lar ? '11912345678' : '',
-        cidadeDeResidencia: 'Mogi das Cruzes',
-        usuario: 'juli_dias',
-        larDeAdocao: lar,
-        endereco: lar ? 'Rua Coronel, 67 - Jardim Solaris' : null,
-      );
+  Future<Map<String, dynamic>> buscarPerfilPublicoSupabase(int id) async => {
+    'id': id,
+    'nome': 'Juliana',
+    'sobrenome': 'Dias',
+    'usuario': 'juli_dias',
+    'cidade': 'Mogi das Cruzes',
+    'estado': 'SP',
+    'lar_de_adocao': lar,
+  };
+
   @override
-  Future<List<Animal>> listarAnimais({
-    Map<String, String> filtros = const {},
+  Future<List<Animal>> listarAnimaisDisponiveisDoClienteSupabase(
+    int clienteId, {
+    int pagina = 1,
   }) async {
-    filtrosRecebidos = filtros;
+    clienteConsultado = clienteId;
+    paginaConsultada = pagina;
     return vazio ? [] : [animal];
   }
 
@@ -74,11 +74,8 @@ void main() {
       expect(find.text('Perfil ‘@juli_dias’'), findsOneWidget);
       expect(find.text('Juliana Dias'), findsOneWidget);
       expect(find.text('Lar de Adoção'), findsOneWidget);
-      expect(dados.filtrosRecebidos, {
-        'id_cliente': '7',
-        'status': 'Disponível',
-        'pagina': '1',
-      });
+      expect(dados.clienteConsultado, 7);
+      expect(dados.paginaConsultada, 1);
       await tester.scrollUntilVisible(
         find.text('Lua'),
         150,

@@ -1,7 +1,5 @@
 import '../../core/foto_perfil_picker.dart';
 
-import 'package:flutter/services.dart';
-
 import '../../core/scrollable_screen_body.dart';
 
 import 'package:material_ui/material_ui.dart';
@@ -11,6 +9,7 @@ import '../../../controller/clientes_scope.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/telefone_formatter.dart';
+import '../../../services/foto_perfil_url.dart';
 import '../login.dart';
 import 'cadastroUsuario2.dart';
 
@@ -26,8 +25,7 @@ class _CadastroUsuarioScreenState extends State<CadastroUsuarioScreen> {
   final sobrenomeController = TextEditingController();
   final emailController = TextEditingController();
   final telefoneController = TextEditingController();
-  Uint8List? _foto;
-  bool _selecionandoFoto = false;
+  String? _fotoUrl;
 
   @override
   void dispose() {
@@ -47,6 +45,8 @@ class _CadastroUsuarioScreenState extends State<CadastroUsuarioScreen> {
       telefoneController,
     ].any((controller) => controller.text.trim().isEmpty)) {
       mensagem = 'Preencha todos os campos para continuar.';
+    } else if (_fotoUrl != null && !FotoPerfilUrl.valida(_fotoUrl)) {
+      mensagem = 'Digite um link de imagem válido (http ou https).';
     } else if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
         .hasMatch(emailController.text.trim())) {
       mensagem = 'Digite um e-mail válido.';
@@ -68,9 +68,9 @@ class _CadastroUsuarioScreenState extends State<CadastroUsuarioScreen> {
               sobrenome: sobrenomeController.text.trim(),
               email: emailController.text.trim(),
               telefone: telefoneController.text.trim(),
+              imageUrl: _fotoUrl,
               cidadeDeResidencia: '',
               usuario: '',
-              fotoCadastro: _foto,
             ),
           ),
         ),
@@ -181,9 +181,8 @@ class _CadastroUsuarioScreenState extends State<CadastroUsuarioScreen> {
 
                   const SizedBox(height: 24),
                   FotoPerfilPicker(
-                    onChanged: (foto) => setState(() => _foto = foto),
-                    onBusy: (ocupado) =>
-                        setState(() => _selecionandoFoto = ocupado),
+                    url: _fotoUrl,
+                    onChanged: (url) => setState(() => _fotoUrl = url),
                   ),
                   const SizedBox(height: 20),
 
@@ -285,7 +284,7 @@ class _CadastroUsuarioScreenState extends State<CadastroUsuarioScreen> {
                       SizedBox(
                         height: 62,
                         child: ElevatedButton(
-                          onPressed: _selecionandoFoto ? null : avancar,
+                          onPressed: avancar,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.laranja,
                             foregroundColor: Colors.white,

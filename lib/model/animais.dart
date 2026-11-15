@@ -1,7 +1,7 @@
 class Animal {
   int id;
   String nome;
-  int idade;
+  int? idade;
   String? imageUrl;
   String tipo;
   String descricao;
@@ -42,7 +42,7 @@ class Animal {
   factory Animal.fromJson(Map<String, dynamic> d) => Animal(
     id: (d['id'] as num).toInt(),
     nome: d['nome'] as String? ?? '',
-    idade: (d['idade'] as num).toInt(),
+    idade: (d['idade'] as num?)?.toInt(),
     imageUrl: d['imagem'] as String?,
     tipo: d['tipo'] as String? ?? '',
     descricao: d['descricao'] as String? ?? '',

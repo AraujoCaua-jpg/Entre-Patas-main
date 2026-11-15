@@ -4,7 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import '../core/app_colors.dart';
 import 'testeCompFim.dart';
 import '../../controller/clientes_scope.dart';
-import '../../service/auth_api.dart';
+import '../../services/login_exception.dart';
 
 class TesteCompCScreen extends StatefulWidget {
   const TesteCompCScreen({super.key, this.respostas = const {}});

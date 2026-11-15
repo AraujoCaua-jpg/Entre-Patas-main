@@ -1,105 +1,43 @@
-import 'dart:developer' as developer;
-
-import 'package:image_picker/image_picker.dart';
-import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'app_colors.dart';
+import '../../services/foto_perfil_url.dart';
 
 class FotoPerfilPicker extends StatefulWidget {
   const FotoPerfilPicker({
     super.key,
     this.url,
     required this.onChanged,
-    this.onBusy,
     this.enabled = true,
   });
   final String? url;
-  final ValueChanged<Uint8List?> onChanged;
-  final ValueChanged<bool>? onBusy;
+  final ValueChanged<String?> onChanged;
   final bool enabled;
   @override
   State<FotoPerfilPicker> createState() => _FotoPerfilPickerState();
 }
 
 class _FotoPerfilPickerState extends State<FotoPerfilPicker> {
-  Uint8List? _foto;
-  bool _selecionandoFoto = false;
-  Future<void> _escolherFoto() async {
-    if (_selecionandoFoto) return;
-    setState(() => _selecionandoFoto = true);
-    widget.onBusy?.call(true);
-    try {
-      final arquivo = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1200,
-        maxHeight: 1200,
-        imageQuality: 85,
-        requestFullMetadata: false,
-      );
-      if (arquivo == null || !mounted) return;
-      if (await arquivo.length() > 3 * 1024 * 1024) {
-        throw const FormatException('Escolha uma foto de até 3 MB.');
-      }
-      final bytes = await arquivo.readAsBytes();
-      final jpg =
-          bytes.length >= 3 &&
-          bytes[0] == 0xff &&
-          bytes[1] == 0xd8 &&
-          bytes[2] == 0xff;
-      final png =
-          bytes.length >= 8 &&
-          bytes[0] == 0x89 &&
-          bytes[1] == 0x50 &&
-          bytes[2] == 0x4e &&
-          bytes[3] == 0x47;
-      final webp =
-          bytes.length >= 12 &&
-          String.fromCharCodes(bytes.sublist(0, 4)) == 'RIFF' &&
-          String.fromCharCodes(bytes.sublist(8, 12)) == 'WEBP';
-      if (!jpg && !png && !webp) {
-        throw const FormatException('Escolha uma foto JPG, PNG ou WebP.');
-      }
-      final codec = await PaintingBinding.instance
-          .instantiateImageCodecWithSize(
-            await ImmutableBuffer.fromUint8List(bytes),
-          );
-      try {
-        final frame = await codec.getNextFrame();
-        frame.image.dispose();
-      } finally {
-        codec.dispose();
-      }
-      if (!mounted) return;
-      setState(() => _foto = bytes);
-      widget.onChanged(bytes);
-    } catch (erro, stack) {
-      developer.log(
-        'Falha ao selecionar foto de perfil',
-        name: 'cadastro.foto',
-        error: erro,
-        stackTrace: stack,
-      );
-      if (!mounted) return;
-      final String mensagem;
-      if (erro is MissingPluginException || erro is UnimplementedError) {
-        mensagem = 'O seletor de fotos ainda não foi carregado. Feche o app e execute novamente; Hot Reload não é suficiente.';
-      } else if (erro is PlatformException) {
-        mensagem =
-            erro.code.contains('denied') || erro.code.contains('permission')
-            ? 'Permita o acesso às fotos nas configurações do dispositivo e tente novamente.'
-            : 'Não foi possível abrir o seletor de fotos (${erro.code}). Feche e abra o app novamente.';
-      } else {
-        mensagem = erro is FormatException ? erro.message.toString() : 'Não foi possível ler a foto. Tente outro arquivo JPG, PNG ou WebP.';
-      }
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(mensagem)));
-    } finally {
-      if (mounted) {
-        setState(() => _selecionandoFoto = false);
-        widget.onBusy?.call(false);
-      }
+  late final TextEditingController _urlController;
+
+  @override
+  void initState() {
+    super.initState();
+    _urlController = TextEditingController(text: widget.url ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant FotoPerfilPicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.url != widget.url && _urlController.text != widget.url) {
+      _urlController.text = widget.url ?? '';
     }
+  }
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    super.dispose();
   }
 
   @override
@@ -127,11 +65,9 @@ class _FotoPerfilPickerState extends State<FotoPerfilPicker> {
           child: ClipOval(
             child: ColoredBox(
               color: AppColors.rosa,
-              child: _foto != null
-                  ? Image.memory(_foto!, fit: BoxFit.cover)
-                  : (widget.url?.isNotEmpty ?? false)
+              child: FotoPerfilUrl.valida(_urlController.text)
                   ? Image.network(
-                      widget.url!,
+                      _urlController.text.trim(),
                       fit: BoxFit.cover,
                       errorBuilder: (_, error, stack) => placeholder,
                     )
@@ -145,43 +81,41 @@ class _FotoPerfilPickerState extends State<FotoPerfilPicker> {
           style: TextStyle(color: AppColors.cinzaEscuro),
         ),
         const SizedBox(height: 12),
-        OutlinedButton.icon(
-          onPressed: !widget.enabled || _selecionandoFoto
-              ? null
-              : _escolherFoto,
-          icon: const Icon(Icons.add_photo_alternate_outlined),
-          label: Text(
-            _selecionandoFoto
-                ? 'Abrindo fotos...'
-                : _foto != null || (widget.url?.isNotEmpty ?? false)
-                ? 'Trocar foto'
-                : 'Escolher foto',
-          ),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.laranja,
-            side: const BorderSide(color: AppColors.laranja),
-            minimumSize: const Size(180, 48),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+        TextField(
+          controller: _urlController,
+          enabled: widget.enabled,
+          keyboardType: TextInputType.url,
+          textInputAction: TextInputAction.done,
+          autocorrect: false,
+          onChanged: (valor) {
+            setState(() {});
+            final url = valor.trim();
+            widget.onChanged(url.isEmpty ? null : url);
+          },
+          decoration: InputDecoration(
+            hintText: 'Link da imagem (opcional)',
+            prefixIcon: const Icon(Icons.link, color: Color(0xFF888888)),
+            suffixIcon: _urlController.text.isEmpty
+                ? null
+                : IconButton(
+                    tooltip: 'Remover foto',
+                    onPressed: widget.enabled
+                        ? () {
+                            _urlController.clear();
+                            setState(() {});
+                            widget.onChanged(null);
+                          }
+                        : null,
+                    icon: const Icon(Icons.clear),
+                  ),
+            filled: true,
+            fillColor: AppColors.cinza,
+            hintStyle: const TextStyle(color: Color(0xFF888888)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
             ),
           ),
-        ),
-        if (_foto != null || (widget.url?.isNotEmpty ?? false))
-          TextButton.icon(
-            onPressed: !widget.enabled || _selecionandoFoto
-                ? null
-                : () {
-                    setState(() => _foto = null);
-                    widget.onChanged(null);
-                  },
-            icon: const Icon(Icons.delete_outline),
-            label: const Text('Remover foto'),
-            style: TextButton.styleFrom(foregroundColor: AppColors.laranja),
-          ),
-        const SizedBox(height: 8),
-        const Text(
-          'JPG, PNG ou WebP • até 3 MB',
-          style: TextStyle(color: AppColors.cinzaEscuro, fontSize: 12),
         ),
       ],
     );

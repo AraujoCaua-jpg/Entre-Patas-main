@@ -1,4 +1,5 @@
 import 'package:entre_patas/view/core/app_dialog.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/scrollable_screen_body.dart';
 
@@ -7,8 +8,8 @@ import '../login.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../model/cliente.dart';
-import '../../../service/cliente_api.dart';
 import '../../../controller/clientes_scope.dart';
+import '../../../services/login_exception.dart';
 
 import '../../core/app_colors.dart';
 
@@ -62,11 +63,9 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
   bool larDeAdocao = false;
   bool _cadastroConcluido = false;
   bool _salvando = false;
-  final _api = ClienteApi();
 
   @override
   void dispose() {
-    _api.close();
     cidadeController.dispose();
     enderecoController.dispose();
     super.dispose();
@@ -81,17 +80,6 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
       mensagem = 'Informe o endereço do lar de adoção.';
     } else {
       final controller = ClientesScope.of(context);
-      if (controller.buscarPorEmail(widget.cliente.email) != null ||
-          controller.buscarPorUsuario(widget.cliente.usuario) != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'E-mail ou usuário já cadastrado. Volte para corrigir.',
-            ),
-          ),
-        );
-        return;
-      }
       widget.cliente.cidadeDeResidencia = cidadeController.text.trim();
       widget.cliente.estado = estado;
       widget.cliente.larDeAdocao = larDeAdocao;
@@ -100,8 +88,15 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
           : null;
       setState(() => _salvando = true);
       try {
-        widget.cliente.id = await _api.cadastrar(widget.cliente, widget.senha);
-      } on CadastroException catch (erro) {
+        await controller.cadastrarClienteSupabase(widget.cliente, widget.senha);
+      } on AuthException catch (erro) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(erro.message)));
+
+        return;
+      } on LoginException catch (erro) {
         if (!mounted) return;
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(erro.mensagem)));
@@ -118,16 +113,20 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
         if (mounted) setState(() => _salvando = false);
       }
       if (!mounted) return;
-      controller.cadastrarCliente(widget.cliente);
       setState(() => _cadastroConcluido = true);
+
       await showDialog<void>(
         context: context,
         barrierDismissible: false,
         builder: (context) => PopScope(
           canPop: false,
           child: AppDialog(
-            title: const Text('Cadastro concluído'),
-            content: const Text('Usuário cadastrado com sucesso!'),
+            title: const Text('Cadastro concluído!'),
+            content: const Text(
+              'Sua conta foi criada com sucesso! '
+              'Verifique se precisa confirmar seu e-mail '
+              'antes de entrar no Entre Patas.',
+            ),
             actions: [
               TextButton(
                 onPressed: () {
@@ -140,7 +139,7 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
                     (Route<dynamic> route) => false,
                   );
                 },
-                child: const Text('Entrar na minha conta'),
+                child: const Text('Ir para o login'),
               ),
             ],
           ),

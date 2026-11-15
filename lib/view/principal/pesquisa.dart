@@ -5,10 +5,11 @@ import 'package:material_ui/material_ui.dart';
 import '../../model/cliente.dart';
 import '../../model/animais.dart';
 import '../../controller/clientes_scope.dart';
-import '../../service/auth_api.dart';
+import '../../services/login_exception.dart';
 import '../animal/fichaAnimal.dart';
 import '../usuario/fichaPerfil.dart';
 import '../core/app_colors.dart';
+import '../core/foto_perfil_avatar.dart';
 
 const _laranja = Color(0xFFFF642F);
 const _rosa = Color(0xFFF8D7C8);
@@ -41,56 +42,83 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
 
   Future<void> _buscar() async {
     _debounce?.cancel();
+
     final versao = ++_versao;
     final usuarios = _usuariosAtivos;
     final controller = ClientesScope.of(context);
+
+    final termo = _texto.text.trim().toLowerCase();
+    final categoria = _categoria;
+    final sexo = _sexo;
+    final porte = _porte;
+
     setState(() {
       _carregando = true;
       _erro = null;
     });
+
     try {
       if (usuarios) {
-        final encontrados = await controller.pesquisarClientes(
-          _texto.text.trim(),
-        );
+        final encontrados = await controller.pesquisarClientes(termo);
         if (mounted && versao == _versao) {
-          setState(() => _usuarios = encontrados);
+          setState(() {
+            _usuarios = encontrados;
+            _pets = [];
+          });
         }
-      } else {
-        final filtros = <String, String>{
-          'q': _texto.text.trim(),
-          if (_categoria == 'Cachorros') 'tipo': 'Cachorro',
-          if (_categoria == 'Gatos') 'tipo': 'Gato',
-          'sexo': ?_sexo,
-          'porte': ?_porte,
-        };
-        if (_categoria == 'Perto de mim') {
-          final cliente = controller.clienteLogado;
-          if (cliente == null ||
-              cliente.cidadeDeResidencia.trim().isEmpty ||
-              (cliente.estado ?? '').trim().isEmpty) {
-            throw const LoginException(
-              'Preencha sua cidade e estado no perfil para encontrar pets perto de você.',
-            );
-          }
-          filtros['cidade'] = cliente.cidadeDeResidencia;
-          filtros['estado'] = cliente.estado!;
-        }
-        final encontrados = await controller.listarAnimais(filtros: filtros);
-        if (mounted && versao == _versao) {
-          setState(() => _pets = encontrados);
-        }
+        return;
       }
-    } catch (e) {
+
+      final filtros = <String, String>{
+        if (termo.isNotEmpty) 'q': termo,
+        'sexo': ?sexo,
+        'porte': ?porte,
+      };
+      String? tipo;
+      if (categoria == 'Cachorros') tipo = 'Cachorro';
+      if (categoria == 'Gatos') tipo = 'Gato';
+      if (categoria == 'Outros') tipo = 'Outros';
+      if (categoria == 'Perto de mim') {
+        final perfil = controller.clienteLogado;
+        if (perfil == null ||
+            perfil.cidadeDeResidencia.trim().isEmpty ||
+            (perfil.estado?.trim().isEmpty ?? true)) {
+          throw const LoginException(
+            'Complete sua cidade e estado no perfil para usar este filtro.',
+          );
+        }
+        filtros['cidade'] = perfil.cidadeDeResidencia.trim();
+        filtros['estado'] = perfil.estado!.trim();
+      }
+
+      final filtrados = await controller.listarAnimaisSupabase(
+        tipo: tipo,
+        filtros: filtros,
+        pagina: 1,
+      );
+
       if (mounted && versao == _versao) {
-        setState(
-          () => _erro = e is LoginException
-              ? e.mensagem
-              : 'Não foi possível pesquisar.',
-        );
+        setState(() {
+          _pets = filtrados;
+          _usuarios = [];
+        });
+      }
+
+      debugPrint('Pesquisa Supabase: ${filtrados.length} animais');
+    } catch (erro) {
+      if (mounted && versao == _versao) {
+        setState(() {
+          _pets = [];
+
+          _erro = erro is LoginException
+              ? erro.mensagem
+              : 'Não foi possível pesquisar no Supabase.';
+        });
       }
     } finally {
-      if (mounted && versao == _versao) setState(() => _carregando = false);
+      if (mounted && versao == _versao) {
+        setState(() => _carregando = false);
+      }
     }
   }
 
@@ -396,6 +424,7 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
                       ('Todos', Icons.grid_view_outlined),
                       ('Cachorros', Icons.pets_outlined),
                       ('Gatos', Icons.pets),
+                      ('Outros', Icons.cruelty_free_outlined),
                       ('Perto de mim', Icons.location_on_outlined),
                     ])
                       Expanded(
@@ -525,7 +554,7 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
                   _SearchCard(
                     name: animal.nome,
                     desc:
-                        '${animal.idade} ${animal.idade == 1 ? 'ano' : 'anos'} - ${animal.sexo}',
+                        '${animal.idade == null ? 'Idade não informada' : '${animal.idade} ${animal.idade == 1 ? 'ano' : 'anos'}'} - ${animal.sexo}',
                     image: animal.imageUrl,
                     location: [
                       animal.cidade,
@@ -676,19 +705,27 @@ class _SearchCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          ClipOval(
-            child: SizedBox(
-              width: 56,
-              height: 56,
-              child: image == null || image!.isEmpty
-                  ? _placeholder()
-                  : Image.network(
-                      image!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, error, stack) => _placeholder(),
-                    ),
-            ),
-          ),
+          pet
+              ? ClipOval(
+                  child: SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: image == null || image!.isEmpty
+                        ? _placeholder()
+                        : Image.network(
+                            image!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, error, stack) => _placeholder(),
+                          ),
+                  ),
+                )
+              : FotoPerfilAvatar(
+                  url: image,
+                  radius: 28,
+                  backgroundColor: _rosa,
+                  foregroundColor: AppColors.laranja,
+                  icon: Icons.person_outline,
+                ),
           const SizedBox(width: 9),
           Expanded(
             child: Column(

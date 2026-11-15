@@ -19,7 +19,7 @@ class Adocao {
 
   factory Adocao.fromJson(Map<String, dynamic> d) => Adocao(
     id: (d['id'] as num).toInt(),
-    data: DateTime.parse(d['data'] as String),
+    data: DateTime.parse(d['data'] as String).toLocal(),
     status: d['status'] as String,
     idAnimal: (d['id_animal'] as num).toInt(),
     idCliente: (d['id_cliente'] as num).toInt(),
