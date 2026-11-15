@@ -1,5 +1,9 @@
 import '../../service/auth_api.dart';
 
+import 'package:flutter/services.dart' show Uint8List;
+
+import '../core/foto_perfil_picker.dart';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../../model/cliente.dart';
@@ -18,6 +22,9 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   int? _clienteId;
   bool _dadosCarregados = false;
   bool _salvando = false;
+  Uint8List? _foto;
+  String? _fotoUrl;
+  bool _selecionandoFoto = false;
 
   @override
   void didChangeDependencies() {
@@ -33,6 +40,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       if (!mounted) return;
 
       _clienteId = cliente.id;
+      _fotoUrl = cliente.imageUrl;
       nomeController.text = cliente.nome;
       sobrenomeController.text = cliente.sobrenome;
       emailController.text = cliente.email;
@@ -111,7 +119,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   }
 
   Future<void> editarConta() async {
-    if (_salvando) return;
+    if (_salvando || _selecionandoFoto) return;
     final controller = ClientesScope.of(context);
     final cliente = controller.clienteLogado;
     if (cliente == null || cliente.id != _clienteId) {
@@ -170,7 +178,8 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             telefone: telefoneController.text.trim(),
             usuario: usuarioController.text.trim(),
             cidadeDeResidencia: cidadeController.text.trim(),
-            imageUrl: cliente.imageUrl,
+            imageUrl: _fotoUrl,
+            fotoCadastro: _foto,
             estado: estado,
             larDeAdocao: larDeAdocao,
             endereco: larDeAdocao ? enderecoController.text.trim() : null,
@@ -225,6 +234,16 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         padding: EdgeInsets.all(16.0),
         child: Column(
           children: [
+            FotoPerfilPicker(
+              url: _fotoUrl,
+              enabled: !_salvando && _clienteId != null,
+              onChanged: (foto) => setState(() {
+                _foto = foto;
+                if (foto == null) _fotoUrl = null;
+              }),
+              onBusy: (ocupado) => setState(() => _selecionandoFoto = ocupado),
+            ),
+            const SizedBox(height: 24),
             Row(
               children: [
                 Text("Dados Pessoais", style: TextStyle(fontSize: 20)),
@@ -479,7 +498,9 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             SizedBox(
               height: 62,
               child: ElevatedButton(
-                onPressed: _salvando ? null : editarConta,
+                onPressed: _salvando || _selecionandoFoto || _clienteId == null
+                    ? null
+                    : editarConta,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.laranja,
                   foregroundColor: Colors.white,

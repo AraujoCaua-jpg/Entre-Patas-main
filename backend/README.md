@@ -1,5 +1,23 @@
 # API local do Entre Patas
 
+## Foto de perfil no cadastro
+
+O cadastro recebe `fotoBase64` opcional (JPG, PNG ou WebP, até 3 MB), salva o
+arquivo em `uploads/perfis` e guarda sua URL em `cliente.imagem`. Nenhuma mudança
+no banco é necessária. Cadastros sem foto e clientes antigos continuam aceitos.
+Publique `cadastrar_cliente.php`, `foto_perfil_storage.php`, `foto_perfil.php`
+e `uploads/.htaccess` juntos. A pasta `uploads` precisa permitir escrita pelo PHP;
+publique também `clientes.php` para permitir trocar ou remover a foto na edição
+do perfil. A troca só é gravada ao salvar o formulário e exige uma sessão válida;
+seu `.htaccess` bloqueia acesso direto aos arquivos. Não versione fotos reais.
+Configure `PUBLIC_API_URL` com a URL pública da API quando houver proxy/HTTPS;
+sem ela, o endereço é derivado da requisição. O limite do servidor para o corpo
+da requisição deve permitir pelo menos 5 MB, pois a foto é enviada em base64.
+
+Validação local: `C:\xampp\php\php.exe test\foto_perfil_backend_test.php`.
+Se a API estiver no XAMPP, defina `PHOTO_STORAGE_DIR` com o caminho absoluto de
+`C:\xampp\htdocs\entrepatas-api\uploads\perfis` para remover a foto temporária do teste.
+
 ## Contador de notificações
 
 Execute `C:\xampp\php\php.exe backend\migrar_notificacoes.php` para criar

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:entre_patas/model/cliente.dart';
 import 'package:entre_patas/service/clientes_api.dart';
@@ -37,6 +38,7 @@ void main() {
         expect(body.containsKey('id'), false);
         expect(body.containsKey('senha'), false);
         expect(body.containsKey('ativo'), false);
+        expect(base64Decode(body['fotoBase64'] as String), [1, 2, 3]);
         return http.Response(
           jsonEncode({
             'cliente': {'id': 4, ...body},
@@ -54,6 +56,7 @@ void main() {
       telefone: '11999999999',
       cidadeDeResidencia: 'Teste',
       usuario: 'ana',
+      fotoCadastro: Uint8List.fromList([1, 2, 3]),
     );
     expect((await api.editar('teste', c)).nome, 'Ana');
   });

@@ -74,7 +74,11 @@ class ClientesApi {
     (await requisicao(
           'clientes.php?acao=editar',
           token: token,
-          dados: c.toJson(),
+          dados: {
+            ...c.toJson(),
+            if (c.fotoCadastro != null)
+              'fotoBase64': base64Encode(c.fotoCadastro!),
+          },
         ))['cliente']
         as Map<String, dynamic>,
   );

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:entre_patas/model/cliente.dart';
 import 'package:entre_patas/service/cliente_api.dart';
@@ -56,6 +57,28 @@ void main() {
       ),
     );
   });
+
+  test(
+    'envia a foto selecionada e guarda a URL retornada pelo servidor',
+    () async {
+      final foto = Uint8List.fromList([1, 2, 3, 4]);
+      cliente.fotoCadastro = foto;
+      final api = ClienteApi(
+        client: MockClient((request) async {
+          final dados = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(base64Decode(dados['fotoBase64'] as String), foto);
+          return http.Response(
+            '{"id":43,"imagem":"http://localhost/entrepatas-api/foto_perfil.php?arquivo=teste.png"}',
+            201,
+          );
+        }),
+      );
+      addTearDown(api.close);
+      expect(await api.cadastrar(cliente, 'SenhaTeste!1'), 43);
+      expect(cliente.imageUrl, contains('foto_perfil.php?arquivo=teste.png'));
+      expect(cliente.fotoCadastro, isNull);
+    },
+  );
 
   test('não aceita HTML ou sucesso sem ID válido', () async {
     for (final body in ['<html>Erro PHP</html>', '{"id":0}']) {

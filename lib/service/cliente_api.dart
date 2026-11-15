@@ -37,6 +37,8 @@ class ClienteApi {
               'endereco': cliente.endereco,
               'larDeAdocao': cliente.larDeAdocao,
               'imagem': cliente.imageUrl,
+              if (cliente.fotoCadastro != null)
+                'fotoBase64': base64Encode(cliente.fotoCadastro!),
             }),
           )
           .timeout(const Duration(seconds: 15));
@@ -54,6 +56,10 @@ class ClienteApi {
       }
       final id = dados['id'];
       if (id is! int || id <= 0) throw const FormatException();
+      if (dados['imagem'] is String) {
+        cliente.imageUrl = dados['imagem'] as String;
+      }
+      cliente.fotoCadastro = null;
       return id;
     } on TimeoutException {
       throw const CadastroException(

@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/auth_common.php';
 require_once __DIR__ . '/validacao_cliente.php';
+require_once __DIR__ . '/foto_perfil_storage.php';
+$arquivoFoto = null;
 function dados_publicos($c, $basico = false) {
     $campos = $basico ? ['id','nome','usuario','imagem']
         : ['id','nome','sobrenome','usuario','imagem','estado','cidadeDeResidencia','larDeAdocao'];
@@ -41,12 +43,19 @@ try {
             resposta(200, ['mensagem' => 'Conta desativada.']);
         }
         if ($acao === 'editar') {
-            $d = json_decode(file_get_contents('php://input'), true);
+            $corpo = file_get_contents('php://input', false, null, 0, 5*1024*1024+1);
+            if (strlen($corpo)>5*1024*1024) resposta(413, ['erro'=>'Escolha uma foto de até 3 MB.']);
+            $d = json_decode($corpo, true);
             if (!is_array($d)) resposta(400, ['erro' => 'Dados inválidos.']);
             try {
                 $d = validar_cliente($d);
+                $foto = isset($d['fotoBase64']) ? validar_foto_perfil($d['fotoBase64']) : null;
             } catch (InvalidArgumentException $erro) {
                 resposta(400, ['erro'=>$erro->getMessage()]);
+            }
+            if ($foto !== null) {
+                [$arquivoFoto,$nomeFoto] = salvar_foto_perfil($foto);
+                $d['imagem'] = url_foto_perfil($nomeFoto);
             }
             $q = $pdo->prepare('UPDATE cliente SET nome=?,sobrenome=?,email=?,telefone=?,usuario=?,cidadeDeResidencia=?,estado=?,larDeAdocao=?,endereco=?,imagem=? WHERE id=? AND ativo=1');
             $q->execute([$d['nome'],$d['sobrenome'],$d['email'],$d['telefone'],$d['usuario'],$d['cidadeDeResidencia'],$d['estado'],
@@ -58,10 +67,12 @@ try {
     } else resposta(405, ['erro' => 'Método não permitido.']);
     resposta(404, ['erro' => 'Operação não encontrada.']);
 } catch (PDOException $e) {
+    if ($arquivoFoto !== null) @unlink($arquivoFoto);
     if (($e->errorInfo[1] ?? 0) === 1062) resposta(409, ['erro' => 'E-mail, telefone ou usuário já cadastrado.']);
     error_log($e->getMessage());
     resposta(500, ['erro' => 'Não foi possível concluir a operação.']);
 } catch (Throwable $e) {
+    if ($arquivoFoto !== null) @unlink($arquivoFoto);
     error_log($e->getMessage());
     resposta(500, ['erro' => 'Não foi possível concluir a operação.']);
 }

@@ -101,6 +101,11 @@ class _AlterarSenhaScreenState extends State<AlterarSenhaScreen> {
         backgroundColor: AppColors.fundo,
         centerTitle: true,
         automaticallyImplyLeading: false,
+        leading: IconButton(
+          tooltip: 'Voltar',
+          icon: const Icon(Icons.arrow_back, color: AppColors.laranja),
+          onPressed: () => Navigator.maybePop(context),
+        ),
         title: Image.asset('assets/logo.png', height: 25, fit: BoxFit.contain),
         shape: const Border(
           bottom: BorderSide(color: Color(0xFFD96C3F), width: 2),

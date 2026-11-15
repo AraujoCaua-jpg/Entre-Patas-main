@@ -1,3 +1,7 @@
+import '../../core/foto_perfil_picker.dart';
+
+import 'package:flutter/services.dart';
+
 import '../../core/scrollable_screen_body.dart';
 
 import 'package:material_ui/material_ui.dart';
@@ -22,6 +26,8 @@ class _CadastroUsuarioScreenState extends State<CadastroUsuarioScreen> {
   final sobrenomeController = TextEditingController();
   final emailController = TextEditingController();
   final telefoneController = TextEditingController();
+  Uint8List? _foto;
+  bool _selecionandoFoto = false;
 
   @override
   void dispose() {
@@ -64,6 +70,7 @@ class _CadastroUsuarioScreenState extends State<CadastroUsuarioScreen> {
               telefone: telefoneController.text.trim(),
               cidadeDeResidencia: '',
               usuario: '',
+              fotoCadastro: _foto,
             ),
           ),
         ),
@@ -172,7 +179,13 @@ class _CadastroUsuarioScreenState extends State<CadastroUsuarioScreen> {
                     style: TextStyle(color: Color(0xFF888888), fontSize: 16),
                   ),
 
-                  SizedBox(height: 40),
+                  const SizedBox(height: 24),
+                  FotoPerfilPicker(
+                    onChanged: (foto) => setState(() => _foto = foto),
+                    onBusy: (ocupado) =>
+                        setState(() => _selecionandoFoto = ocupado),
+                  ),
+                  const SizedBox(height: 20),
 
                   TextField(
                     controller: nomeController,
@@ -272,7 +285,7 @@ class _CadastroUsuarioScreenState extends State<CadastroUsuarioScreen> {
                       SizedBox(
                         height: 62,
                         child: ElevatedButton(
-                          onPressed: avancar,
+                          onPressed: _selecionandoFoto ? null : avancar,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.laranja,
                             foregroundColor: Colors.white,

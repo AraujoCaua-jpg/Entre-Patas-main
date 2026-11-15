@@ -1,4 +1,8 @@
+import 'dart:typed_data';
+
 class Cliente {
+  // Arquivo temporário do cadastro; não é serializado no perfil.
+  Uint8List? fotoCadastro;
   int id;
   String nome;
   String sobrenome;
@@ -19,6 +23,7 @@ class Cliente {
     required this.email,
     required this.telefone,
     this.imageUrl,
+    this.fotoCadastro,
     required this.cidadeDeResidencia,
     required this.usuario,
     this.estado,
