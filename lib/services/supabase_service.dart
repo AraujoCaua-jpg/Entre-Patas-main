@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -9,9 +10,15 @@ import 'validacao_perfil.dart';
 import 'filtros_animais.dart';
 import 'foto_perfil_url.dart';
 import 'login_exception.dart';
+import 'foto_perfil_storage_service.dart';
+import 'foto_perfil_pendente_service.dart';
 
 class SupabaseService {
+  SupabaseService({FotoPerfilPendenteService? fotoPendente})
+    : _fotoPendente = fotoPendente ?? FotoPerfilPendenteService();
+
   final SupabaseClient _client = Supabase.instance.client;
+  final FotoPerfilPendenteService _fotoPendente;
 
   Future<List<Adocao>> listarAdocoesSupabase() async {
     final dados = await _executarAdocaoRpc('listar_minhas_adocoes');
@@ -257,10 +264,44 @@ class SupabaseService {
         'Mantenha seu e-mail atual para salvar os outros dados.',
       );
     }
-    final imagem = cliente.imageUrl?.trim();
+    final imagemInformada = cliente.imageUrl?.trim();
+    FotoPerfilEnviada? fotoEnviada;
+    var perfilSalvo = false;
+    var patchIniciado = false;
 
     try {
+      if (cliente.fotoCadastro == null &&
+          (imagemInformada?.isEmpty ?? true) &&
+          (usuario.userMetadata?['imagem'] != null ||
+              usuario.userMetadata?['avatar_url'] != null)) {
+        try {
+          // Limpar o fallback também evita recuperar a foto antiga após removê-la.
+          final resposta = await _client.auth.updateUser(
+            UserAttributes(data: {'imagem': null, 'avatar_url': null}),
+          );
+          if (resposta.user?.id != usuario.id) {
+            throw const LoginException(
+              'Entre novamente para remover sua foto.',
+            );
+          }
+        } on AuthException {
+          throw const LoginException(
+            'Não foi possível remover a foto. Tente novamente.',
+          );
+        }
+      }
+      if (cliente.fotoCadastro != null) {
+        fotoEnviada = await FotoPerfilStorageService.enviar(
+          cliente.fotoCadastro!,
+          client: _client,
+        );
+      }
+      if (_client.auth.currentUser?.id != usuario.id) {
+        throw const LoginException('Entre novamente para editar seu perfil.');
+      }
+      final imagem = fotoEnviada?.url ?? imagemInformada;
       // Lista explícita: e-mail é gerenciado pelo Auth, nunca por este PATCH.
+      patchIniciado = true;
       final dados = await _client
           .from('cliente')
           .update({
@@ -279,16 +320,72 @@ class SupabaseService {
           .eq('ativo', true)
           .select()
           .maybeSingle();
+      perfilSalvo = dados != null;
       if (_client.auth.currentUser?.id != usuario.id) {
         throw const LoginException('Entre novamente para editar seu perfil.');
       }
       if (dados == null) {
         throw const LoginException('Perfil não encontrado ou sem permissão.');
       }
-      return Cliente.fromJson(dados);
+      final atualizado = Cliente.fromJson(dados);
+      if (fotoEnviada != null) {
+        cliente.fotoCadastro = null;
+      }
+      // Uma edição manual também substitui a escolha pendente do cadastro.
+      await _limparFotoPendente(usuario.id);
+      return atualizado;
     } on PostgrestException catch (erro) {
+      if (!perfilSalvo) await _descartarFoto(fotoEnviada);
       throw _erroPerfil(erro);
+    } catch (_) {
+      // Uma falha de transporte após enviar o PATCH pode ocorrer mesmo com a
+      // foto já vinculada. Não apagar o arquivo se a confirmação for incerta.
+      if (!patchIniciado && !perfilSalvo) await _descartarFoto(fotoEnviada);
+      rethrow;
     }
+  }
+
+  Future<void> _descartarFoto(FotoPerfilEnviada? foto) async {
+    if (foto == null) return;
+    try {
+      await FotoPerfilStorageService.descartar(foto, _client);
+    } catch (_) {
+      developer.log('A limpeza do novo arquivo de foto ficou pendente.');
+    }
+  }
+
+  Future<void> _limparFotoPendente(String usuarioId) async {
+    try {
+      await _fotoPendente.remover(usuarioId);
+    } catch (_) {
+      // A imagem já está vinculada no servidor. No próximo login, a existência
+      // dessa imagem evita reenviar a foto e permite repetir só a limpeza local.
+      developer.log(
+        'A limpeza da foto pendente local será repetida no próximo login.',
+      );
+    }
+  }
+
+  Future<String?> finalizarFotoPendenteCadastro() async {
+    final usuario = _client.auth.currentUser;
+    if (usuario == null) {
+      throw const LoginException('Entre para enviar sua foto.');
+    }
+    final foto = await _fotoPendente.carregar(usuario.id);
+    if (_client.auth.currentUser?.id != usuario.id) {
+      throw const LoginException('Entre novamente para enviar sua foto.');
+    }
+    if (foto == null) return null;
+    final perfil = await buscarMeuPerfilSupabase();
+    if (_client.auth.currentUser?.id != usuario.id) {
+      throw const LoginException('Entre novamente para enviar sua foto.');
+    }
+    if (FotoPerfilUrl.valida(perfil.imageUrl)) {
+      await _limparFotoPendente(usuario.id);
+      return perfil.imageUrl;
+    }
+    perfil.fotoCadastro = foto;
+    return (await editarMeuPerfilSupabase(perfil)).imageUrl;
   }
 
   LoginException _erroPerfil(PostgrestException erro) {
@@ -475,7 +572,45 @@ class SupabaseService {
     );
   }
 
-  Future<void> publicarAnimal(Animal animal) async {
+  Future<void> publicarAnimal(Animal animal) =>
+      _salvarAnimalComFoto(animal, (imagem) => _publicarAnimal(animal, imagem));
+
+  Future<void> _salvarAnimalComFoto(
+    Animal animal,
+    Future<void> Function(String? imagem) salvar,
+  ) async {
+    final usuarioId = _client.auth.currentUser?.id;
+    if (usuarioId == null) {
+      throw const LoginException('Entre novamente para salvar o animal.');
+    }
+    FotoPerfilEnviada? enviada;
+    var gravacaoIniciada = false;
+    try {
+      if (animal.fotoCadastro != null) {
+        enviada = await FotoPerfilStorageService.enviarAnimal(
+          animal.fotoCadastro!,
+          client: _client,
+        );
+      }
+      if (_client.auth.currentUser?.id != usuarioId) {
+        throw const LoginException('Entre novamente para salvar o animal.');
+      }
+      gravacaoIniciada = true;
+      final imagem = enviada?.url ?? animal.imageUrl;
+      await salvar(imagem);
+      animal.imageUrl = imagem;
+      animal.fotoCadastro = null;
+    } on PostgrestException {
+      await _descartarFoto(enviada);
+      rethrow;
+    } catch (_) {
+      // Uma resposta perdida pode ocorrer depois de o banco salvar a URL.
+      if (!gravacaoIniciada) await _descartarFoto(enviada);
+      rethrow;
+    }
+  }
+
+  Future<void> _publicarAnimal(Animal animal, String? imagem) async {
     final usuario = _client.auth.currentUser;
 
     if (usuario == null) {
@@ -493,11 +628,16 @@ class SupabaseService {
       throw Exception('Perfil não encontrado ou inativo.');
     }
 
+    if (_client.auth.currentUser?.id != usuario.id) {
+      throw const LoginException('Entre novamente para salvar o animal.');
+    }
+
     // Publica o animal no Supabase
     final dados = await _client
         .from('animal')
         .insert({
           ...animal.toJson(),
+          'imagem': imagem,
           'id_cliente': perfil['id'],
           'ativo': true,
           'status': 'Disponível',
@@ -538,7 +678,10 @@ class SupabaseService {
     return Animal.fromJson(dados);
   }
 
-  Future<void> editarAnimalSupabase(Animal animal) async {
+  Future<void> editarAnimalSupabase(Animal animal) =>
+      _salvarAnimalComFoto(animal, (imagem) => _editarAnimal(animal, imagem));
+
+  Future<void> _editarAnimal(Animal animal, String? imagem) async {
     final usuario = _client.auth.currentUser;
     if (usuario == null) {
       throw Exception('Entre novamente.');
@@ -555,12 +698,16 @@ class SupabaseService {
       throw Exception('Perfil não encontrado ou inativo.');
     }
 
+    if (_client.auth.currentUser?.id != usuario.id) {
+      throw const LoginException('Entre novamente para salvar o animal.');
+    }
+
     final atualizado = await _client
         .from('animal')
         .update({
           'nome': animal.nome,
           'idade': animal.idade,
-          'imagem': animal.imageUrl,
+          'imagem': imagem,
           'tipo': animal.tipo,
           'descricao': animal.descricao,
           'sexo': animal.sexo,
@@ -819,7 +966,12 @@ class SupabaseService {
     }
   }
 
-  Future<void> cadastrarClienteSupabase(Cliente cliente, String senha) async {
+  Future<String?> cadastrarClienteSupabase(
+    Cliente cliente,
+    String senha,
+  ) async {
+    final foto = cliente.fotoCadastro;
+    if (foto != null) FotoPerfilStorageService.validarFoto(foto);
     final imagem = cliente.imageUrl?.trim();
     if (imagem != null && imagem.isNotEmpty && !FotoPerfilUrl.valida(imagem)) {
       throw const LoginException(
@@ -840,13 +992,31 @@ class SupabaseService {
         'cidade': cliente.cidadeDeResidencia.trim(),
         'larDeAdocao': cliente.larDeAdocao,
         'endereco': cliente.larDeAdocao ? cliente.endereco?.trim() : null,
-        'imagem': (imagem?.isNotEmpty ?? false) ? imagem : null,
+        'imagem': foto == null && (imagem?.isNotEmpty ?? false) ? imagem : null,
       },
     );
 
     if (resultado.user == null) {
       throw Exception('Não foi possível iniciar o cadastro.');
     }
+    if (foto == null) return null;
+    try {
+      await _fotoPendente.guardar(resultado.user!.id, foto);
+      cliente.fotoCadastro = null;
+    } catch (_) {
+      // O cadastro já foi confirmado pelo Auth: não pedir para criar outra conta.
+      return 'Não foi possível guardar sua foto. Após entrar, envie-a em Editar perfil.';
+    }
+    if (resultado.session != null &&
+        _client.auth.currentUser?.id == resultado.user!.id) {
+      try {
+        await finalizarFotoPendenteCadastro();
+        return null;
+      } catch (_) {
+        return 'Sua foto ficou pendente. Você poderá enviá-la ao entrar novamente ou em Editar perfil.';
+      }
+    }
+    return 'Sua foto será enviada após confirmar o e-mail e entrar neste mesmo navegador.';
   }
 
   Future<void> salvarQuestionarioSupabase(Map<String, dynamic> dados) async {

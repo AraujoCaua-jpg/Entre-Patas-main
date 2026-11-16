@@ -1,8 +1,12 @@
+import 'dart:typed_data';
+
 class Animal {
   int id;
   String nome;
   int? idade;
   String? imageUrl;
+  // Bytes locais; somente a URL enviada é persistida no banco.
+  Uint8List? fotoCadastro;
   String tipo;
   String descricao;
   String sexo;
@@ -23,6 +27,7 @@ class Animal {
     required this.nome,
     required this.idade,
     this.imageUrl,
+    this.fotoCadastro,
     required this.tipo,
     required this.energia,
     required this.porte,

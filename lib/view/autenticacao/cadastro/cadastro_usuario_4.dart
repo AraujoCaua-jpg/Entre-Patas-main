@@ -95,10 +95,11 @@ class _CadastroUsuario4ScreenState extends State<CadastroUsuario4Screen> {
           canPop: false,
           child: AppDialog(
             title: const Text('Cadastro concluído!'),
-            content: const Text(
+            content: Text(
               'Sua conta foi criada com sucesso! '
               'Verifique se precisa confirmar seu e-mail '
-              'antes de entrar no Entre Patas.',
+              'antes de entrar no Entre Patas.'
+              '${controller.avisoFotoCadastro == null ? '' : '\n\n${controller.avisoFotoCadastro}'}',
             ),
             actions: [
               TextButton(

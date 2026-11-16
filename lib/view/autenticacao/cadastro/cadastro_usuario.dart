@@ -1,5 +1,7 @@
 import '../../core/foto_perfil_picker.dart';
 
+import 'dart:typed_data';
+
 import '../../core/scrollable_screen_body.dart';
 
 import 'package:material_ui/material_ui.dart';
@@ -27,6 +29,7 @@ class _CadastroUsuarioScreenState extends State<CadastroUsuarioScreen> {
   final emailController = TextEditingController();
   final telefoneController = TextEditingController();
   String? _fotoUrl;
+  Uint8List? _fotoSelecionada;
 
   @override
   void dispose() {
@@ -68,6 +71,7 @@ class _CadastroUsuarioScreenState extends State<CadastroUsuarioScreen> {
               email: emailController.text.trim(),
               telefone: telefoneController.text.trim(),
               imageUrl: _fotoUrl,
+              fotoCadastro: _fotoSelecionada,
               cidadeDeResidencia: '',
               usuario: '',
             ),
@@ -181,6 +185,9 @@ class _CadastroUsuarioScreenState extends State<CadastroUsuarioScreen> {
                   const SizedBox(height: 24),
                   FotoPerfilPicker(
                     url: _fotoUrl,
+                    foto: _fotoSelecionada,
+                    onFotoChanged: (foto) =>
+                        setState(() => _fotoSelecionada = foto),
                     onChanged: (url) => setState(() => _fotoUrl = url),
                   ),
                   const SizedBox(height: 20),

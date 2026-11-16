@@ -14,6 +14,10 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:entre_patas/services/foto_perfil_pendente_service.dart';
+
+import 'support/foto_perfil_fixture.dart';
 
 Cliente _cliente({String? imagem}) => Cliente(
   id: 0,
@@ -75,6 +79,7 @@ void main() {
   late SupabaseService service;
 
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           const MethodChannel('plugins.flutter.io/shared_preferences'),
@@ -96,6 +101,30 @@ void main() {
 
   tearDown(() async => Supabase.instance.dispose());
 
+  test(
+    'Cadastro com foto e confirmação pendente não faz upload anônimo',
+    () async {
+      final foto = fotoPng();
+      final cliente = _cliente()..fotoCadastro = foto;
+      final aviso = await service.cadastrarClienteSupabase(
+        cliente,
+        'senha-simulada',
+      );
+      expect(aviso, contains('confirmar o e-mail'));
+      expect(servidor.uploads, isEmpty);
+      final dados = jsonDecode(servidor.cadastros.single.body) as Map;
+      expect(dados['data']['imagem'], isNull);
+      expect(dados['data'].toString(), isNot(contains(base64Encode(foto))));
+      expect(
+        await FotoPerfilPendenteService().carregar(
+          '11111111-1111-4111-8111-111111111111',
+        ),
+        foto,
+      );
+      expect(cliente.fotoCadastro, isNull);
+    },
+  );
+
   test('Cadastro sem foto envia imagem nula e não acessa Storage', () async {
     await service.cadastrarClienteSupabase(_cliente(), 'senha-simulada');
 
@@ -105,6 +134,18 @@ void main() {
     expect(dados['data']['telefone'], '11999998888');
     expect(dados['data']['origem_cadastro'], 'entre_patas');
     expect(dados['data']['imagem'], isNull);
+    expect(servidor.uploads, isEmpty);
+  });
+
+  test('falha ao guardar foto não apresenta a conta criada como cadastro fracassado', () async {
+    final servico = SupabaseService(fotoPendente: _SemEspaco());
+    final cliente = _cliente()..fotoCadastro = fotoPng();
+    final aviso = await servico.cadastrarClienteSupabase(
+      cliente,
+      'senha-simulada',
+    );
+    expect(servidor.cadastros, hasLength(1));
+    expect(aviso, contains('Após entrar'));
     expect(servidor.uploads, isEmpty);
   });
 
@@ -172,20 +213,24 @@ void main() {
     );
   });
 
-  testWidgets('Primeira etapa mantém a URL para as demais etapas', (
+  testWidgets('Primeira etapa mantém a foto escolhida para as demais etapas', (
     tester,
   ) async {
     await tester.pumpWidget(
       const ClientesScope(child: MaterialApp(home: CadastroUsuarioScreen())),
     );
+    final foto = fotoPng();
+    tester
+        .widget<FotoPerfilPicker>(find.byType(FotoPerfilPicker))
+        .onFotoChanged!(foto);
+    await tester.pump();
 
     final campos = find.byType(TextField);
     for (final (indice, texto) in [
-      (0, 'https://example.com/perfil.png'),
-      (1, 'Ana'),
-      (2, 'Silva'),
-      (3, 'ana@example.com'),
-      (4, '(11) 99999-8888'),
+      (0, 'Ana'),
+      (1, 'Silva'),
+      (2, 'ana@example.com'),
+      (3, '(11) 99999-8888'),
     ]) {
       await tester.ensureVisible(campos.at(indice));
       await tester.enterText(campos.at(indice), texto);
@@ -199,6 +244,14 @@ void main() {
     final etapa = tester.widget<CadastroUsuario2Screen>(
       find.byType(CadastroUsuario2Screen),
     );
-    expect(etapa.cliente.imageUrl, 'https://example.com/perfil.png');
+    expect(etapa.cliente.fotoCadastro, foto);
+    expect(etapa.cliente.imageUrl, isNull);
   });
+}
+
+class _SemEspaco extends FotoPerfilPendenteService {
+  @override
+  Future<void> guardar(String usuarioId, Uint8List foto) async {
+    throw const LoginException('Armazenamento local indisponível.');
+  }
 }

@@ -1,6 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../core/app_colors.dart';
+import '../core/foto_perfil_picker.dart';
 import '../../controller/clientes_scope.dart';
 import '../../model/animais.dart';
 import '../../services/login_exception.dart';
@@ -52,7 +55,7 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
   String? _erro;
   Animal? _animal;
   final imagemController = TextEditingController();
-  String get urlImagem => imagemController.text.trim();
+  Uint8List? _fotoSelecionada;
 
   @override
   void didChangeDependencies() {
@@ -140,6 +143,7 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
         nome: nomeController.text.trim(),
         idade: idade!,
         imageUrl: imagemController.text.trim(),
+        fotoCadastro: _fotoSelecionada,
         tipo: tipo!,
         descricao: descricaoController.text.trim(),
         sexo: sexo!,
@@ -606,67 +610,17 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
 
                   SizedBox(height: 20),
 
-                  if (urlImagem.isNotEmpty)
-                    Image.network(
-                      urlImagem,
-
-                      width: 200,
-                      height: 200,
-
-                      fit: BoxFit.cover,
-
-                      // Enquanto carrega
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) {
-                          return child;
-                        }
-
-                        return const SizedBox(
-                          width: 200,
-                          height: 200,
-                          child: Center(child: CircularProgressIndicator()),
-                        );
-                      },
-
-                      // Se não carregar
-                      errorBuilder: (context, error, stackTrace) {
-                        return const SizedBox(
-                          width: 200,
-                          height: 200,
-                          child: Center(
-                            child: Text(
-                              "Não foi possível carregar a imagem",
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-
-                  Text("Prévia da Imagem"),
-                  //https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTk2-tEClIMDpCT_nCBfIk8dVbpN5hxOP9AHQ&s
-
-                  SizedBox(height: 20),
-
-                  TextField(
-                    controller: imagemController,
-                    onChanged: (valor) {
-                      setState(() {});
-                    },
-                    maxLength: 255,
-                    decoration: InputDecoration(
-                      hintText: 'Link da imagem (opcional)',
-                      prefixIcon: const Icon(
-                        Icons.image_outlined,
-                        color: Color(0xFF888888),
-                      ),
-                      filled: true,
-                      fillColor: AppColors.cinza,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
+                  FotoPerfilPicker(
+                    titulo: 'Foto do animal',
+                    url: imagemController.text,
+                    foto: _fotoSelecionada,
+                    enabled: !_salvando,
+                    onChanged: (url) => setState(() {
+                      imagemController.text = url ?? '';
+                    }),
+                    onFotoChanged: (foto) => setState(() {
+                      _fotoSelecionada = foto;
+                    }),
                   ),
                   const SizedBox(height: 20),
                   SizedBox(

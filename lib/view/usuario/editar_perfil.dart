@@ -1,5 +1,7 @@
 import '../../services/login_exception.dart';
 
+import 'dart:typed_data';
+
 import '../core/foto_perfil_picker.dart';
 
 import 'package:material_ui/material_ui.dart';
@@ -24,6 +26,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   bool _dadosCarregados = false;
   bool _salvando = false;
   String? _fotoUrl;
+  Uint8List? _fotoSelecionada;
 
   @override
   void didChangeDependencies() {
@@ -149,6 +152,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             usuario: usuarioController.text.trim(),
             cidadeDeResidencia: cidadeController.text.trim(),
             imageUrl: _fotoUrl,
+            fotoCadastro: _fotoSelecionada,
             estado: estado,
             larDeAdocao: larDeAdocao,
             endereco: larDeAdocao ? enderecoController.text.trim() : null,
@@ -217,6 +221,8 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
           children: [
             FotoPerfilPicker(
               url: _fotoUrl,
+              foto: _fotoSelecionada,
+              onFotoChanged: (foto) => setState(() => _fotoSelecionada = foto),
               enabled: !_salvando && _clienteId != null,
               onChanged: (url) => setState(() => _fotoUrl = url),
             ),

@@ -78,6 +78,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Se não existe questionário, abre o teste.
       // Caso contrário, abre a Home.
+      final avisoFoto = controller.avisoFotoLogin;
+      if (avisoFoto != null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(avisoFoto)));
+      }
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(

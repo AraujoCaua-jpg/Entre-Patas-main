@@ -26,6 +26,10 @@ class ClienteController extends ChangeNotifier {
   late final SupabaseAuthService _supabaseAuthService =
       _supabaseAuthServiceInicial ?? SupabaseAuthService();
   Future<void>? _logoutPendente;
+  String? _avisoFotoCadastro;
+  String? _avisoFotoLogin;
+  String? get avisoFotoCadastro => _avisoFotoCadastro;
+  String? get avisoFotoLogin => _avisoFotoLogin;
   int _versaoSessao = 0;
   int _versaoDados = 0;
 
@@ -189,6 +193,7 @@ class ClienteController extends ChangeNotifier {
   Future<void> entrar(String email, String senha) async {
     if (_autenticando) return;
     _autenticando = true;
+    _avisoFotoLogin = null;
 
     try {
       final resposta = await _supabaseAuthService.entrar(email, senha);
@@ -197,6 +202,28 @@ class ClienteController extends ChangeNotifier {
       }
       _limparNotificacoes();
       await carregarMeuPerfilSupabase();
+      final versaoSessao = _versaoSessao;
+      try {
+        final imagem = await _supabaseService.finalizarFotoPendenteCadastro();
+        if (versaoSessao != _versaoSessao ||
+            Supabase.instance.client.auth.currentUser?.id !=
+                resposta.user!.id) {
+          throw const LoginException('Entre novamente para continuar.');
+        }
+        if (imagem != null) {
+          clienteLogado?.imageUrl = imagem;
+          notifyListeners();
+        }
+      } catch (erro) {
+        if (versaoSessao != _versaoSessao ||
+            Supabase.instance.client.auth.currentUser?.id !=
+                resposta.user!.id) {
+          throw const LoginException('Entre novamente para continuar.');
+        }
+        _avisoFotoLogin = erro is LoginException
+            ? 'Sua foto ficou pendente. ${erro.mensagem} Você pode tentar novamente em Editar perfil.'
+            : 'Você entrou, mas a foto ficou pendente. Tente enviá-la em Editar perfil.';
+      }
     } finally {
       _autenticando = false;
     }
@@ -506,6 +533,8 @@ class ClienteController extends ChangeNotifier {
 
   // Limpar sessão
   void limparSessao() {
+    _avisoFotoCadastro = null;
+    _avisoFotoLogin = null;
     _versaoSessao++;
     _limparNotificacoes();
     _clienteLogadoId = null;
@@ -553,7 +582,10 @@ class ClienteController extends ChangeNotifier {
   }
 
   Future<void> cadastrarClienteSupabase(Cliente cliente, String senha) async {
-    await _supabaseService.cadastrarClienteSupabase(cliente, senha);
+    _avisoFotoCadastro = await _supabaseService.cadastrarClienteSupabase(
+      cliente,
+      senha,
+    );
   }
 
   Future<Map<String, dynamic>?> buscarMeuQuestionarioSupabase() async {

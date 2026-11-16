@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 class Cliente {
-  // Arquivo temporário do cadastro; não é serializado no perfil.
+  // Seleção local da foto no cadastro/edição; não é serializada no perfil.
   Uint8List? fotoCadastro;
   int id;
   String nome;
