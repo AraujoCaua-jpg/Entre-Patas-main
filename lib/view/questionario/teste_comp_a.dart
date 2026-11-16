@@ -97,8 +97,18 @@ class _TesteCompAScreenState extends State<TesteCompAScreen> {
         child: Column(
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                TextButton.icon(
+                  onPressed: Navigator.canPop(context)
+                      ? () {
+                          FocusScope.of(context).unfocus();
+                          Navigator.pop(context);
+                        }
+                      : null,
+                  icon: const Icon(Icons.arrow_back, color: AppColors.laranja),
+                  label: const Text('Voltar'),
+                ),
                 Text(
                   'Etapa 2 de 5',
                   style: TextStyle(color: Colors.black, fontSize: 14),
@@ -232,7 +242,7 @@ class _TesteCompAScreenState extends State<TesteCompAScreen> {
                     controller: idadeMinController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      hintText: 'Idade mínima',
+                      hintText: 'Idade mínima (em anos)',
                       filled: true,
                       fillColor: AppColors.cinza,
                       border: OutlineInputBorder(
@@ -250,7 +260,7 @@ class _TesteCompAScreenState extends State<TesteCompAScreen> {
                     controller: idadeMaxController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      hintText: 'Idade máxima',
+                      hintText: 'Idade máxima (em anos)',
                       filled: true,
                       fillColor: AppColors.cinza,
                       border: OutlineInputBorder(

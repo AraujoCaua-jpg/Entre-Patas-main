@@ -6,20 +6,37 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 import '../services/supabase_auth_service.dart';
 import '../services/login_exception.dart';
+import '../services/notificacoes_lidas_service.dart';
 
 import '../model/animais.dart';
 import '../model/adocao.dart';
 import '../model/cliente.dart';
 
 class ClienteController extends ChangeNotifier {
-  ClienteController({SupabaseAuthService? supabaseAuthService})
-    : _supabaseAuthServiceInicial = supabaseAuthService;
+  ClienteController({
+    SupabaseAuthService? supabaseAuthService,
+    NotificacoesLidasService? notificacoesLidasService,
+  }) : _supabaseAuthServiceInicial = supabaseAuthService,
+       _notificacoesLidasService =
+           notificacoesLidasService ?? NotificacoesLidasService();
+
+  final NotificacoesLidasService _notificacoesLidasService;
 
   final SupabaseAuthService? _supabaseAuthServiceInicial;
   late final SupabaseAuthService _supabaseAuthService =
       _supabaseAuthServiceInicial ?? SupabaseAuthService();
   Future<void>? _logoutPendente;
   int _versaoSessao = 0;
+  int _versaoDados = 0;
+
+  // Revisão dos dados; mudanças apenas nas notificações mantêm esta versão.
+  int get versaoDados => _versaoDados;
+
+  @override
+  void notifyListeners() {
+    _versaoDados++;
+    super.notifyListeners();
+  }
 
   late final _supabaseService = SupabaseService();
 
@@ -41,6 +58,11 @@ class ClienteController extends ChangeNotifier {
   bool notificacaoFoiLida(Adocao adocao) =>
       _notificacoesLidas.contains((adocao.id, adocao.status));
 
+  List<(int, String)> estadosAdocoesDoAnimal(int animalId) => [
+    for (final adocao in _adocoesNotificacoes)
+      if (adocao.idAnimal == animalId) (adocao.id, adocao.status),
+  ]..sort((a, b) => a.$1.compareTo(b.$1));
+
   Future<List<Adocao>> atualizarNotificacoes() async {
     final cliente = clienteLogado;
     if (cliente == null) {
@@ -52,6 +74,11 @@ class ClienteController extends ChangeNotifier {
       _clienteNotificacoes = cliente.id;
     }
     final versao = ++_versaoNotificacoes;
+    final lidasSalvas = await _notificacoesLidasService.carregar(cliente.id);
+    if (versaoSessao != _versaoSessao || clienteLogado?.id != cliente.id) {
+      throw const LoginException('Entre novamente para continuar.');
+    }
+    _notificacoesLidas.addAll(lidasSalvas);
     final adocoes = await listarAdocoes();
     if (versaoSessao != _versaoSessao || clienteLogado?.id != cliente.id) {
       throw const LoginException('Entre novamente para continuar.');
@@ -61,9 +88,7 @@ class ClienteController extends ChangeNotifier {
       // recente pode substituir o cache usado pelo badge.
       return List.unmodifiable(adocoes);
     }
-    final mudou = !_mesmasAdocoes(_adocoesNotificacoes, adocoes);
-    _adocoesNotificacoes = List.of(adocoes);
-    _notificacoes = adocoes.where((adocao) {
+    final novasNotificacoes = adocoes.where((adocao) {
       final recebida = adocao.idDono == cliente.id
           ? const {'Aguardando', 'Cancelado'}.contains(adocao.status)
           : adocao.idCliente == cliente.id &&
@@ -71,7 +96,12 @@ class ClienteController extends ChangeNotifier {
       return recebida &&
           !_notificacoesLidas.contains((adocao.id, adocao.status));
     }).toList();
-    if (mudou) notifyListeners();
+    final mudou =
+        !_mesmasAdocoes(_adocoesNotificacoes, adocoes) ||
+        !_mesmasAdocoes(_notificacoes, novasNotificacoes);
+    _adocoesNotificacoes = List.of(adocoes);
+    _notificacoes = novasNotificacoes;
+    if (mudou) super.notifyListeners();
     // A tela filtra as lidas; o badge conta apenas as notificações novas.
     return List.unmodifiable(_adocoesNotificacoes);
   }
@@ -86,13 +116,23 @@ class ClienteController extends ChangeNotifier {
       _limparNotificacoes();
       _clienteNotificacoes = cliente.id;
     }
-    // O SQL instalado não persiste leitura de notificações. Mantém a versão
-    // exibida em memória nesta sessão, sem alterar o histórico nem usar PHP.
+    final versaoSessao = _versaoSessao;
+    if (_notificacoesLidas.contains((adocao.id, adocao.status))) return;
+    await _notificacoesLidasService.marcarComoLida(
+      cliente.id,
+      adocao.id,
+      adocao.status,
+    );
+    if (versaoSessao != _versaoSessao || clienteLogado?.id != cliente.id) {
+      throw const LoginException('Entre novamente para continuar.');
+    }
+    // Só oculta depois de confirmar a gravação. Logout limpa a memória,
+    // mas preserva a leitura salva para o próximo acesso deste perfil.
     if (!_notificacoesLidas.add((adocao.id, adocao.status))) return;
     _notificacoes.removeWhere(
       (a) => a.id == adocao.id && a.status == adocao.status,
     );
-    notifyListeners();
+    super.notifyListeners();
   }
 
   void _limparNotificacoes() {

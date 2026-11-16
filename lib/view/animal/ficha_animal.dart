@@ -1,10 +1,12 @@
 import 'package:entre_patas/view/animal/adocao.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 
 import '../core/app_colors.dart';
 
 import '../core/usuario_resumo.dart';
 import '../../controller/clientes_scope.dart';
+import '../../controller/cliente_controller.dart';
 import '../../model/animais.dart';
 import '../../services/compatibilidade_service.dart';
 import '../../services/login_exception.dart';
@@ -20,12 +22,17 @@ class FichaAnimalScreen extends StatefulWidget {
 
 class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
   Future<Animal>? _consulta;
+  ClienteController? _controllerConsulta;
+  int? _versaoDadosConsulta;
+  int? _clienteConsulta;
+  List<(int, String)> _estadosAdocoesConsulta = const [];
 
-  Future<Animal> _buscarAnimalComCompatibilidade() async {
-    final controller = ClientesScope.of(context);
-
+  Future<Animal> _buscarAnimalComCompatibilidade(
+    ClienteController controller,
+    int animalId,
+  ) async {
     // Busca os dados do animal no Supabase.
-    final animal = await controller.buscarAnimalPorIdSupabase(widget.animalId);
+    final animal = await controller.buscarAnimalPorIdSupabase(animalId);
 
     final meuId = controller.clienteLogado?.id;
 
@@ -48,11 +55,21 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
     return animal;
   }
 
+  void _iniciarConsulta(ClienteController controller) {
+    _controllerConsulta = controller;
+    _versaoDadosConsulta = controller.versaoDados;
+    _clienteConsulta = controller.clienteLogado?.id;
+    _estadosAdocoesConsulta = controller.estadosAdocoesDoAnimal(
+      widget.animalId,
+    );
+    _consulta = _buscarAnimalComCompatibilidade(controller, widget.animalId);
+  }
+
   void _recarregar() {
     if (!mounted) return;
-    final consulta = _buscarAnimalComCompatibilidade();
+    final controller = ClientesScope.of(context);
     setState(() {
-      _consulta = consulta;
+      _iniciarConsulta(controller);
     });
   }
 
@@ -60,27 +77,36 @@ class _FichaAnimalScreenState extends State<FichaAnimalScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // O controller notifica os ouvintes após salvar o questionário.
-    // Reconsulta o Supabase para não reutilizar percentuais antigos.
-    _consulta = _buscarAnimalComCompatibilidade();
+    final controller = ClientesScope.of(context);
+    if (_consulta == null ||
+        !identical(_controllerConsulta, controller) ||
+        _versaoDadosConsulta != controller.versaoDados ||
+        _clienteConsulta != controller.clienteLogado?.id ||
+        !listEquals(
+          _estadosAdocoesConsulta,
+          controller.estadosAdocoesDoAnimal(widget.animalId),
+        )) {
+      // Reconsulta após mudanças de dados/sessão, não por atualizações do badge.
+      _iniciarConsulta(controller);
+    }
   }
 
   @override
   void didUpdateWidget(covariant FichaAnimalScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.animalId != widget.animalId) {
-      _consulta = _buscarAnimalComCompatibilidade();
+      _iniciarConsulta(ClientesScope.of(context));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Animal>(
+      key: ValueKey((widget.animalId, _controllerConsulta, _clienteConsulta)),
       future: _consulta,
       builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done ||
-            snapshot.hasError ||
-            !snapshot.hasData) {
+        // Conserva a ficha já carregada durante uma atualização do mesmo animal.
+        if (snapshot.hasError || !snapshot.hasData) {
           return Scaffold(
             appBar: AppBar(title: const Text('Ficha do Animal')),
             body: snapshot.hasError

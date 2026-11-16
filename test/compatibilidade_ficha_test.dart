@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
@@ -6,6 +8,7 @@ import 'package:entre_patas/controller/cliente_controller.dart';
 import 'package:entre_patas/controller/clientes_scope.dart';
 import 'package:entre_patas/model/animais.dart';
 import 'package:entre_patas/model/cliente.dart';
+import 'package:entre_patas/model/adocao.dart';
 import 'package:entre_patas/services/compatibilidade_service.dart';
 import 'package:entre_patas/view/animal/ficha_animal.dart';
 import 'package:entre_patas/view/animal/compatibilidade_animal.dart';
@@ -50,6 +53,11 @@ class DadosFichaSupabase extends ClienteController {
   bool falhar = false;
   int consultas = 0;
   Map<String, dynamic>? questionario = respostas();
+  List<Adocao> adocoes = [];
+  Completer<Animal>? animalPendente;
+
+  @override
+  Future<List<Adocao>> listarAdocoes() async => adocoes;
 
   @override
   Cliente get clienteLogado => Cliente(
@@ -63,7 +71,8 @@ class DadosFichaSupabase extends ClienteController {
   );
 
   @override
-  Future<Animal> buscarAnimalPorIdSupabase(int id) async => animal();
+  Future<Animal> buscarAnimalPorIdSupabase(int id) =>
+      animalPendente?.future ?? Future.value(animal());
 
   @override
   Future<Map<String, dynamic>?> buscarMeuQuestionarioSupabase() async {
@@ -116,6 +125,115 @@ void main() {
     });
     expect(CompatibilidadeService.calcular(animal(), null), isNull);
     expect(CompatibilidadeService.calcular(animal(), {}), isNull);
+  });
+
+  testWidgets('ficha atualiza apenas por adoções do próprio animal', (
+    tester,
+  ) async {
+    final dados = DadosFichaSupabase();
+    await tester.pumpWidget(
+      ClientesScope(
+        controller: dados,
+        child: const MaterialApp(home: FichaAnimalScreen(animalId: 8)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(dados.consultas, 1);
+    dados.adocoes = [
+      Adocao(
+        id: 1,
+        data: DateTime(2026, 11, 16),
+        status: 'Aceito',
+        idAnimal: 99,
+        idCliente: 2,
+        idDono: 3,
+      ),
+    ];
+    await dados.atualizarNotificacoes();
+    await tester.pumpAndSettle();
+    expect(dados.totalNotificacoes, 1);
+    expect(dados.consultas, 1);
+    await dados.lerNotificacao(dados.adocoes.single);
+    await tester.pumpAndSettle();
+    expect(dados.totalNotificacoes, 0);
+    expect(dados.consultas, 1);
+    dados.adocoes = [
+      Adocao(
+        id: 2,
+        data: DateTime(2026, 11, 16),
+        status: 'Aceito',
+        idAnimal: 8,
+        idCliente: 2,
+        idDono: 1,
+      ),
+    ];
+    await dados.atualizarNotificacoes();
+    await tester.pumpAndSettle();
+    expect(dados.consultas, 2);
+    expect(find.text('Lua'), findsWidgets);
+    await tester.pumpWidget(const SizedBox());
+    dados.dispose();
+  });
+
+  testWidgets('atualização real mantém ficha visível enquanto busca os dados', (
+    tester,
+  ) async {
+    final dados = DadosFichaSupabase();
+    await tester.pumpWidget(
+      ClientesScope(
+        controller: dados,
+        child: const MaterialApp(home: FichaAnimalScreen(animalId: 8)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(0, -300),
+    );
+    await tester.pumpAndSettle();
+    final rolagem = tester
+        .state<ScrollableState>(find.byType(Scrollable).first)
+        .position;
+    final posicao = rolagem.pixels;
+    expect(posicao, greaterThan(0));
+    final resposta = Completer<Animal>();
+    dados.animalPendente = resposta;
+    dados.atualizar();
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Lua'), findsWidgets);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(rolagem.pixels, posicao);
+    resposta.complete(animal()..nome = 'Lua atualizada');
+    await tester.pumpAndSettle();
+    expect(find.text('Lua atualizada'), findsWidgets);
+    expect(dados.consultas, 2);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    dados.dispose();
+  });
+
+  testWidgets('mudança de tamanho da janela não reconsulta a ficha', (
+    tester,
+  ) async {
+    final dados = DadosFichaSupabase();
+    await tester.pumpWidget(
+      ClientesScope(
+        controller: dados,
+        child: const MaterialApp(home: FichaAnimalScreen(animalId: 8)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(dados.consultas, 1);
+    tester.view.physicalSize = const Size(600, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpAndSettle();
+    expect(dados.consultas, 1);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    dados.dispose();
   });
 
   for (final caso in ['normal', 'proprio', 'sem questionario', 'erro']) {
