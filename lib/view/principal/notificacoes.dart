@@ -1,3 +1,5 @@
+import '../core/responsive_content.dart';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../../controller/clientes_scope.dart';
@@ -51,81 +53,83 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
         bottom: BorderSide(color: AppColors.laranja, width: 2),
       ),
     ),
-    body: FutureBuilder<List<Adocao>>(
-      future: _consulta,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(
-            child: TextButton(
-              onPressed: _atualizar,
-              child: Text(
-                snapshot.error is LoginException
-                    ? (snapshot.error as LoginException).mensagem
-                    : 'Não foi possível carregar as solicitações.',
-              ),
-            ),
-          );
-        }
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final controller = ClientesScope.of(context);
-        final lista = snapshot.data!
-            .where((adocao) => !controller.notificacaoFoiLida(adocao))
-            .toList();
-        if (lista.isEmpty) {
-          return const Center(child: Text('Nenhuma solicitação de adoção.'));
-        }
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: lista.length,
-          itemBuilder: (context, i) {
-            final a = lista[i];
-            final dono = a.idDono == controller.clienteLogado?.id;
-            return Card(
-              child: ListTile(
-                leading: const CircleAvatar(child: Icon(Icons.notifications)),
-                title: Text(
-                  dono
-                      ? '${a.detalhes['solicitante_nome']} quer adotar ${a.detalhes['animal_nome']}'
-                      : 'Sua solicitação para ${a.detalhes['animal_nome']}',
+    body: ResponsiveContent(
+      child: FutureBuilder<List<Adocao>>(
+        future: _consulta,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(
+              child: TextButton(
+                onPressed: _atualizar,
+                child: Text(
+                  snapshot.error is LoginException
+                      ? (snapshot.error as LoginException).mensagem
+                      : 'Não foi possível carregar as solicitações.',
                 ),
-                subtitle: Text(
-                  '${a.status} • ${a.data.day}/${a.data.month}/${a.data.year}',
-                ),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () async {
-                  try {
-                    await ClientesScope.of(context).lerNotificacao(a);
-                  } catch (_) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Não foi possível marcar a notificação como lida. Tente novamente.',
-                        ),
-                      ),
-                    );
-                    return;
-                  }
-                  if (!context.mounted) return;
-                  setState(() {});
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => AdocaoScreen(adocaoId: a.id),
-                    ),
-                  );
-                  if (mounted) _atualizar();
-                },
               ),
             );
-          },
-        );
-      },
+          }
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final controller = ClientesScope.of(context);
+          final lista = snapshot.data!
+              .where((adocao) => !controller.notificacaoFoiLida(adocao))
+              .toList();
+          if (lista.isEmpty) {
+            return const Center(child: Text('Nenhuma solicitação de adoção.'));
+          }
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: lista.length,
+            itemBuilder: (context, i) {
+              final a = lista[i];
+              final dono = a.idDono == controller.clienteLogado?.id;
+              return Card(
+                child: ListTile(
+                  leading: const CircleAvatar(child: Icon(Icons.notifications)),
+                  title: Text(
+                    dono
+                        ? '${a.detalhes['solicitante_nome']} quer adotar ${a.detalhes['animal_nome']}'
+                        : 'Sua solicitação para ${a.detalhes['animal_nome']}',
+                  ),
+                  subtitle: Text(
+                    '${a.status} • ${a.data.day}/${a.data.month}/${a.data.year}',
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios),
+                  onTap: () async {
+                    try {
+                      await ClientesScope.of(context).lerNotificacao(a);
+                    } catch (_) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Não foi possível marcar a notificação como lida. Tente novamente.',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                    if (!context.mounted) return;
+                    setState(() {});
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AdocaoScreen(adocaoId: a.id),
+                      ),
+                    );
+                    if (mounted) _atualizar();
+                  },
+                ),
+              );
+            },
+          );
+        },
+      ),
     ),
   );
 }

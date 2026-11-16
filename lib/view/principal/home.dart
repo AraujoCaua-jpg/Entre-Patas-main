@@ -125,11 +125,16 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
+            constraints: const BoxConstraints(maxWidth: 1200),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _BannerHome(),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 720),
+                    child: const _BannerHome(),
+                  ),
+                ),
                 const SizedBox(height: 8),
                 const Text(
                   'Amiguinhos disponíveis',
@@ -191,7 +196,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         LayoutBuilder(
                           builder: (context, constraints) {
-                            final columns = constraints.maxWidth >= 600 ? 3 : 2;
+                            final columns = constraints.maxWidth >= 1000
+                                ? 4
+                                : constraints.maxWidth >= 600
+                                ? 3
+                                : 2;
                             final width =
                                 (constraints.maxWidth - (columns - 1) * 8) /
                                 columns;
@@ -378,24 +387,6 @@ class _PetCard extends StatelessWidget {
                           fit: BoxFit.cover,
                           errorBuilder: (_, error, stack) => _semFoto(),
                         ),
-                ),
-                const Positioned(
-                  top: 5,
-                  right: 5,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(3),
-                      child: Icon(
-                        Icons.favorite_border,
-                        color: _laranjaHome,
-                        size: 13,
-                      ),
-                    ),
-                  ),
                 ),
                 if (animal.compatibilidade != null)
                   Positioned(

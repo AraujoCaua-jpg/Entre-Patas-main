@@ -132,7 +132,7 @@ class _FichaPerfilScreenState extends State<FichaPerfilScreen> {
             : Align(
                 alignment: Alignment.topCenter,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 600),
+                  constraints: const BoxConstraints(maxWidth: 1000),
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
                     children: [
@@ -321,12 +321,17 @@ class _AnimaisDoPerfilState extends State<_AnimaisDoPerfil> {
         ),
       LayoutBuilder(
         builder: (context, constraints) {
-          final largura = (constraints.maxWidth - 8) / 2;
+          final colunas = constraints.maxWidth >= 900
+              ? 4
+              : constraints.maxWidth >= 650
+              ? 3
+              : 2;
+          final largura = (constraints.maxWidth - (colunas - 1) * 8) / colunas;
           return GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+              crossAxisCount: colunas,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
               mainAxisExtent: largura / 1.45 + 78,
@@ -399,24 +404,6 @@ class _AnimalPerfilCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                const Positioned(
-                  top: 5,
-                  right: 5,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(3),
-                      child: Icon(
-                        Icons.favorite_border,
-                        size: 12,
-                        color: AppColors.laranja,
-                      ),
-                    ),
-                  ),
-                ),
                 Positioned(
                   left: 4,
                   bottom: 4,

@@ -1,3 +1,5 @@
+import '../core/responsive_content.dart';
+
 import 'package:entre_patas/view/core/app_dialog.dart';
 import 'package:entre_patas/view/core/app_colors.dart';
 import 'package:material_ui/material_ui.dart';
@@ -168,98 +170,99 @@ class _AnimaisCadastradosScreenState extends State<AnimaisCadastradosScreen> {
           bottom: BorderSide(color: Color(0xFFD96C3F), width: 2),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            if (_carregando) const LinearProgressIndicator(),
-            if (_erro != null)
-              TextButton(onPressed: () => _carregar(), child: Text(_erro!)),
-            if (_mais)
-              TextButton(
-                onPressed: _carregando ? null : () => _carregar(mais: true),
-                child: const Text('Carregar mais'),
-              ),
-            Expanded(
-              child: animais.isEmpty
-                  ? const Center(child: Text('Nenhum Animal Cadastrado'))
-                  : ListView.builder(
-                      itemCount: animais.length,
-                      itemBuilder: (context, index) {
-                        final item = animais[index];
+      body: ResponsiveContent(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              if (_carregando) const LinearProgressIndicator(),
+              if (_erro != null)
+                TextButton(onPressed: () => _carregar(), child: Text(_erro!)),
+              if (_mais)
+                TextButton(
+                  onPressed: _carregando ? null : () => _carregar(mais: true),
+                  child: const Text('Carregar mais'),
+                ),
+              Expanded(
+                child: animais.isEmpty
+                    ? const Center(child: Text('Nenhum Animal Cadastrado'))
+                    : ListView.builder(
+                        itemCount: animais.length,
+                        itemBuilder: (context, index) {
+                          final item = animais[index];
 
-                        return Card(
-                          elevation: 2,
-                          child: Padding(
-                            padding: EdgeInsets.all(
-                              8.0,
-                            ), // Espaçamento interno em todos os lados
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius:
-                                      30, // Define o tamanho do raio do círculo
-                                  backgroundImage: (item[3] as String).isEmpty
-                                      ? null
-                                      : NetworkImage(item[3]),
-                                  child: (item[3] as String).isEmpty
-                                      ? const Icon(Icons.pets)
-                                      : null,
-                                  // Ou use NetworkImage, AssetImage, etc.
-                                ),
+                          return Card(
+                            elevation: 2,
+                            child: Padding(
+                              padding: EdgeInsets.all(
+                                8.0,
+                              ), // Espaçamento interno em todos os lados
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 30, // Define o tamanho do raio do círculo
+                                    backgroundImage: (item[3] as String).isEmpty
+                                        ? null
+                                        : NetworkImage(item[3]),
+                                    child: (item[3] as String).isEmpty
+                                        ? const Icon(Icons.pets)
+                                        : null,
+                                    // Ou use NetworkImage, AssetImage, etc.
+                                  ),
 
-                                SizedBox(width: 10),
+                                  SizedBox(width: 10),
 
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item[0],
-                                        style: TextStyle(fontSize: 20),
-                                      ),
-                                      Text(
-                                        "${item[1]} - ${item[2]}",
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: AppColors.cinzaEscuro,
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item[0],
+                                          style: TextStyle(fontSize: 20),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.edit_note_rounded,
-                                    color: AppColors.cinzaEscuro,
-                                    size: 26,
-                                  ),
-                                  onPressed: () => _abrir(
-                                    EditarAnimalScreen(
-                                      animalId: item[4] as int,
+                                        Text(
+                                          "${item[1]} - ${item[2]}",
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: AppColors.cinzaEscuro,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ),
 
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                    color: Colors.red,
-                                    size: 26,
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.edit_note_rounded,
+                                      color: AppColors.cinzaEscuro,
+                                      size: 26,
+                                    ),
+                                    onPressed: () => _abrir(
+                                      EditarAnimalScreen(
+                                        animalId: item[4] as int,
+                                      ),
+                                    ),
                                   ),
-                                  onPressed: () =>
-                                      apagar(context, item[4] as int),
-                                ),
-                              ],
+
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      color: Colors.red,
+                                      size: 26,
+                                    ),
+                                    onPressed: () =>
+                                        apagar(context, item[4] as int),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
 

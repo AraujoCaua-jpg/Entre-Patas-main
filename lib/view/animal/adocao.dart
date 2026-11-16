@@ -1,3 +1,5 @@
+import '../core/responsive_content.dart';
+
 import 'package:entre_patas/view/core/app_dialog.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -205,148 +207,152 @@ class _AdocaoScreenState extends State<AdocaoScreen> {
           bottom: BorderSide(color: AppColors.laranja, width: 2),
         ),
       ),
-      body: _carregando
-          ? const Center(child: CircularProgressIndicator())
-          : _erro != null
-          ? Center(
-              child: TextButton(onPressed: _carregar, child: Text(_erro!)),
-            )
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _titulo('Solicitação de Adoção'),
-                Text(
-                  'Confira as informações sobre a adoção de $nome.',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    color: AppColors.cinzaEscuro,
+      body: ResponsiveContent(
+        child: _carregando
+            ? const Center(child: CircularProgressIndicator())
+            : _erro != null
+            ? Center(
+                child: TextButton(onPressed: _carregar, child: Text(_erro!)),
+              )
+            : ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _titulo('Solicitação de Adoção'),
+                  Text(
+                    'Confira as informações sobre a adoção de $nome.',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: AppColors.cinzaEscuro,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                _caixa(
-                  Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: imagem.isEmpty
-                            ? const SizedBox(
-                                width: 100,
-                                height: 100,
-                                child: Icon(
-                                  Icons.pets,
-                                  color: AppColors.laranja,
-                                  size: 48,
-                                ),
-                              )
-                            : Image.network(
-                                imagem,
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => const SizedBox(
+                  const SizedBox(height: 20),
+                  _caixa(
+                    Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: imagem.isEmpty
+                              ? const SizedBox(
                                   width: 100,
                                   height: 100,
-                                  child: Icon(Icons.pets),
+                                  child: Icon(
+                                    Icons.pets,
+                                    color: AppColors.laranja,
+                                    size: 48,
+                                  ),
+                                )
+                              : Image.network(
+                                  imagem,
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => const SizedBox(
+                                    width: 100,
+                                    height: 100,
+                                    child: Icon(Icons.pets),
+                                  ),
                                 ),
-                              ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(nome, style: const TextStyle(fontSize: 24)),
-                            Text(
-                              '${idade == null ? 'Idade não informada' : '$idade ano(s)'} - ${d['animal_sexo'] ?? _animal?.sexo}',
-                            ),
-                            Text(
-                              '${d['cidadeDeResidencia'] ?? _animal?.cidade} - ${d['estado'] ?? _animal?.estado}',
-                            ),
-                            if (_animal?.compatibilidade != null)
-                              Text(
-                                '${_animal!.compatibilidade!['total']}% de compatibilidade',
-                                style: const TextStyle(color: AppColors.verde),
-                              ),
-                          ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(nome, style: const TextStyle(fontSize: 24)),
+                              Text(
+                                '${idade == null ? 'Idade não informada' : '$idade ano(s)'} - ${d['animal_sexo'] ?? _animal?.sexo}',
+                              ),
+                              Text(
+                                '${d['cidadeDeResidencia'] ?? _animal?.cidade} - ${d['estado'] ?? _animal?.estado}',
+                              ),
+                              if (_animal?.compatibilidade != null)
+                                Text(
+                                  '${_animal!.compatibilidade!['total']}% de compatibilidade',
+                                  style: const TextStyle(
+                                    color: AppColors.verde,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                _titulo('Publicado por:'),
-                UsuarioResumo(clienteId: dono),
-                _titulo(souDono ? 'Dados do solicitante:' : 'Seus dados:'),
-                _caixa(
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Nome: ${d['solicitante_nome'] ?? c?.nome ?? ''} ${d['solicitante_sobrenome'] ?? c?.sobrenome ?? ''}',
-                        style: const TextStyle(fontSize: 18),
-                      ),
-                      Text(
-                        'E-mail: ${d['solicitante_email'] ?? c?.email ?? ''}',
-                        style: const TextStyle(fontSize: 18),
-                      ),
-                      Text(
-                        'Telefone: ${d['solicitante_telefone'] ?? c?.telefone ?? ''}',
-                        style: const TextStyle(fontSize: 18),
-                      ),
-                    ],
-                  ),
-                ),
-                _titulo('Informações da Solicitação:'),
-                _caixa(
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (_adocao != null)
+                  _titulo('Publicado por:'),
+                  UsuarioResumo(clienteId: dono),
+                  _titulo(souDono ? 'Dados do solicitante:' : 'Seus dados:'),
+                  _caixa(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          'Data e hora: ${_adocao!.data.day.toString().padLeft(2, '0')}/${_adocao!.data.month.toString().padLeft(2, '0')}/${_adocao!.data.year} ${_adocao!.data.hour.toString().padLeft(2, '0')}:${_adocao!.data.minute.toString().padLeft(2, '0')}',
+                          'Nome: ${d['solicitante_nome'] ?? c?.nome ?? ''} ${d['solicitante_sobrenome'] ?? c?.sobrenome ?? ''}',
                           style: const TextStyle(fontSize: 18),
                         ),
-                      Text(
-                        'Status: $status',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: status == 'Aceito'
-                              ? AppColors.verde
-                              : AppColors.laranja,
+                        Text(
+                          'E-mail: ${d['solicitante_email'] ?? c?.email ?? ''}',
+                          style: const TextStyle(fontSize: 18),
                         ),
-                      ),
-                    ],
+                        Text(
+                          'Telefone: ${d['solicitante_telefone'] ?? c?.telefone ?? ''}',
+                          style: const TextStyle(fontSize: 18),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                if (_adocao == null &&
-                    c != null &&
-                    !souDono &&
-                    _animal?.status == 'Disponível')
-                  _botao('Enviar solicitação', () => _acao('solicitar')),
-                if (_adocao == null && souDono)
-                  const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Text('Este animal foi publicado por você.'),
+                  _titulo('Informações da Solicitação:'),
+                  _caixa(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (_adocao != null)
+                          Text(
+                            'Data e hora: ${_adocao!.data.day.toString().padLeft(2, '0')}/${_adocao!.data.month.toString().padLeft(2, '0')}/${_adocao!.data.year} ${_adocao!.data.hour.toString().padLeft(2, '0')}:${_adocao!.data.minute.toString().padLeft(2, '0')}',
+                            style: const TextStyle(fontSize: 18),
+                          ),
+                        Text(
+                          'Status: $status',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: status == 'Aceito'
+                                ? AppColors.verde
+                                : AppColors.laranja,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                if (_adocao == null && _animal?.status == 'Adotado')
-                  const Text('Este animal já foi adotado.'),
-                if (_adocao?.status == 'Aguardando' && souDono) ...[
-                  _botao('Aprovar adoção', () => _acao('aceitar')),
-                  _botao('Recusar solicitação', () => _acao('recusar')),
+                  if (_adocao == null &&
+                      c != null &&
+                      !souDono &&
+                      _animal?.status == 'Disponível')
+                    _botao('Enviar solicitação', () => _acao('solicitar')),
+                  if (_adocao == null && souDono)
+                    const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Text('Este animal foi publicado por você.'),
+                    ),
+                  if (_adocao == null && _animal?.status == 'Adotado')
+                    const Text('Este animal já foi adotado.'),
+                  if (_adocao?.status == 'Aguardando' && souDono) ...[
+                    _botao('Aprovar adoção', () => _acao('aceitar')),
+                    _botao('Recusar solicitação', () => _acao('recusar')),
+                  ],
+                  if (_adocao?.status == 'Aguardando' && !souDono)
+                    _botao('Cancelar solicitação', () => _acao('cancelar')),
+                  if (!souDono)
+                    _botao('Editar Perfil', () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const EditarPerfilScreen(),
+                        ),
+                      );
+                      if (mounted) setState(() {});
+                    }),
                 ],
-                if (_adocao?.status == 'Aguardando' && !souDono)
-                  _botao('Cancelar solicitação', () => _acao('cancelar')),
-                if (!souDono)
-                  _botao('Editar Perfil', () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const EditarPerfilScreen(),
-                      ),
-                    );
-                    if (mounted) setState(() {});
-                  }),
-              ],
-            ),
+              ),
+      ),
     );
   }
 }
