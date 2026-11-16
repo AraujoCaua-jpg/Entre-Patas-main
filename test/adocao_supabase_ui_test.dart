@@ -277,6 +277,20 @@ void main() {
     dados.dispose();
   });
 
+  testWidgets('Notificação visualizada some da lista', (tester) async {
+    final dados = _DadosAdocao();
+    await abrir(tester, dados, const NotificacoesScreen());
+    expect(find.text('Sua solicitação para Lua'), findsOneWidget);
+    await clicar(tester, 'Sua solicitação para Lua');
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('Sua solicitação para Lua'), findsNothing);
+    expect(find.text('Nenhuma solicitação de adoção.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    dados.dispose();
+  });
+
   testWidgets(
     'Atualizar notificações não mantém lista antiga enquanto aguarda',
     (tester) async {

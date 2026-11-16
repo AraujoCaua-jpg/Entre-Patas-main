@@ -37,8 +37,13 @@ class _HomeScreenState extends State<HomeScreen> {
     // Busca as respostas do usuário autenticado.
     final questionario = await controller.buscarMeuQuestionarioSupabase();
 
+    final especiePreferida = questionario?['tipo']?.toString().trim();
+    final tipoPreferido = especiePreferida == null || especiePreferida.isEmpty
+        ? null
+        : especiePreferida;
+
     // Busca os animais disponíveis no Supabase.
-    final animais = await controller.listarAnimaisSupabase();
+    final animais = await controller.listarAnimaisSupabase(tipo: tipoPreferido);
 
     if (!mounted) return [];
 
@@ -55,7 +60,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Exclui animais cadastrados pelo próprio usuário.
     final disponiveis = animais
-        .where((animal) => animal.idCliente != meuId)
+        .where(
+          (animal) =>
+              animal.idCliente != meuId &&
+              (tipoPreferido == null || animal.tipo == tipoPreferido),
+        )
         .toList();
 
     // Calcula a compatibilidade individualmente.

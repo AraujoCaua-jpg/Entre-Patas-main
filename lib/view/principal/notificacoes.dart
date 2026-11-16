@@ -72,8 +72,10 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
-        // Mantém o histórico acessível; o controller usa só as novas no badge.
-        final lista = snapshot.data!;
+        final controller = ClientesScope.of(context);
+        final lista = snapshot.data!
+            .where((adocao) => !controller.notificacaoFoiLida(adocao))
+            .toList();
         if (lista.isEmpty) {
           return const Center(child: Text('Nenhuma solicitação de adoção.'));
         }
@@ -82,8 +84,7 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
           itemCount: lista.length,
           itemBuilder: (context, i) {
             final a = lista[i];
-            final dono =
-                a.idDono == ClientesScope.of(context).clienteLogado?.id;
+            final dono = a.idDono == controller.clienteLogado?.id;
             return Card(
               child: ListTile(
                 leading: const CircleAvatar(child: Icon(Icons.notifications)),
@@ -111,6 +112,7 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
                     return;
                   }
                   if (!context.mounted) return;
+                  setState(() {});
                   await Navigator.push(
                     context,
                     MaterialPageRoute(

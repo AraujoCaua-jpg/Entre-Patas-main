@@ -48,6 +48,10 @@ class _DadosHome extends ClienteController {
     Animal.fromJson(_jsonAnimal(3, 'Idade desconhecida', null)),
     Animal.fromJson(_jsonAnimal(2, 'Menor nota', 20)),
     Animal.fromJson(_jsonAnimal(1, 'Completo', 2)),
+    Animal.fromJson({
+      ..._jsonAnimal(5, 'Fora da espécie preferida', 1),
+      'tipo': 'Cachorro',
+    }),
     Animal.fromJson({..._jsonAnimal(4, 'Meu animal', null), 'id_cliente': 1}),
   ];
 
@@ -127,7 +131,7 @@ void main() {
   });
 
   testWidgets(
-    'Home mantém feed misto e ordena desconhecidos após notas válidas',
+    'Home filtra pela espécie e ordena os compatíveis por pontuação',
     (tester) async {
       final dados = _DadosHome();
       await tester.pumpWidget(
@@ -150,6 +154,7 @@ void main() {
         'Idade desconhecida',
       ]);
       expect(cards.map((a) => a.compatibilidade?['total']), [100, 96, null]);
+      expect(find.text('Fora da espécie preferida'), findsNothing);
       expect(find.text('Idade não informada'), findsOneWidget);
       expect(find.text('null anos'), findsNothing);
       expect(find.text('Meu animal'), findsNothing);

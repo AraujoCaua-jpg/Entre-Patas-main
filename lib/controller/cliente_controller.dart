@@ -38,6 +38,9 @@ class ClienteController extends ChangeNotifier {
       : const [];
   int get totalNotificacoes => notificacoes.length;
 
+  bool notificacaoFoiLida(Adocao adocao) =>
+      _notificacoesLidas.contains((adocao.id, adocao.status));
+
   Future<List<Adocao>> atualizarNotificacoes() async {
     final cliente = clienteLogado;
     if (cliente == null) {
@@ -68,7 +71,7 @@ class ClienteController extends ChangeNotifier {
           !_notificacoesLidas.contains((adocao.id, adocao.status));
     }).toList();
     notifyListeners();
-    // A tela também é o histórico de adoções. O badge usa apenas as novas.
+    // A tela filtra as lidas; o badge conta apenas as notificações novas.
     return List.unmodifiable(_adocoesNotificacoes);
   }
 
