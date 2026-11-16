@@ -4,217 +4,187 @@
 ![Flutter](https://img.shields.io/badge/Flutter-259acf?style=for-the-badge&logo=flutter&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 
-O **Entre Patas** é um aplicativo de adoção de animais, desenvolvido para o Summit
-da Universidade de Mogi das Cruzes (UMC). Aproxima adotantes, animais e
-organizações de acolhimento com cadastro, teste de compatibilidade e
-acompanhamento das solicitações de adoção.
+## Sobre o projeto
 
-Repositório: [AraujoCaua-jpg/Entre-Patas-main](https://github.com/AraujoCaua-jpg/Entre-Patas-main).
-O endereço definitivo da aplicação Vercel não foi identificado nos arquivos
-versionados; falta informá-lo e validar os fluxos nesse domínio.
+O **Entre Patas** é um projeto acadêmico de aplicativo para adoção de animais, desenvolvido para apresentação no Summit da Universidade de Mogi das Cruzes (UMC).
 
-## Aplicativo e backend
+A proposta é aproximar adotantes, animais e organizações de acolhimento por meio de uma experiência digital acessível. O aplicativo conta com a proposta de um questionário de compatibilidade, que ajuda o usuário a refletir sobre seu perfil e as necessidades do animal antes de solicitar a adoção.
 
-O aplicativo atual utiliza **Flutter/Dart e Supabase Auth/PostgreSQL**, com
-permissões de acesso protegidas por RLS e funções RPC. A Home calcula a
-compatibilidade com as respostas do questionário: Rotina 50%, Ambiente 30% e
-Preferências 20%. Animais sem informações suficientes continuam visíveis sem
-uma porcentagem inventada.
+O projeto busca contribuir para adoções mais conscientes, oferecendo informações sobre os animais, pesquisa por região e acompanhamento das solicitações.
 
-Os fluxos implementados incluem cadastro/login, recuperação de senha, perfil,
-questionário, pesquisa de animais e usuários, publicação/edição de animais,
-solicitação/cancelamento/aprovação/recusa e notificações. A disponibilidade no
-ambiente online depende da instalação das respectivas funções e políticas no
-banco; compilar o Flutter não instala essas dependências.
+## Objetivos
 
-**Os SQLs 12, 15 e 10 foram instalados no Supabase de produção em 15/11/2026**,
-com três COMMITs confirmados e **20/20 verificações do SQL 16 aprovadas**.
-As contagens e os fingerprints dos dados foram preservados. Consulte o
-[relatório da instalação](docs/instalacao_producao_2026-11-15.md).
-O build e a publicação do aplicativo não executam migrações.
+- Facilitar a descoberta de animais disponíveis para adoção.
+- Apoiar escolhas responsáveis por meio de um teste de compatibilidade.
+- Disponibilizar perfis detalhados dos animais e dos responsáveis pelas publicações.
+- Permitir que adotantes enviem e acompanhem solicitações.
+- Oferecer às organizações recursos para cadastrar e gerenciar animais.
 
-A confirmação visual dos fluxos no aplicativo publicado continua necessária.
-Nove animais antigos pertencem a responsáveis sem vínculo Auth; esses vínculos
-precisam de regularização comprovada e não são criados automaticamente.
+## Funcionalidades previstas
 
-O backend PHP e seus testes foram preservados para consulta e manutenção do
-legado. Apache, XAMPP, MySQL e `API_BASE_URL` **não são necessários para executar
-o fluxo atual do aplicativo**.
+| Área | Funcionalidades |
+|---|---|
+| **Acesso** | Boas-vindas, cadastro, login e recuperação de senha. |
+| **Usuário** | Perfil do adotante e edição de dados. |
+| **Animais** | Listagem, pesquisa, filtros e ficha detalhada. |
+| **Compatibilidade** | Questionário de preferências e indicação de afinidade com os animais. |
+| **Adoção** | Solicitação com identificação do animal, publicador e adotante, data/hora e acompanhamento de status. |
+| **Organizações** | Perfil de abrigo/lar e cadastro e gestão de animais. |
+| **Comunicação** | Notificações sobre atualizações do processo; chat previsto no escopo de telas. |
 
-## Executar em outro computador
+> **Observação:** esta tabela representa o escopo do produto. A existência de uma tela no Figma não comprova que sua lógica esteja implementada no Flutter.
 
-Pré-requisitos: Git, Chrome e **Flutter 3.50.0**, que inclui o Dart 3.14. Não é
-necessário instalar Dart separadamente. Android/iOS exigem também as ferramentas
-indicadas por `flutter doctor`; suas configurações foram preservadas.
+## Como executar o projeto
 
-```powershell
+O projeto pode ser acessado diretamente pelo navegador, por meio do seguinte link:
+
+🌐 [**Entre Patas – Acessar aplicação**](https://entre-patas-seven.vercel.app)
+
+Caso prefira executar o projeto localmente, será necessário instalar as seguintes ferramentas:
+
+- Git: para clonar o repositório.
+- Flutter SDK: para executar e desenvolver a aplicação.
+
+Após instalar os requisitos, siga as instruções de configuração e execução do projeto.
+
+
+Estas são instruções gerais para um projeto Flutter. Dependências, variáveis de ambiente e configurações específicas devem ser verificadas no repositório.
+
+```bash
+# 1 - Clonar repositório do GitHub:
 git clone https://github.com/AraujoCaua-jpg/Entre-Patas-main.git
+
+# 2 - Abrir projeto no VS Code:
 cd Entre-Patas-main
-flutter --version
+
+# 3 - Verificar se está tudo certo com o ambiente:
 flutter doctor
+
+# 4 - Instalar dependências e pacotes do flutter para o projeto
 flutter pub get
+
+# 5 - Para fazer o programa rodar localmente via Chrome:
 flutter run -d chrome --dart-define-from-file=config/production.json
+
 ```
 
-Mantenha `pubspec.lock` no Git e utilize a versão de Flutter indicada. Não execute
-`flutter pub upgrade` como parte da instalação normal. Caso o SDK não esteja no
-PATH, use o executável `flutter` da instalação correspondente.
+### Exemplo de jornada: adoção do Bolt
 
-### Um mesmo Supabase para os três integrantes
+1. O usuário encontra Bolt na listagem ou na pesquisa.
+2. Abre a ficha para consultar fotos, descrição, porte, idade, localização e informações de saúde.
+3. Visualiza uma indicação de compatibilidade (por exemplo, **95%**, valor ilustrativo utilizado no protótipo).
+4. Seleciona **“Quero adotar o Bolt”**.
+5. Confere o animal, quem publicou, seus dados e os detalhes da solicitação.
+6. Envia a solicitação e acompanha o andamento até a conclusão do processo.
 
-O projeto compartilhado é `https://cyaxnaflvnjnpryryorr.supabase.co`. O arquivo
-`config/production.json` contém somente a URL pública e a chave publicável do
-cliente. O `main.dart` lê `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY` com
-`String.fromEnvironment`; os valores padrão também apontam para esse projeto
-online, portanto `flutter run -d chrome` não depende de localhost.
+> Os nomes, percentuais, datas e dados pessoais apresentados nos mockups são exemplos de demonstração, não registros reais.
 
-Cada integrante pode criar ou acessar sua própria conta no app usando o mesmo
-backend. **Não é necessário importar um banco, instalar Docker ou receber convite
-para o painel do Supabase para usar o aplicativo.** As contas de usuários e as
-contas administrativas do painel são diferentes.
+## Tecnologias e ferramentas
 
-Convide alguém para o painel somente se precisar administrar o backend, com o
-menor privilégio necessário. Nunca compartilhe a conta administrativa, senhas,
-tokens de acesso, chave `service_role` ou chave `secret` com os usuários do app.
-Somente a URL e a chave pública podem integrar o bundle Web; a proteção dos dados
-depende da autenticação e da RLS, não do sigilo dessa chave pública.
+| Tecnologia/Ferramenta | Utilização |
+|---|---|
+| **Flutter** | Desenvolvimento da interface do aplicativo. |
+| **Dart** | Linguagem de programação. |
+| **Figma** | Prototipação UX/UI e navegação entre telas. |
+| **Git e GitHub** | Versionamento e colaboração. |
+| **Trello** | Organização de tarefas e sprints. |
+| **Banco de dados** | Persistência de usuários, animais e adoções. A tecnologia e a integração final ainda precisam ser confirmadas. |
 
-Os dados desse ambiente são compartilhados: alterações feitas no app afetam o
-mesmo banco. Testes que criam ou alteram dados e scripts de migração devem ser
-executados no ambiente local isolado, nunca automaticamente em produção.
+A organização do código em `models` e `controllers` faz parte da abordagem de desenvolvimento discutida pela equipe. A estrutura efetiva do repositório deve ser confirmada no código-fonte.
 
-### Outra configuração ou QA local
+## Demonstração do Aplicativo
 
-As variáveis são definidas na compilação, não lidas automaticamente de um `.env`
-no navegador. Para outro ambiente, crie um JSON local ignorado pelo Git com
-`SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY` e passe
-`--dart-define-from-file=<arquivo>`. Não coloque credenciais administrativas
-nesse arquivo nem em qualquer `dart-define`.
+A seguir, estão algumas capturas de tela do sistema, apresentando suas principais funcionalidades e interfaces.
 
-`SUPABASE_AUTH_REDIRECT_URL` é opcional para recuperação de senha. Sem essa
-variável, o Web usa a URL atual e o mobile usa `entrepatas://auth-callback`.
-O domínio definitivo e os callbacks permitidos precisam ser revisados no Auth do
-Supabase antes da publicação; não houve alteração automática dessas configurações.
+### 1. Boas Vindas
+Apresenta a página o qual o usuário escolhe se vai fazer login ou entrar no aplicativo.
 
-## Validação e build Web
+<img src="readme-images/boasVindas.png" width="150">
 
-```powershell
-flutter pub get
-flutter analyze
-flutter test
-flutter build web --release --dart-define-from-file=config/production.json
-git diff --check
-```
+### 2. Tela de Login
+Permite que o usuário acesse sua conta por meio de suas credenciais, garantindo acesso às funcionalidades personalizadas do sistema.
 
-O resultado Web fica em `build/web`. O comando acima compila para o Supabase
-online sem executar migrações nem gravar dados. Um build feito com configuração
-de QA em `127.0.0.1` não é um build de produção.
+<img src="readme-images/login.png" width="150">
 
-A validação final de 15/11/2026 registrou **258 testes aprovados, nenhuma falha e
-dois casos ignorados** por uma funcionalidade de alteração de e-mail desabilitada.
-O release Web de produção compilou e abriu no Chrome isolado sem erros de runtime.
-O analisador retornou 0 erros, 0 avisos e 113 informações de estilo/depreciação
-(o comando padrão termina com exit 1 por essas informações). Consulte o
-[relatório final de entrega](docs/qa_entrega_flutter_web_2026-11-15.md).
-Fluxos autenticados e gravações no Supabase real ainda precisam de validação
-manual autorizada; testes locais não substituem essa confirmação.
+### 3. Esqueci minha senha
+Telas que permitem que o usuário troque a senha em caso de esquecimento.
 
-A revisão local de **16/11/2026**, com correções e avaliação pelos seis critérios
-acadêmicos, está no [relatório de auditoria](docs/auditoria_avaliacao_final_2026-11-16.md).
-Os resultados de 15/11 acima são históricos, não a contagem da revisão atual.
+<img src="readme-images/esqueciMinhaSenha.png" width="150"> <img src="readme-images/alterarSenha.png" width="150">
 
-Para os contratos SQL isolados e a configuração de build, com Node e as
-dependências locais de testes disponíveis, execute `node --test test/*.mjs`.
-Esses testes usam PostgreSQL em memória e não executam migrações em produção.
-Em uma instalação nova, prepare a dependência isolada com
-`npm install --prefix .dart_tool/adocao_sql_test --no-save @electric-sql/pglite@0.5.16`.
-O teste unitário PHP legado pode ser executado com
-`php test/validacao_cliente_test.php`; os demais testes PHP de integração
-exigem Apache/MySQL e banco isolado, conforme `backend/README.md`.
+### 4. Telas de Cadastro
+Possibilita o preenchimento das informações necessárias para realizar um novo cadastro no sistema.
 
-## Exemplos de uso e evidências visuais
+<img src="readme-images/cadastro1.png" width="150"> <img src="readme-images/cadastro2.png" width="150"> <img src="readme-images/cadastro3.png" width="150"> <img src="readme-images/cadastro4.png" width="150">
 
-1. Cadastre uma conta nas quatro etapas e confirme o e-mail, se solicitado.
-2. Entre e responda ao questionário antes da Home. Nos próximos logins, as
-   respostas salvas são reutilizadas, inclusive para contas legadas.
-3. Consulte as recomendações da espécie preferida, ordenadas pela maior
-   compatibilidade, ou use Pesquisa para encontrar outros animais.
-4. Abra uma ficha e solicite a adoção; o responsável acompanha a solicitação
-   nas notificações e pode aprovar ou recusar. O adotante pode cancelar.
-5. No perfil, edite os dados e informe uma URL HTTP/HTTPS para a foto.
-   Publique um animal e gerencie suas próprias publicações.
+### 5. Teste de Compatibilidade
+Teste que é usado para calcular a porcentagem de compatibilidade com o animal de acordo com suas preferências e rotina.
 
-**Prints reais ainda pendentes:** login, quatro etapas do cadastro,
-questionário, Home com percentuais ordenados, pesquisa com filtros, ficha do
-animal, perfil/edição, cadastro de animal e adoções/notificações. Capture o
-aplicativo em execução, com dados de demonstração autorizados, em celular e
-desktop. Banners e imagens de animais em `assets/` não comprovam essas telas.
-Não foram adicionados prints fictícios nem links para imagens inexistentes.
+<img src="readme-images/quest1.png" width="150"> <img src="readme-images/quest2.png" width="150"> <img src="readme-images/quest3.png" width="150"> <img src="readme-images/quest4.png" width="150"> <img src="readme-images/quest5.png" width="150">
 
-### Vercel
+### 6. Home - Tela Inicial
+Exibe as principais opções de animais baseado na suas preferências e rotinas.
 
-O repositório prepara a configuração em `vercel.json`:
+<img src="readme-images/home.png" width="150">
 
-- Framework: **Other**.
-- Build: `node scripts/build_web.mjs`.
-- Saída: `build/web`.
-- SDK de build: Flutter **3.50.0**, fixado pelo script.
-- Configuração do cliente: `config/production.json`, somente valores públicos.
+## 7. Pesquisa
+Permite pesquisar entre animais e usuários com filtros de busca.
 
-O script prepara o SDK em cache quando necessário, instala as dependências pelo
-lockfile e gera o build Web. Ele rejeita outro endpoint Supabase, chaves
-administrativas e um SDK divergente. A configuração de rotas permite que o
-aplicativo seja aberto por URL direta. Confira o
-[checklist de publicação](docs/publicacao_github_vercel.md), incluindo os
-callbacks de Auth do domínio definitivo. **Preparar esses arquivos não publica
-na Vercel.**
+<img src="readme-images/pesquisaPet.png" width="150"> <img src="readme-images/pesquisaUsuario.png" width="150"> <img src="readme-images/filtroPesquisa.png" width="150">
 
-## Estrutura e arquivos que devem ser preservados
+## 8. Perfil
+Mostra o que é exibido para os outros na sua página de perfil, e permite alterar seus dados de cadastro. 
 
-| Caminho | Finalidade |
-| --- | --- |
-| `lib/controller/`, `lib/model/`, `lib/services/`, `lib/view/` | Estado, modelos, integração Supabase e telas do app. |
-| `lib/service/` | Validação de senha ativa e clientes PHP legados cobertos por testes. |
-| `assets/`, `web/`, `android/`, `ios/` | Recursos, fontes e configurações das plataformas. |
-| `test/` | Regressões Flutter, fixtures e verificações SQL/legadas. |
-| `docs/`, `docs/sql/` | Relatórios de QA, instruções e SQLs de inspeção/migração para revisão. |
-| `supabase/functions/` | Funções de backend, incluindo exclusão de conta; nunca substituir por código administrativo no Flutter. |
-| `backend/` | Implementação PHP legada preservada. |
-| `pubspec.yaml`, `pubspec.lock` | Dependências e suas versões resolvidas. |
+<img src="readme-images/perfil.png" width="150"> <img src="readme-images/editarPerfil.png" width="150">
 
-`build/`, `.dart_tool/`, caches, logs descartáveis e `supabase/.temp/` são
-artefatos locais ignorados pelo Git. Backups/dumps de banco, `.env`, tokens e
-chaves privadas não devem entrar no repositório. Preserve os SQLs de instalação
-e manutenção; eles não são descartáveis por não serem compilados pelo Flutter.
+A tela da ficha de perfil é exibida quando outros usuários acessam sua página.
 
-Não execute `supabase db push`, `db reset` nem os SQLs 05, 10, 20 ou 30 em produção
-como etapa de instalação do app. Qualquer instalação do backend exige revisão
-separada, backup recuperável e validação das permissões.
+<img src="readme-images/fichaPerfil.png" width="150">
 
-## Colaboração
+## 9. Notificações
+Exibe as adoções realizadas o qual o usuário participa.
 
-Cada integrante deve usar sua própria conta do GitHub e uma branch por tarefa.
-Revise `git status` e o diff antes de selecionar arquivos para um commit e
-integre as mudanças por pull request. Não envie builds, caches ou credenciais.
-Mensagens e autoria devem refletir contribuições reais; não crie commits
-artificiais para simular participação.
+<img src="readme-images/notificações.png" width="150">
 
-## Contexto acadêmico e autores
+Nessa tela, o usuário pode visualizar a ficha de adoção, que mostra os status e as informações do processo.
 
-Projeto do 4º semestre de Engenharia de Software da UMC, nas disciplinas de
-Desenvolvimento de Aplicações e Métodos Ágeis e para o SUMMIT da Revista
-Científica da UMC. O protótipo de UX/UI foi elaborado no Figma.
+<img src="readme-images/adocao.png" width="150">
+
+## 10. Configurações
+Exibe funções de alteração de conta, como editar, refazer teste ou apagar.
+
+<img src="readme-images/configurações.png" width="150">
+
+## 11. Animais
+Funções para editar, apagar ou ccadastrar novos animais no sistema.
+
+<img src="readme-images/animaisCadastrados.png" width="150"> <img src="readme-images/publicarAnimal.png" width="150"> <img src="readme-images/editarAnimal.png" width="150">
+
+A tela de ficha do animal, é exibida quando outros usuários acessam a página do pet.
+
+<img src="readme-images/fichaAnimal.png" width="150">
+
+## Testes recomendados
+
+- Cadastro, autenticação e validação de campos;
+- Criação, consulta, edição e remoção autorizada de registros;
+- Carregamento de animais e filtros de pesquisa;
+- Navegação entre telas e carrossel de fotos;
+- Cálculo e apresentação da compatibilidade;
+- Envio de solicitações sem duplicidade acidental;
+- Registro de data/hora, mudanças de status e notificações;
+- Tratamento de erros e responsividade.
+
+## Contexto acadêmico
+
+Projeto desenvolvido para apresentação no Summit da Universidade de Mogi das Cruzes (UMC), com aplicação de conceitos de desenvolvimento de software, prototipação de interfaces e organização ágil de projetos.
+
+## Equipe de Desenvolvimento
 
 | Integrante | Atuação apresentada | GitHub |
-| --- | --- | --- |
-| Cauã Araújo Marques | Desenvolvimento e integração | [AraujoCaua-jpg](https://github.com/AraujoCaua-jpg) |
-| Lucas Alves Siqueira | UX/UI Design e prototipação | [LucasSiq31](https://github.com/LucasSiq31) |
-| Yasmim Camilli da Silva Pacheco | Planejamento e desenvolvimento | [YasmimPacheco](https://github.com/YasmimPacheco) |
+|---|---|---|
+| Cauã Araújo Marques | Desenvolvimento e integração | <a href="https://github.com/AraujoCaua-jpg"><img src="https://img.shields.io/badge/AraujoCauajpg-181717?style=for-the-badge&logo=github&logoColor=white" alt="AraujoCaua-jpg"></a> |
+| Lucas Alves Siqueira | UX/UI Design e prototipação | <a href="https://github.com/LucasSiq31"><img src="https://img.shields.io/badge/LucasSiq31-181717?style=for-the-badge&logo=github&logoColor=white" alt="LucasSiq31"></a> |
+| Yasmim Camilli da Silva Pacheco | Planejamento e desenvolvimento | <a href="https://github.com/YasmimPacheco"><img src="https://img.shields.io/badge/YasmimPacheco-181717?style=for-the-badge&logo=github&logoColor=white" alt="YasmimPacheco"></a> |
 
 **Orientadores:** Alessandra da Silva Martins e Higor Barreto Campos.
 
-O histórico local confirma contribuições dos três integrantes. Exemplos:
-Cauã — integração Supabase (`6f8e63f`); Lucas — prévia da foto (`60b2f58`)
-e README (`476ac3e`); Yasmim — recomendações/notificações (`0240f96`) e
-ajustes de seleção (`bdc343f`). A tabela de atuação acima mantém o contexto
-declarado pelo grupo; os commits comprovam apenas as mudanças registradas.
