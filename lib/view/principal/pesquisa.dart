@@ -1,5 +1,3 @@
-import '../core/responsive_content.dart';
-
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
@@ -358,7 +356,7 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
+          constraints: const BoxConstraints(maxWidth: 720),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -557,38 +555,33 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
                         : 'Nenhum animal encontrado.',
                   ),
                 )
+              else if (_usuariosAtivos)
+                for (final usuario in _usuarios)
+                  _SearchCard(
+                    name: '${usuario.nome} ${usuario.sobrenome}',
+                    desc: '@${usuario.usuario}',
+                    image: usuario.imageUrl,
+                    location: [
+                      usuario.cidadeDeResidencia,
+                      usuario.estado ?? '',
+                    ].where((s) => s.isNotEmpty).join(' - '),
+                    pet: false,
+                    page: FichaPerfilScreen(clienteId: usuario.id),
+                  )
               else
-                ResponsiveCards(
-                  children: [
-                    if (_usuariosAtivos)
-                      for (final usuario in _usuarios)
-                        _SearchCard(
-                          name: '${usuario.nome} ${usuario.sobrenome}',
-                          desc: '@${usuario.usuario}',
-                          image: usuario.imageUrl,
-                          location: [
-                            usuario.cidadeDeResidencia,
-                            usuario.estado ?? '',
-                          ].where((s) => s.isNotEmpty).join(' - '),
-                          pet: false,
-                          page: FichaPerfilScreen(clienteId: usuario.id),
-                        )
-                    else
-                      for (final animal in _pets)
-                        _SearchCard(
-                          name: animal.nome,
-                          desc:
-                              '${animal.idade == null ? 'Idade não informada' : '${animal.idade} ${animal.idade == 1 ? 'ano' : 'anos'}'} - ${animal.sexo}',
-                          image: animal.imageUrl,
-                          location: [
-                            animal.cidade,
-                            animal.estado,
-                          ].where((s) => s.isNotEmpty).join(' - '),
-                          pet: true,
-                          page: FichaAnimalScreen(animalId: animal.id),
-                        ),
-                  ],
-                ),
+                for (final animal in _pets)
+                  _SearchCard(
+                    name: animal.nome,
+                    desc:
+                        '${animal.idade == null ? 'Idade não informada' : '${animal.idade} ${animal.idade == 1 ? 'ano' : 'anos'}'} - ${animal.sexo}',
+                    image: animal.imageUrl,
+                    location: [
+                      animal.cidade,
+                      animal.estado,
+                    ].where((s) => s.isNotEmpty).join(' - '),
+                    pet: true,
+                    page: FichaAnimalScreen(animalId: animal.id),
+                  ),
               if (!_usuariosAtivos && _mais && !_carregando && _erro == null)
                 Center(
                   child: TextButton(

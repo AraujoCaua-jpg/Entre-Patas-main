@@ -40,42 +40,6 @@ void main() {
     await Supabase.instance.dispose();
   });
 
-  testWidgets('redimensionar mantém a pesquisa e alterna a navegação', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1440, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    await controller.entrar('a@example.com', 'senha-simulada');
-    await tester.pumpWidget(
-      ClientesScope(
-        controller: controller,
-        child: const MaterialApp(home: NavegacaoScreen()),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.byType(NavigationRail), findsOneWidget);
-    expect(find.byType(NavigationBar), findsNothing);
-    await tester.tap(find.text('Pesquisa').last);
-    await tester.pumpAndSettle();
-    final campo = find.byType(TextField).first;
-    await tester.enterText(campo, 'Mel');
-    await tester.pump(const Duration(milliseconds: 350));
-    await tester.pumpAndSettle();
-    tester.view.physicalSize = const Size(390, 844);
-    await tester.pumpAndSettle();
-    expect(find.byType(NavigationRail), findsNothing);
-    expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.text('Mel'), findsOneWidget);
-    expect(
-      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-      1,
-    );
-    expect(tester.takeException(), isNull);
-    await tester.pumpWidget(const SizedBox());
-  });
-
   testWidgets('Telas reais: login A, logout, Voltar e login B sem dados de A', (
     tester,
   ) async {

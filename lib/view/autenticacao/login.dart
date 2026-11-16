@@ -234,28 +234,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
 
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const EsqueciSenhaScreen(), //RECUPERAR SENHA
-                          ),
-                        );
-                      },
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const EsqueciSenhaScreen(), //RECUPERAR SENHA
+                            ),
+                          );
+                        },
 
-                      child: const Text(
-                        'Esqueci minha senha!',
-                        style: TextStyle(
-                          color: AppColors.laranja,
-                          fontSize: 16,
-                          decoration: TextDecoration.underline,
+                        child: const Text(
+                          'Esqueci minha senha!',
+                          style: TextStyle(
+                            color: AppColors.laranja,
+                            fontSize: 16,
+                            decoration: TextDecoration.underline,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
 
                   SizedBox(height: 40),

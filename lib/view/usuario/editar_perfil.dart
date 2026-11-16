@@ -1,4 +1,3 @@
-import '../core/responsive_content.dart';
 import '../../services/login_exception.dart';
 
 import 'dart:typed_data';
@@ -202,10 +201,8 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     if (ClientesScope.of(context).clienteLogado == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Editar Perfil')),
-        body: ResponsiveContent(
-          child: const Center(
-            child: Text('Entre novamente para editar seu perfil.'),
-          ),
+        body: const Center(
+          child: Text('Entre novamente para editar seu perfil.'),
         ),
       );
     }
@@ -218,191 +215,253 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
           bottom: BorderSide(color: Color(0xFFD96C3F), width: 2),
         ),
       ),
-      body: ResponsiveContent(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              FotoPerfilPicker(
-                url: _fotoUrl,
-                foto: _fotoSelecionada,
-                onFotoChanged: (foto) =>
-                    setState(() => _fotoSelecionada = foto),
-                enabled: !_salvando && _clienteId != null,
-                onChanged: (url) => setState(() => _fotoUrl = url),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Text("Dados Pessoais", style: TextStyle(fontSize: 20)),
-                ],
-              ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            FotoPerfilPicker(
+              url: _fotoUrl,
+              foto: _fotoSelecionada,
+              onFotoChanged: (foto) => setState(() => _fotoSelecionada = foto),
+              enabled: !_salvando && _clienteId != null,
+              onChanged: (url) => setState(() => _fotoUrl = url),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Text("Dados Pessoais", style: TextStyle(fontSize: 20)),
+              ],
+            ),
 
-              SizedBox(height: 20),
+            SizedBox(height: 20),
 
-              TextField(
-                controller: nomeController,
-                keyboardType: TextInputType.name,
-                textCapitalization: TextCapitalization.words,
-                decoration: InputDecoration(
-                  hintText: 'Nome',
-                  prefixIcon: const Icon(
-                    Icons.person_outline,
-                    color: Color(0xFF888888),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.cinza,
-                  hintStyle: const TextStyle(color: Color(0xFF888888)),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 20),
-
-              TextField(
-                controller: sobrenomeController,
-                keyboardType: TextInputType.name,
-                textCapitalization: TextCapitalization.words,
-                decoration: InputDecoration(
-                  hintText: 'Sobrenome',
-                  prefixIcon: const Icon(
-                    Icons.person_outline,
-                    color: Color(0xFF888888),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.cinza,
-                  hintStyle: const TextStyle(color: Color(0xFF888888)),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 20),
-
-              TextField(
-                controller: emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  hintText: 'E-mail',
-                  prefixIcon: const Icon(
-                    Icons.mail_outline,
-                    color: Color(0xFF888888),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.cinza,
-                  hintStyle: const TextStyle(color: Color(0xFF888888)),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 20),
-
-              TextField(
-                controller: telefoneController,
-                inputFormatters: [TelefoneInputFormatter()],
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  hintText: 'Telefone',
-                  prefixIcon: const Icon(
-                    Icons.phone_outlined,
-                    color: Color(0xFF888888),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.cinza,
-                  hintStyle: const TextStyle(color: Color(0xFF888888)),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 20),
-
-              TextField(
-                controller: usuarioController,
-                autocorrect: false,
-                enableSuggestions: false,
-                textInputAction: TextInputAction.done,
-                style: const TextStyle(color: Colors.black),
-                decoration: InputDecoration(
-                  hintText: 'Nome de Usuário',
-                  prefixIcon: const Icon(
-                    Icons.alternate_email,
-                    color: Color(0xFF888888),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.cinza,
-                  hintStyle: const TextStyle(color: Color(0xFF888888)),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 20),
-
-              Row(children: [Text("Endereço", style: TextStyle(fontSize: 20))]),
-
-              SizedBox(height: 20),
-
-              DropdownButtonFormField<String>(
-                menuMaxHeight: 240,
-                borderRadius: BorderRadius.circular(10),
-                initialValue: estado,
-                isExpanded: true,
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontFamily: 'NunitoSans',
-                  fontSize: 16,
-                ),
-                dropdownColor: Colors.white,
-                icon: const Icon(
-                  Icons.keyboard_arrow_down,
+            TextField(
+              controller: nomeController,
+              keyboardType: TextInputType.name,
+              textCapitalization: TextCapitalization.words,
+              decoration: InputDecoration(
+                hintText: 'Nome',
+                prefixIcon: const Icon(
+                  Icons.person_outline,
                   color: Color(0xFF888888),
                 ),
-                decoration: InputDecoration(
-                  hintText: 'Estado',
-                  prefixIcon: const Icon(
-                    Icons.location_on_outlined,
-                    color: Color(0xFF888888),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.cinza,
-                  hintStyle: const TextStyle(color: Color(0xFF888888)),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
+                filled: true,
+                fillColor: AppColors.cinza,
+                hintStyle: const TextStyle(color: Color(0xFF888888)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+            TextField(
+              controller: sobrenomeController,
+              keyboardType: TextInputType.name,
+              textCapitalization: TextCapitalization.words,
+              decoration: InputDecoration(
+                hintText: 'Sobrenome',
+                prefixIcon: const Icon(
+                  Icons.person_outline,
+                  color: Color(0xFF888888),
+                ),
+                filled: true,
+                fillColor: AppColors.cinza,
+                hintStyle: const TextStyle(color: Color(0xFF888888)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                hintText: 'E-mail',
+                prefixIcon: const Icon(
+                  Icons.mail_outline,
+                  color: Color(0xFF888888),
+                ),
+                filled: true,
+                fillColor: AppColors.cinza,
+                hintStyle: const TextStyle(color: Color(0xFF888888)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+            TextField(
+              controller: telefoneController,
+              inputFormatters: [TelefoneInputFormatter()],
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(
+                hintText: 'Telefone',
+                prefixIcon: const Icon(
+                  Icons.phone_outlined,
+                  color: Color(0xFF888888),
+                ),
+                filled: true,
+                fillColor: AppColors.cinza,
+                hintStyle: const TextStyle(color: Color(0xFF888888)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+            TextField(
+              controller: usuarioController,
+              autocorrect: false,
+              enableSuggestions: false,
+              textInputAction: TextInputAction.done,
+              style: const TextStyle(color: Colors.black),
+              decoration: InputDecoration(
+                hintText: 'Nome de Usuário',
+                prefixIcon: const Icon(
+                  Icons.alternate_email,
+                  color: Color(0xFF888888),
+                ),
+                filled: true,
+                fillColor: AppColors.cinza,
+                hintStyle: const TextStyle(color: Color(0xFF888888)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+            Row(children: [Text("Endereço", style: TextStyle(fontSize: 20))]),
+
+            SizedBox(height: 20),
+
+            DropdownButtonFormField<String>(
+              menuMaxHeight: 240,
+              borderRadius: BorderRadius.circular(10),
+              initialValue: estado,
+              isExpanded: true,
+              style: const TextStyle(
+                color: Colors.black,
+                fontFamily: 'NunitoSans',
+                fontSize: 16,
+              ),
+              dropdownColor: Colors.white,
+              icon: const Icon(
+                Icons.keyboard_arrow_down,
+                color: Color(0xFF888888),
+              ),
+              decoration: InputDecoration(
+                hintText: 'Estado',
+                prefixIcon: const Icon(
+                  Icons.location_on_outlined,
+                  color: Color(0xFF888888),
+                ),
+                filled: true,
+                fillColor: AppColors.cinza,
+                hintStyle: const TextStyle(color: Color(0xFF888888)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              items: estados.entries
+                  .map(
+                    (entry) => DropdownMenuItem(
+                      value: entry.key,
+                      child: Text(entry.value),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) => setState(() => estado = value),
+            ),
+
+            SizedBox(height: 20),
+
+            TextField(
+              controller: cidadeController,
+              textCapitalization: TextCapitalization.words,
+              style: const TextStyle(color: Colors.black),
+              decoration: InputDecoration(
+                hintText: 'Cidade',
+                prefixIcon: const Icon(
+                  Icons.location_city,
+                  color: Color(0xFF888888),
+                ),
+                filled: true,
+                fillColor: AppColors.cinza,
+                hintStyle: const TextStyle(color: Color(0xFF888888)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+            Divider(height: 1, thickness: 1, color: AppColors.laranja),
+
+            SizedBox(height: 20),
+
+            Row(
+              children: [
+                Checkbox(
+                  value: larDeAdocao,
+                  activeColor: AppColors.laranja,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                  onChanged: (value) =>
+                      setState(() => larDeAdocao = value ?? false),
+                ),
+
+                GestureDetector(
+                  onTap: () => setState(() => larDeAdocao = !larDeAdocao),
+                  child: const Text(
+                    'Sou um Lar de Adoção',
+                    style: TextStyle(color: Colors.black, fontSize: 20),
                   ),
                 ),
-                items: estados.entries
-                    .map(
-                      (entry) => DropdownMenuItem(
-                        value: entry.key,
-                        child: Text(entry.value),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) => setState(() => estado = value),
-              ),
+              ],
+            ),
 
-              SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Uma conta de lar de adoção tem informações adicionadas no perfil para contato, (telefone e e-mail)',
+                    textAlign: TextAlign.left,
+                    softWrap: true,
+                    style: TextStyle(color: Color(0xFF888888), fontSize: 10),
+                  ),
+                ),
+              ],
+            ),
 
+            SizedBox(height: 20),
+
+            if (larDeAdocao)
               TextField(
-                controller: cidadeController,
+                controller: enderecoController,
                 textCapitalization: TextCapitalization.words,
-                style: const TextStyle(color: Colors.black),
+                style: TextStyle(color: Colors.black),
+
                 decoration: InputDecoration(
-                  hintText: 'Cidade',
+                  hintText: 'Endereço',
                   prefixIcon: const Icon(
                     Icons.location_city,
                     color: Color(0xFF888888),
@@ -417,98 +476,31 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                 ),
               ),
 
-              SizedBox(height: 20),
+            SizedBox(height: 20),
 
-              Divider(height: 1, thickness: 1, color: AppColors.laranja),
-
-              SizedBox(height: 20),
-
-              Row(
-                children: [
-                  Checkbox(
-                    value: larDeAdocao,
-                    activeColor: AppColors.laranja,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
-                    onChanged: (value) =>
-                        setState(() => larDeAdocao = value ?? false),
-                  ),
-
-                  GestureDetector(
-                    onTap: () => setState(() => larDeAdocao = !larDeAdocao),
-                    child: const Text(
-                      'Sou um Lar de Adoção',
-                      style: TextStyle(color: Colors.black, fontSize: 20),
-                    ),
-                  ),
-                ],
-              ),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Uma conta de lar de adoção tem informações adicionadas no perfil para contato, (telefone e e-mail)',
-                      textAlign: TextAlign.left,
-                      softWrap: true,
-                      style: TextStyle(color: Color(0xFF888888), fontSize: 10),
-                    ),
-                  ),
-                ],
-              ),
-
-              SizedBox(height: 20),
-
-              if (larDeAdocao)
-                TextField(
-                  controller: enderecoController,
-                  textCapitalization: TextCapitalization.words,
-                  style: TextStyle(color: Colors.black),
-
-                  decoration: InputDecoration(
-                    hintText: 'Endereço',
-                    prefixIcon: const Icon(
-                      Icons.location_city,
-                      color: Color(0xFF888888),
-                    ),
-                    filled: true,
-                    fillColor: AppColors.cinza,
-                    hintStyle: const TextStyle(color: Color(0xFF888888)),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
+            SizedBox(
+              height: 62,
+              child: ElevatedButton(
+                onPressed: _salvando || _clienteId == null ? null : editarConta,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.laranja,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-
-              SizedBox(height: 20),
-
-              SizedBox(
-                height: 62,
-                child: ElevatedButton(
-                  onPressed: _salvando || _clienteId == null
-                      ? null
-                      : editarConta,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.laranja,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Salvar alterações', style: TextStyle(fontSize: 24)),
-                      SizedBox(width: 10),
-                      Icon(Icons.arrow_forward),
-                    ],
-                  ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Salvar alterações', style: TextStyle(fontSize: 24)),
+                    SizedBox(width: 10),
+                    Icon(Icons.arrow_forward),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

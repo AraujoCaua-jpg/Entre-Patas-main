@@ -132,7 +132,7 @@ class _FichaPerfilScreenState extends State<FichaPerfilScreen> {
             : Align(
                 alignment: Alignment.topCenter,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1000),
+                  constraints: const BoxConstraints(maxWidth: 600),
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
                     children: [
@@ -321,17 +321,12 @@ class _AnimaisDoPerfilState extends State<_AnimaisDoPerfil> {
         ),
       LayoutBuilder(
         builder: (context, constraints) {
-          final colunas = constraints.maxWidth >= 900
-              ? 4
-              : constraints.maxWidth >= 650
-              ? 3
-              : 2;
-          final largura = (constraints.maxWidth - (colunas - 1) * 8) / colunas;
+          final largura = (constraints.maxWidth - 8) / 2;
           return GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: colunas,
+              crossAxisCount: 2,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
               mainAxisExtent: largura / 1.45 + 78,

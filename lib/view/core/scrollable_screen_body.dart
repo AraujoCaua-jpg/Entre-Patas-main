@@ -6,12 +6,10 @@ class ScrollableScreenBody extends StatelessWidget {
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(24),
-    this.maxWidth = 560,
   });
 
   final Widget child;
   final EdgeInsets padding;
-  final double maxWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +21,7 @@ class ScrollableScreenBody extends StatelessWidget {
           child: Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: maxWidth,
+                maxWidth: 560,
                 minHeight: (constraints.maxHeight - padding.vertical).clamp(
                   0.0,
                   double.infinity,

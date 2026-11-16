@@ -1,5 +1,3 @@
-import '../core/responsive_content.dart';
-
 import 'package:entre_patas/view/questionario/teste_comp_c.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -71,314 +69,277 @@ class _TesteCompBScreenState extends State<TesteCompBScreen> {
         ),
       ),
 
-      body: ResponsiveContent(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(24),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  icon: const Icon(Icons.arrow_back, color: AppColors.laranja),
+                  label: const Text('Voltar'),
+                  iconAlignment: .start,
+                ),
+
+                Text(
+                  'Etapa 3 de 5',
+                  style: TextStyle(color: Colors.black, fontSize: 14),
+                ),
+              ],
+            ),
+
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 28),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment
+                    .spaceBetween, // Centraliza as barrinhas (opcional)
                 children: [
-                  TextButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: AppColors.laranja,
-                    ),
-                    label: const Text('Voltar'),
-                    iconAlignment: .start,
-                  ),
-
-                  Text(
-                    'Etapa 3 de 5',
-                    style: TextStyle(color: Colors.black, fontSize: 14),
-                  ),
-                ],
-              ),
-
-              Padding(
-                padding: const EdgeInsets.only(top: 8, bottom: 28),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment
-                      .spaceBetween, // Centraliza as barrinhas (opcional)
-                  children: [
-                    for (var etapa = 0; etapa < 5; etapa++)
-                      Expanded(
-                        child: Container(
-                          height: 6,
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                          ), // Um espaço leve entre elas
-                          decoration: BoxDecoration(
-                            // Se a etapa já passou ou é a atual, fica verde. Senão, cinza.
-                            color: etapa < 3
-                                ? AppColors.verde
-                                : AppColors.cinza,
-                            borderRadius: BorderRadius.circular(3),
-                          ),
+                  for (var etapa = 0; etapa < 5; etapa++)
+                    Expanded(
+                      child: Container(
+                        height: 6,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                        ), // Um espaço leve entre elas
+                        decoration: BoxDecoration(
+                          // Se a etapa já passou ou é a atual, fica verde. Senão, cinza.
+                          color: etapa < 3 ? AppColors.verde : AppColors.cinza,
+                          borderRadius: BorderRadius.circular(3),
                         ),
                       ),
-                  ],
-                ),
-              ),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [Text("Bloco B", style: TextStyle(fontSize: 24))],
-              ),
-
-              SizedBox(height: 20),
-
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      '1- Qual o ambiente que você mora?',
-                      style: TextStyle(fontSize: 18),
                     ),
-                  ),
                 ],
               ),
+            ),
 
-              RadioGroup<String>(
-                groupValue: residencia,
-                onChanged: (value) => setState(() => residencia = value),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: 'Casa c/ Quintal',
-                          activeColor: AppColors.laranja,
-                        ),
-                        const Text(
-                          'Casa c/ Quintal',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                      ],
-                    ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [Text("Bloco B", style: TextStyle(fontSize: 24))],
+            ),
 
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: 'Casa s/ Quintal',
-                          activeColor: AppColors.laranja,
-                        ),
-                        const Text(
-                          'Casa s/ Quintal',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                      ],
-                    ),
+            SizedBox(height: 20),
 
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: 'Apartamento',
-                          activeColor: AppColors.laranja,
-                        ),
-                        const Text(
-                          'Apartamento',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                      ],
-                    ),
-
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: 'Outro',
-                          activeColor: AppColors.laranja,
-                        ),
-                        const Text('Outro', style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
-                  ],
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    '1- Qual o ambiente que você mora?',
+                    style: TextStyle(fontSize: 18),
+                  ),
                 ),
-              ),
+              ],
+            ),
 
-              SizedBox(height: 20),
-
-              Row(
+            RadioGroup<String>(
+              groupValue: residencia,
+              onChanged: (value) => setState(() => residencia = value),
+              child: Column(
                 children: [
-                  const Expanded(
-                    child: Text(
-                      '2- Quantas horas por dia o animal ficaria sozinho?',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ),
-                ],
-              ),
-
-              RadioGroup<String>(
-                groupValue: sozinho,
-                onChanged: (value) => setState(() => sozinho = value),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: '5',
-                          activeColor: AppColors.laranja,
-                        ),
-                        const Text('0-2', style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: '4',
-                          activeColor: AppColors.laranja,
-                        ),
-                        const Text('2-4', style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: '3',
-                          activeColor: AppColors.laranja,
-                        ),
-                        const Text('4-6', style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: '2',
-                          activeColor: AppColors.laranja,
-                        ),
-                        const Text('6-8', style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: '1',
-                          activeColor: AppColors.laranja,
-                        ),
-                        const Text('8+', style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 20),
-
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      '3- Quanto tempo você tem para dedicar ao animal (passeio e brincadeiras)?',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ),
-                ],
-              ),
-
-              RadioGroup<String>(
-                groupValue: dedicacao,
-                onChanged: (value) => setState(() => dedicacao = value),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: '1',
-                          activeColor: AppColors.laranja,
-                        ),
-                        const Text('0-30 min', style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: '2',
-                          activeColor: AppColors.laranja,
-                        ),
-                        const Text('30-60 min', style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: '3',
-                          activeColor: AppColors.laranja,
-                        ),
-                        const Text('1-2 horas', style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: '4',
-                          activeColor: AppColors.laranja,
-                        ),
-                        const Text('+2 horas', style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 20),
-
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      '4- Você tem outros animais em sua residência?',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ),
-                ],
-              ),
-
-              RadioGroup<String>(
-                groupValue: convivencia,
-                onChanged: (value) => setState(() => convivencia = value),
-                child: Row(
-                  children: [
-                    Radio<String>(value: 'Sim', activeColor: AppColors.laranja),
-                    const Text('Sim', style: TextStyle(fontSize: 18)),
-
-                    const SizedBox(width: 8),
-
-                    Radio<String>(value: 'Não', activeColor: AppColors.laranja),
-                    const Text('Não', style: TextStyle(fontSize: 18)),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 20),
-
-              SizedBox(
-                height: 62,
-                child: ElevatedButton(
-                  onPressed: avancar,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.laranja,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Row(
                     children: [
-                      Text('Avançar', style: TextStyle(fontSize: 24)),
-                      SizedBox(width: 10),
-                      Icon(Icons.arrow_forward),
+                      Radio<String>(
+                        value: 'Casa c/ Quintal',
+                        activeColor: AppColors.laranja,
+                      ),
+                      const Text(
+                        'Casa c/ Quintal',
+                        style: TextStyle(fontSize: 18),
+                      ),
                     ],
                   ),
+
+                  Row(
+                    children: [
+                      Radio<String>(
+                        value: 'Casa s/ Quintal',
+                        activeColor: AppColors.laranja,
+                      ),
+                      const Text(
+                        'Casa s/ Quintal',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ],
+                  ),
+
+                  Row(
+                    children: [
+                      Radio<String>(
+                        value: 'Apartamento',
+                        activeColor: AppColors.laranja,
+                      ),
+                      const Text('Apartamento', style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
+
+                  Row(
+                    children: [
+                      Radio<String>(
+                        value: 'Outro',
+                        activeColor: AppColors.laranja,
+                      ),
+                      const Text('Outro', style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    '2- Quantas horas por dia o animal ficaria sozinho?',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ),
+              ],
+            ),
+
+            RadioGroup<String>(
+              groupValue: sozinho,
+              onChanged: (value) => setState(() => sozinho = value),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Radio<String>(value: '5', activeColor: AppColors.laranja),
+                      const Text('0-2', style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Radio<String>(value: '4', activeColor: AppColors.laranja),
+                      const Text('2-4', style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Radio<String>(value: '3', activeColor: AppColors.laranja),
+                      const Text('4-6', style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Radio<String>(value: '2', activeColor: AppColors.laranja),
+                      const Text('6-8', style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Radio<String>(value: '1', activeColor: AppColors.laranja),
+                      const Text('8+', style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    '3- Quanto tempo você tem para dedicar ao animal (passeio e brincadeiras)?',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ),
+              ],
+            ),
+
+            RadioGroup<String>(
+              groupValue: dedicacao,
+              onChanged: (value) => setState(() => dedicacao = value),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Radio<String>(value: '1', activeColor: AppColors.laranja),
+                      const Text('0-30 min', style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Radio<String>(value: '2', activeColor: AppColors.laranja),
+                      const Text('30-60 min', style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Radio<String>(value: '3', activeColor: AppColors.laranja),
+                      const Text('1-2 horas', style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Radio<String>(value: '4', activeColor: AppColors.laranja),
+                      const Text('+2 horas', style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    '4- Você tem outros animais em sua residência?',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ),
+              ],
+            ),
+
+            RadioGroup<String>(
+              groupValue: convivencia,
+              onChanged: (value) => setState(() => convivencia = value),
+              child: Row(
+                children: [
+                  Radio<String>(value: 'Sim', activeColor: AppColors.laranja),
+                  const Text('Sim', style: TextStyle(fontSize: 18)),
+
+                  const SizedBox(width: 8),
+
+                  Radio<String>(value: 'Não', activeColor: AppColors.laranja),
+                  const Text('Não', style: TextStyle(fontSize: 18)),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+            SizedBox(
+              height: 62,
+              child: ElevatedButton(
+                onPressed: avancar,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.laranja,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Avançar', style: TextStyle(fontSize: 24)),
+                    SizedBox(width: 10),
+                    Icon(Icons.arrow_forward),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

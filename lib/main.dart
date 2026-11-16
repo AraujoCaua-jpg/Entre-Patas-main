@@ -4,7 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'controller/clientes_scope.dart';
 import 'view/core/app_colors.dart';
 import 'view/core/recuperacao_senha_navigation.dart';
-import 'view/autenticacao/bem_vindo.dart';
+import 'view/core/pagina_atual_navigation.dart';
+import 'view/core/restaurar_sessao_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,10 +41,12 @@ class MeuApp extends StatefulWidget {
 class _MeuAppState extends State<MeuApp> {
   late final _recuperacaoSenha =
       widget.recuperacaoSenha ?? RecuperacaoSenhaNavigation();
+  late final _paginaAtual = PaginaAtualNavigation();
 
   @override
   void dispose() {
     _recuperacaoSenha.dispose();
+    _paginaAtual.dispose();
     super.dispose();
   }
 
@@ -52,7 +55,7 @@ class _MeuAppState extends State<MeuApp> {
     return ClientesScope(
       child: MaterialApp(
         navigatorKey: _recuperacaoSenha.navigatorKey,
-        navigatorObservers: [_recuperacaoSenha],
+        navigatorObservers: [_recuperacaoSenha, _paginaAtual],
         builder: (context, child) {
           _recuperacaoSenha.navigatorConstruido();
           return child!;
@@ -64,7 +67,7 @@ class _MeuAppState extends State<MeuApp> {
           colorScheme: ColorScheme.fromSeed(seedColor: AppColors.laranja),
           useMaterial3: true,
         ),
-        home: const BemVindoScreen(),
+        home: const RestaurarSessaoScreen(),
       ),
     );
   }

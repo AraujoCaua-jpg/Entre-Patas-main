@@ -125,16 +125,11 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1200),
+            constraints: const BoxConstraints(maxWidth: 720),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 720),
-                    child: const _BannerHome(),
-                  ),
-                ),
+                const _BannerHome(),
                 const SizedBox(height: 8),
                 const Text(
                   'Amiguinhos disponíveis',
@@ -196,11 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         LayoutBuilder(
                           builder: (context, constraints) {
-                            final columns = constraints.maxWidth >= 1000
-                                ? 4
-                                : constraints.maxWidth >= 600
-                                ? 3
-                                : 2;
+                            final columns = constraints.maxWidth >= 600 ? 3 : 2;
                             final width =
                                 (constraints.maxWidth - (columns - 1) * 8) /
                                 columns;

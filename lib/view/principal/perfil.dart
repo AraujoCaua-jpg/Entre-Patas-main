@@ -1,5 +1,3 @@
-import '../core/responsive_content.dart';
-
 import 'package:entre_patas/view/core/app_colors.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -45,315 +43,257 @@ class _PerfilScreenState extends State<PerfilScreen> {
     final cliente = ClientesScope.of(context).clienteLogado;
     if (cliente == null) {
       return const Scaffold(
-        body: ResponsiveContent(
-          child: Center(
-            child: Text('Entre novamente para visualizar seu perfil.'),
-          ),
+        body: Center(
+          child: Text('Entre novamente para visualizar seu perfil.'),
         ),
       );
     }
     return Scaffold(
       backgroundColor: Colors.white,
-      body: ResponsiveContent(
-        maxWidth: 1200,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final desktop = constraints.maxWidth >= 1000;
-              final informacoes = Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.settings_outlined),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ConfiguracoesScreen(),
-                            ),
-                          );
-                        },
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.settings_outlined),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ConfiguracoesScreen(),
                       ),
-                    ],
-                  ),
+                    );
+                  },
+                ),
+              ],
+            ),
 
-                  Center(
-                    child: FotoPerfilAvatar(
-                      url: cliente.imageUrl,
-                      radius: desktop ? 72 : 100,
-                      iconSize: 80,
-                    ),
-                  ),
-                  SizedBox(height: 10),
+            FotoPerfilAvatar(url: cliente.imageUrl, radius: 100, iconSize: 80),
+            SizedBox(height: 10),
 
-                  Text(
-                    '${cliente.nome} ${cliente.sobrenome}',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 28),
-                  ),
+            Text(
+              '${cliente.nome} ${cliente.sobrenome}',
+              style: TextStyle(fontSize: 28),
+            ),
 
-                  Text(
-                    '@${cliente.usuario}',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14),
-                  ),
+            Text('@${cliente.usuario}', style: TextStyle(fontSize: 14)),
 
-                  SizedBox(height: 4),
+            SizedBox(height: 4),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.pin_drop_outlined,
-                        color: AppColors.cinzaEscuro,
-                        size: 18,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        [
-                          cliente.cidadeDeResidencia,
-                          if (cliente.estado != null) cliente.estado!,
-                        ].join(' - '),
-                        style: TextStyle(fontSize: 14),
-                      ),
-                    ],
-                  ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.pin_drop_outlined,
+                  color: AppColors.cinzaEscuro,
+                  size: 18,
+                ),
+                SizedBox(width: 4),
+                Text(
+                  [
+                    cliente.cidadeDeResidencia,
+                    if (cliente.estado != null) cliente.estado!,
+                  ].join(' - '),
+                  style: TextStyle(fontSize: 14),
+                ),
+              ],
+            ),
 
-                  SizedBox(height: 4),
-                  Divider(color: AppColors.laranja, thickness: 2),
-                  SizedBox(height: 4),
+            SizedBox(height: 4),
+            Divider(color: AppColors.laranja, thickness: 2),
+            SizedBox(height: 4),
 
-                  //EXIBIR APENAS SE FOR CONTA DE LAR DE ADOÇÂO
-                  if (cliente.larDeAdocao)
-                    Container(
-                      padding: const EdgeInsets.all(17),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF2EC),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.pets_outlined,
-                                color: AppColors.laranja,
-                                size: 18,
-                              ),
-                              Text(
-                                ' Lar de Adoção',
-                                style: TextStyle(
-                                  color: AppColors.laranja,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          SizedBox(height: 8),
-
-                          Text(
-                            '${cliente.endereco ?? ''}\nTel: ${cliente.telefone}',
-                            style: TextStyle(color: Colors.black, fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                  SizedBox(height: 10),
-
-                  SizedBox(
-                    height: 62,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const EditarPerfilScreen(),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.laranja,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.edit_note_rounded, size: 24),
-                          SizedBox(width: 10),
-                          Text('Editar Perfil', style: TextStyle(fontSize: 24)),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 20),
-                ],
-              );
-              final animais = Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  //EXIBIR EM TODOS
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Animais Cadastrados:",
-                        style: TextStyle(fontSize: 24),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 10),
-
-                  //CARDS
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 0),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final minCardWidth = desktop ? 200.0 : 160.0;
-                        const spacing = 8.0;
-
-                        final columns =
-                            ((constraints.maxWidth + spacing) /
-                                    (minCardWidth + spacing))
-                                .floor()
-                                .clamp(1, 100);
-
-                        return FutureBuilder<List<Animal>>(
-                          future: _consulta,
-                          builder: (context, snapshot) {
-                            if (snapshot.hasError) {
-                              return TextButton(
-                                onPressed: _recarregar,
-                                child: Text(
-                                  snapshot.error is LoginException
-                                      ? (snapshot.error as LoginException)
-                                            .mensagem
-                                      : 'Não foi possível carregar os animais.',
-                                ),
-                              );
-                            }
-                            if (!snapshot.hasData) {
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
-                            }
-                            if (snapshot.data!.isEmpty) {
-                              return const Text('Nenhum Animal Cadastrado');
-                            }
-                            return GridView.count(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              padding: EdgeInsets.zero,
-                              crossAxisCount: columns,
-                              crossAxisSpacing: 8,
-                              mainAxisSpacing: 8,
-                              mainAxisExtent:
-                                  ((constraints.maxWidth -
-                                                  (columns - 1) * spacing) /
-                                              columns -
-                                          4) *
-                                      116 /
-                                      167 +
-                                  74,
-                              children: snapshot.data!
-                                  .take(4)
-                                  .map(
-                                    (a) => InkWell(
-                                      onTap: () async {
-                                        await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => FichaAnimalScreen(
-                                              animalId: a.id,
-                                            ),
-                                          ),
-                                        );
-                                        if (mounted) _recarregar();
-                                      },
-                                      child: _PetCard(
-                                        name: a.nome,
-                                        age: a.idade == null
-                                            ? 'Idade não informada'
-                                            : '${a.idade} ano(s)',
-                                        gender: a.sexo,
-                                        match:
-                                            (a.compatibilidade?['total']
-                                                    as num?)
-                                                ?.toInt(),
-                                        image: a.imageUrl ?? '',
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-
-                  SizedBox(height: 10),
-                  SizedBox(
-                    height: 42,
-                    child: OutlinedButton(
-                      onPressed: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const AnimaisCadastradosScreen(), //HOME
-                          ),
-                        );
-                        if (mounted) _recarregar();
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.laranja,
-                        backgroundColor: Colors.white,
-                        elevation: 0,
-                        side: const BorderSide(
-                          color: AppColors.laranja,
-                          width: 2,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('Ver Todos', style: TextStyle(fontSize: 24)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              );
-              if (desktop) {
-                return Row(
+            //EXIBIR APENAS SE FOR CONTA DE LAR DE ADOÇÂO
+            if (cliente.larDeAdocao)
+              Container(
+                padding: const EdgeInsets.all(17),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF2EC),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(width: 320, child: informacoes),
-                    const SizedBox(width: 32),
-                    Expanded(child: animais),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.pets_outlined,
+                          color: AppColors.laranja,
+                          size: 18,
+                        ),
+                        Text(
+                          ' Lar de Adoção',
+                          style: TextStyle(
+                            color: AppColors.laranja,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: 8),
+
+                    Text(
+                      '${cliente.endereco ?? ''}\nTel: ${cliente.telefone}',
+                      style: TextStyle(color: Colors.black, fontSize: 14),
+                    ),
                   ],
-                );
-              }
-              return Column(children: [informacoes, animais]);
-            },
-          ),
+                ),
+              ),
+
+            SizedBox(height: 10),
+
+            SizedBox(
+              height: 62,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const EditarPerfilScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.laranja,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.edit_note_rounded, size: 24),
+                    SizedBox(width: 10),
+                    Text('Editar Perfil', style: TextStyle(fontSize: 24)),
+                  ],
+                ),
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+            //EXIBIR EM TODOS
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text("Animais Cadastrados:", style: TextStyle(fontSize: 24)),
+              ],
+            ),
+
+            SizedBox(height: 10),
+
+            //CARDS
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 0),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  const minCardWidth = 160.0;
+                  const spacing = 8.0;
+
+                  final columns =
+                      ((constraints.maxWidth + spacing) /
+                              (minCardWidth + spacing))
+                          .floor()
+                          .clamp(1, 100);
+
+                  return FutureBuilder<List<Animal>>(
+                    future: _consulta,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return TextButton(
+                          onPressed: _recarregar,
+                          child: Text(
+                            snapshot.error is LoginException
+                                ? (snapshot.error as LoginException).mensagem
+                                : 'Não foi possível carregar os animais.',
+                          ),
+                        );
+                      }
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.data!.isEmpty) {
+                        return const Text('Nenhum Animal Cadastrado');
+                      }
+                      return GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: EdgeInsets.zero,
+                        crossAxisCount: columns,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                        childAspectRatio: 167 / 162,
+                        children: snapshot.data!
+                            .take(4)
+                            .map(
+                              (a) => InkWell(
+                                onTap: () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          FichaAnimalScreen(animalId: a.id),
+                                    ),
+                                  );
+                                  if (mounted) _recarregar();
+                                },
+                                child: _PetCard(
+                                  name: a.nome,
+                                  age: a.idade == null
+                                      ? 'Idade não informada'
+                                      : '${a.idade} ano(s)',
+                                  gender: a.sexo,
+                                  match: (a.compatibilidade?['total'] as num?)
+                                      ?.toInt(),
+                                  image: a.imageUrl ?? '',
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+
+            SizedBox(height: 10),
+            SizedBox(
+              height: 42,
+              child: OutlinedButton(
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          const AnimaisCadastradosScreen(), //HOME
+                    ),
+                  );
+                  if (mounted) _recarregar();
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.laranja,
+                  backgroundColor: Colors.white,
+                  elevation: 0,
+                  side: const BorderSide(color: AppColors.laranja, width: 2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [Text('Ver Todos', style: TextStyle(fontSize: 24))],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

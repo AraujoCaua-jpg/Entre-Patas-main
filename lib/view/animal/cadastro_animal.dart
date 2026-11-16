@@ -1,5 +1,3 @@
-import '../core/responsive_content.dart';
-
 import 'dart:typed_data';
 
 import 'package:material_ui/material_ui.dart';
@@ -198,474 +196,465 @@ class _CadastroAnimalScreenState extends State<CadastroAnimalScreen> {
           bottom: BorderSide(color: Color(0xFFD96C3F), width: 2),
         ),
       ),
-      body: ResponsiveContent(
-        child: _carregando
-            ? const Center(child: CircularProgressIndicator())
-            : _erro != null
-            ? Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(_erro!),
-                    TextButton(
-                      onPressed: _carregar,
-                      child: const Text('Tentar novamente'),
+      body: _carregando
+          ? const Center(child: CircularProgressIndicator())
+          : _erro != null
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(_erro!),
+                  TextButton(
+                    onPressed: _carregar,
+                    child: const Text('Tentar novamente'),
+                  ),
+                ],
+              ),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: nomeController,
+                    keyboardType: TextInputType.name,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: InputDecoration(
+                      hintText: 'Nome',
+                      prefixIcon: const Icon(
+                        Icons.pets,
+                        color: Color(0xFF888888),
+                      ),
+                      filled: true,
+                      fillColor: AppColors.cinza,
+                      hintStyle: const TextStyle(color: Color(0xFF888888)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
-                  ],
-                ),
-              )
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: nomeController,
-                      keyboardType: TextInputType.name,
-                      textCapitalization: TextCapitalization.words,
+                  ),
+
+                  SizedBox(height: 20),
+
+                  TextField(
+                    controller: idadeController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: 'Idade (anos)',
+                      prefixIcon: const Icon(
+                        Icons.timer_outlined,
+                        color: Color(0xFF888888),
+                      ),
+                      filled: true,
+                      fillColor: AppColors.cinza,
+                      hintStyle: const TextStyle(color: Color(0xFF888888)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 20),
+
+                  Row(
+                    children: [
+                      const Text('Sexo:', style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
+
+                  RadioGroup<String>(
+                    groupValue: sexo,
+                    onChanged: (value) => setState(() => sexo = value),
+                    child: Row(
+                      children: [
+                        Radio<String>(
+                          value: 'Macho',
+                          activeColor: AppColors.laranja,
+                        ),
+                        const Text('Macho', style: TextStyle(fontSize: 18)),
+
+                        const SizedBox(width: 8),
+
+                        Radio<String>(
+                          value: 'Fêmea',
+                          activeColor: AppColors.laranja,
+                        ),
+                        const Text('Fêmea', style: TextStyle(fontSize: 18)),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 20),
+
+                  Row(
+                    children: [
+                      const Text(
+                        'Espécie de animal:',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 8),
+
+                  if (widget.animalId != null)
+                    TextFormField(
+                      initialValue: tipo,
+                      readOnly: true,
                       decoration: InputDecoration(
-                        hintText: 'Nome',
                         prefixIcon: const Icon(
                           Icons.pets,
-                          color: Color(0xFF888888),
+                          color: AppColors.laranja,
+                        ),
+                        suffixIcon: const Icon(
+                          Icons.lock_outline,
+                          color: AppColors.cinzaEscuro,
                         ),
                         filled: true,
-                        fillColor: AppColors.cinza,
-                        hintStyle: const TextStyle(color: Color(0xFF888888)),
+                        fillColor: AppColors.rosa,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide.none,
                         ),
                       ),
-                    ),
-
-                    SizedBox(height: 20),
-
-                    TextField(
-                      controller: idadeController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        hintText: 'Idade (anos)',
-                        prefixIcon: const Icon(
-                          Icons.timer_outlined,
-                          color: Color(0xFF888888),
-                        ),
-                        filled: true,
-                        fillColor: AppColors.cinza,
-                        hintStyle: const TextStyle(color: Color(0xFF888888)),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: 20),
-
+                    )
+                  else
                     Row(
                       children: [
-                        const Text('Sexo:', style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
-
-                    RadioGroup<String>(
-                      groupValue: sexo,
-                      onChanged: (value) => setState(() => sexo = value),
-                      child: Row(
-                        children: [
-                          Radio<String>(
-                            value: 'Macho',
-                            activeColor: AppColors.laranja,
-                          ),
-                          const Text('Macho', style: TextStyle(fontSize: 18)),
-
-                          const SizedBox(width: 8),
-
-                          Radio<String>(
-                            value: 'Fêmea',
-                            activeColor: AppColors.laranja,
-                          ),
-                          const Text('Fêmea', style: TextStyle(fontSize: 18)),
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(height: 20),
-
-                    Row(
-                      children: [
-                        const Text(
-                          'Espécie de animal:',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                      ],
-                    ),
-
-                    SizedBox(height: 8),
-
-                    if (widget.animalId != null)
-                      TextFormField(
-                        initialValue: tipo,
-                        readOnly: true,
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(
-                            Icons.pets,
-                            color: AppColors.laranja,
-                          ),
-                          suffixIcon: const Icon(
-                            Icons.lock_outline,
-                            color: AppColors.cinzaEscuro,
-                          ),
-                          filled: true,
-                          fillColor: AppColors.rosa,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                      )
-                    else
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () => mudarTipo("Cachorro"),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: tipo == "Cachorro"
-                                    ? AppColors.laranja
-                                    : AppColors.rosa,
-                                foregroundColor: tipo == "Cachorro"
-                                    ? Colors.white
-                                    : AppColors.laranja,
-                                elevation: 0,
-                                minimumSize: const Size(double.infinity, 96),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: const Column(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.pets),
-                                  SizedBox(width: 10),
-                                  Text(
-                                    'Cachorro',
-                                    style: TextStyle(fontSize: 24),
-                                  ),
-                                ],
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => mudarTipo("Cachorro"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: tipo == "Cachorro"
+                                  ? AppColors.laranja
+                                  : AppColors.rosa,
+                              foregroundColor: tipo == "Cachorro"
+                                  ? Colors.white
+                                  : AppColors.laranja,
+                              elevation: 0,
+                              fixedSize: const Size(double.infinity, 80),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                          ),
-
-                          SizedBox(width: 8),
-
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () => mudarTipo("Gato"),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: tipo == "Gato"
-                                    ? AppColors.verde
-                                    : AppColors.verdeClaro,
-                                foregroundColor: tipo == "Gato"
-                                    ? Colors.white
-                                    : AppColors.verde,
-                                elevation: 0,
-                                minimumSize: const Size(double.infinity, 96),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.pets),
+                                SizedBox(width: 10),
+                                Text(
+                                  'Cachorro',
+                                  style: TextStyle(fontSize: 24),
                                 ),
-                              ),
-                              child: const Column(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.pets),
-                                  SizedBox(width: 10),
-                                  Text('Gato', style: TextStyle(fontSize: 24)),
-                                ],
-                              ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-
-                    SizedBox(height: 20),
-
-                    Row(
-                      children: [
-                        const Text('Descrição', style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
-
-                    SizedBox(height: 8),
-
-                    TextField(
-                      controller: descricaoController,
-                      minLines: 4,
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: AppColors.cinza,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
                         ),
-                        contentPadding: const EdgeInsets.all(16),
+
+                        SizedBox(width: 8),
+
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => mudarTipo("Gato"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: tipo == "Gato"
+                                  ? AppColors.verde
+                                  : AppColors.verdeClaro,
+                              foregroundColor: tipo == "Gato"
+                                  ? Colors.white
+                                  : AppColors.verde,
+                              elevation: 0,
+                              fixedSize: const Size(double.infinity, 80),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.pets),
+                                SizedBox(width: 10),
+                                Text('Gato', style: TextStyle(fontSize: 24)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                  SizedBox(height: 20),
+
+                  Row(
+                    children: [
+                      const Text('Descrição', style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
+
+                  SizedBox(height: 8),
+
+                  TextField(
+                    controller: descricaoController,
+                    minLines: 4,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: AppColors.cinza,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
                       ),
+                      contentPadding: const EdgeInsets.all(16),
                     ),
+                  ),
 
-                    SizedBox(height: 20),
+                  SizedBox(height: 20),
 
-                    Row(
-                      children: [
-                        const Text('Energia', style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
+                  Row(
+                    children: [
+                      const Text('Energia', style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
 
-                    SizedBox(height: 8),
+                  SizedBox(height: 8),
 
-                    Slider(
-                      value: energia ?? 0.0,
-                      min: 0.0,
-                      max: 2.0,
-                      divisions: 2,
-                      activeColor: AppColors.laranja, // Parte preenchida
-                      inactiveColor: Colors.grey, // Parte não preenchida
-                      thumbColor: Colors.white,
-                      onChanged: (double valor) {
-                        setState(() {
-                          energia = valor;
-                        });
-                      },
-                    ),
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [Text('Baixo'), Text('Médio'), Text('Alto')],
-                    ),
+                  Slider(
+                    value: energia ?? 0.0,
+                    min: 0.0,
+                    max: 2.0,
+                    divisions: 2,
+                    activeColor: AppColors.laranja, // Parte preenchida
+                    inactiveColor: Colors.grey, // Parte não preenchida
+                    thumbColor: Colors.white,
+                    onChanged: (double valor) {
+                      setState(() {
+                        energia = valor;
+                      });
+                    },
+                  ),
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [Text('Baixo'), Text('Médio'), Text('Alto')],
+                  ),
 
-                    SizedBox(height: 20),
+                  SizedBox(height: 20),
 
-                    Row(
-                      children: [
-                        const Text('Porte', style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
+                  Row(
+                    children: [
+                      const Text('Porte', style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
 
-                    SizedBox(height: 8),
+                  SizedBox(height: 8),
 
-                    Slider(
-                      value: porte ?? 0.0,
-                      min: 0.0,
-                      max: 2.0,
-                      divisions: 2,
-                      activeColor: AppColors.verde, // Parte preenchida
-                      inactiveColor: Colors.grey, // Parte não preenchida
-                      thumbColor: Colors.white,
-                      onChanged: (double valor) {
-                        setState(() {
-                          porte = valor;
-                        });
-                      },
-                    ),
+                  Slider(
+                    value: porte ?? 0.0,
+                    min: 0.0,
+                    max: 2.0,
+                    divisions: 2,
+                    activeColor: AppColors.verde, // Parte preenchida
+                    inactiveColor: Colors.grey, // Parte não preenchida
+                    thumbColor: Colors.white,
+                    onChanged: (double valor) {
+                      setState(() {
+                        porte = valor;
+                      });
+                    },
+                  ),
 
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Pequeno'),
-                        Text('Médio'),
-                        Text('Grande'),
-                      ],
-                    ),
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [Text('Pequeno'), Text('Médio'), Text('Grande')],
+                  ),
 
-                    SizedBox(height: 20),
+                  SizedBox(height: 20),
 
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
+                  Row(
+                    children: [
+                      const Text(
                         'O animal precisa de companhia?',
                         style: TextStyle(fontSize: 18),
                       ),
+                    ],
+                  ),
+
+                  RadioGroup<String>(
+                    groupValue: carencia,
+                    onChanged: (value) => setState(() => carencia = value),
+                    child: Row(
+                      children: [
+                        Radio<String>(
+                          value: 'Sim',
+                          activeColor: AppColors.verde,
+                        ),
+                        const Text('Sim', style: TextStyle(fontSize: 18)),
+
+                        const SizedBox(width: 8),
+
+                        Radio<String>(
+                          value: 'Não',
+                          activeColor: AppColors.laranja,
+                        ),
+                        const Text('Não', style: TextStyle(fontSize: 18)),
+                      ],
                     ),
+                  ),
 
-                    RadioGroup<String>(
-                      groupValue: carencia,
-                      onChanged: (value) => setState(() => carencia = value),
-                      child: Row(
-                        children: [
-                          Radio<String>(
-                            value: 'Sim',
-                            activeColor: AppColors.verde,
-                          ),
-                          const Text('Sim', style: TextStyle(fontSize: 18)),
+                  SizedBox(height: 20),
 
-                          const SizedBox(width: 8),
-
-                          Radio<String>(
-                            value: 'Não',
-                            activeColor: AppColors.laranja,
-                          ),
-                          const Text('Não', style: TextStyle(fontSize: 18)),
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(height: 20),
-
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: const Text(
+                  Row(
+                    children: [
+                      const Text(
                         'Convive bem com outros animais?',
                         style: TextStyle(fontSize: 18),
                       ),
+                    ],
+                  ),
+
+                  RadioGroup<String>(
+                    groupValue: convivencia,
+                    onChanged: (value) => setState(() => convivencia = value),
+                    child: Row(
+                      children: [
+                        Radio<String>(
+                          value: 'Sim',
+                          activeColor: AppColors.verde,
+                        ),
+                        const Text('Sim', style: TextStyle(fontSize: 18)),
+
+                        const SizedBox(width: 8),
+
+                        Radio<String>(
+                          value: 'Não',
+                          activeColor: AppColors.laranja,
+                        ),
+                        const Text('Não', style: TextStyle(fontSize: 18)),
+                      ],
                     ),
+                  ),
 
-                    RadioGroup<String>(
-                      groupValue: convivencia,
-                      onChanged: (value) => setState(() => convivencia = value),
-                      child: Row(
-                        children: [
-                          Radio<String>(
-                            value: 'Sim',
-                            activeColor: AppColors.verde,
-                          ),
-                          const Text('Sim', style: TextStyle(fontSize: 18)),
+                  SizedBox(height: 20),
 
-                          const SizedBox(width: 8),
-
-                          Radio<String>(
-                            value: 'Não',
-                            activeColor: AppColors.laranja,
-                          ),
-                          const Text('Não', style: TextStyle(fontSize: 18)),
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(height: 20),
-
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: const Text(
+                  Row(
+                    children: [
+                      const Text(
                         'O animal é castrado?',
                         style: TextStyle(fontSize: 18),
                       ),
+                    ],
+                  ),
+
+                  RadioGroup<String>(
+                    groupValue: castrado,
+                    onChanged: (value) => setState(() => castrado = value),
+                    child: Row(
+                      children: [
+                        Radio<String>(
+                          value: 'Sim',
+                          activeColor: AppColors.verde,
+                        ),
+                        const Text('Sim', style: TextStyle(fontSize: 18)),
+
+                        const SizedBox(width: 8),
+
+                        Radio<String>(
+                          value: 'Não',
+                          activeColor: AppColors.laranja,
+                        ),
+                        const Text('Não', style: TextStyle(fontSize: 18)),
+                      ],
                     ),
+                  ),
 
-                    RadioGroup<String>(
-                      groupValue: castrado,
-                      onChanged: (value) => setState(() => castrado = value),
-                      child: Row(
-                        children: [
-                          Radio<String>(
-                            value: 'Sim',
-                            activeColor: AppColors.verde,
-                          ),
-                          const Text('Sim', style: TextStyle(fontSize: 18)),
+                  SizedBox(height: 20),
 
-                          const SizedBox(width: 8),
-
-                          Radio<String>(
-                            value: 'Não',
-                            activeColor: AppColors.laranja,
-                          ),
-                          const Text('Não', style: TextStyle(fontSize: 18)),
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(height: 20),
-
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: const Text(
+                  Row(
+                    children: [
+                      const Text(
                         'Vacinação regular?',
                         style: TextStyle(fontSize: 18),
                       ),
+                    ],
+                  ),
+
+                  RadioGroup<String>(
+                    groupValue: vacinado,
+                    onChanged: (value) => setState(() => vacinado = value),
+                    child: Row(
+                      children: [
+                        Radio<String>(
+                          value: 'Sim',
+                          activeColor: AppColors.verde,
+                        ),
+                        const Text('Sim', style: TextStyle(fontSize: 18)),
+
+                        const SizedBox(width: 8),
+
+                        Radio<String>(
+                          value: 'Não',
+                          activeColor: AppColors.laranja,
+                        ),
+                        const Text('Não', style: TextStyle(fontSize: 18)),
+                      ],
                     ),
+                  ),
 
-                    RadioGroup<String>(
-                      groupValue: vacinado,
-                      onChanged: (value) => setState(() => vacinado = value),
+                  SizedBox(height: 20),
+
+                  Row(
+                    children: [
+                      const Text('Imagem:', style: TextStyle(fontSize: 18)),
+                    ],
+                  ),
+
+                  SizedBox(height: 20),
+
+                  FotoPerfilPicker(
+                    titulo: 'Foto do animal',
+                    url: imagemController.text,
+                    foto: _fotoSelecionada,
+                    enabled: !_salvando,
+                    onChanged: (url) => setState(() {
+                      imagemController.text = url ?? '';
+                    }),
+                    onFotoChanged: (foto) => setState(() {
+                      _fotoSelecionada = foto;
+                    }),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    height: 62,
+                    child: ElevatedButton(
+                      onPressed: _salvando ? null : cadastrarAnimal,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.laranja,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Radio<String>(
-                            value: 'Sim',
-                            activeColor: AppColors.verde,
+                          Text(
+                            _salvando
+                                ? 'Salvando...'
+                                : widget.animalId == null
+                                ? 'Publicar Animal'
+                                : 'Salvar Alterações',
+                            style: TextStyle(fontSize: 24),
                           ),
-                          const Text('Sim', style: TextStyle(fontSize: 18)),
-
-                          const SizedBox(width: 8),
-
-                          Radio<String>(
-                            value: 'Não',
-                            activeColor: AppColors.laranja,
-                          ),
-                          const Text('Não', style: TextStyle(fontSize: 18)),
+                          SizedBox(width: 10),
+                          Icon(Icons.pets),
                         ],
                       ),
                     ),
-
-                    SizedBox(height: 20),
-
-                    Row(
-                      children: [
-                        const Text('Imagem:', style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
-
-                    SizedBox(height: 20),
-
-                    FotoPerfilPicker(
-                      titulo: 'Foto do animal',
-                      url: imagemController.text,
-                      foto: _fotoSelecionada,
-                      enabled: !_salvando,
-                      onChanged: (url) => setState(() {
-                        imagemController.text = url ?? '';
-                      }),
-                      onFotoChanged: (foto) => setState(() {
-                        _fotoSelecionada = foto;
-                      }),
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      height: 62,
-                      child: ElevatedButton(
-                        onPressed: _salvando ? null : cadastrarAnimal,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.laranja,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Flexible(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  _salvando
-                                      ? 'Salvando...'
-                                      : widget.animalId == null
-                                      ? 'Publicar Animal'
-                                      : 'Salvar Alterações',
-                                  style: TextStyle(fontSize: 24),
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 10),
-                            Icon(Icons.pets),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-      ),
+            ),
     );
   }
 }

@@ -6,13 +6,16 @@ import '../controller/clientes_scope.dart';
 import '../controller/cliente_controller.dart';
 
 import '../controller/navegacao_controller.dart';
+import '../services/navegacao_persistida_service.dart';
 import './principal/home.dart';
 import './principal/pesquisa.dart';
 import './principal/perfil.dart';
 import './principal/notificacoes.dart';
 
 class NavegacaoScreen extends StatefulWidget {
-  const NavegacaoScreen({super.key});
+  const NavegacaoScreen({super.key, this.paginaInicial = 0})
+    : assert(paginaInicial >= 0 && paginaInicial <= 2);
+  final int paginaInicial;
 
   @override
   State<NavegacaoScreen> createState() => _NavegacaoScreenState();
@@ -60,10 +63,13 @@ class _NavegacaoScreenState extends State<NavegacaoScreen> {
   @override
   void initState() {
     super.initState();
+    controller.paginaAtual = widget.paginaInicial;
+    NavegacaoPersistidaService.abaAtual.value = widget.paginaInicial;
     controller.addListener(atualizarTela);
   }
 
   void atualizarTela() {
+    NavegacaoPersistidaService.abaAtual.value = controller.paginaAtual;
     setState(() {});
   }
 
@@ -77,7 +83,6 @@ class _NavegacaoScreenState extends State<NavegacaoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final desktop = MediaQuery.sizeOf(context).width >= 1000;
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 88,
@@ -115,91 +120,55 @@ class _NavegacaoScreenState extends State<NavegacaoScreen> {
         ),
       ),
 
-      body: Row(
-        children: [
-          SizedBox(
-            width: desktop ? 220 : 0,
-            child: desktop
-                ? NavigationRail(
-                    extended: true,
-                    backgroundColor: const Color(0xFFFFF3ED),
-                    selectedIndex: controller.paginaAtual,
-                    onDestinationSelected: controller.mudarPagina,
-                    destinations: const [
-                      NavigationRailDestination(
-                        icon: Icon(Icons.home_outlined),
-                        label: Text('Início'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.search),
-                        label: Text('Pesquisa'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.person_outline),
-                        label: Text('Perfil'),
-                      ),
-                    ],
-                  )
-                : null,
-          ),
-          Expanded(
-            child: IndexedStack(
-              index: controller.paginaAtual,
-              children: paginas,
+      body: IndexedStack(index: controller.paginaAtual, children: paginas),
+
+      bottomNavigationBar: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          backgroundColor: const Color(0xFFFFF3ED),
+          indicatorColor: Colors.transparent,
+          iconTheme: WidgetStateProperty.resolveWith(
+            (states) => IconThemeData(
+              size: 30,
+              color: states.contains(WidgetState.selected)
+                  ? const Color(0xFFFF642F)
+                  : const Color(0xFF909090),
             ),
           ),
-        ],
+          labelTextStyle: WidgetStateProperty.resolveWith(
+            (states) => TextStyle(
+              fontSize: 11,
+              color: states.contains(WidgetState.selected)
+                  ? const Color(0xFFFF642F)
+                  : const Color(0xFF909090),
+            ),
+          ),
+        ),
+        child: NavigationBar(
+          selectedIndex: controller.paginaAtual,
+
+          onDestinationSelected: (indice) {
+            controller.mudarPagina(indice);
+          },
+
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home_outlined),
+              label: 'Início',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.search_outlined),
+              selectedIcon: Icon(Icons.search),
+              label: 'Pesquisa',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person_outline),
+              label: 'Perfil',
+            ),
+          ],
+        ),
       ),
-
-      bottomNavigationBar: desktop
-          ? null
-          : NavigationBarTheme(
-              data: NavigationBarThemeData(
-                backgroundColor: const Color(0xFFFFF3ED),
-                indicatorColor: Colors.transparent,
-                iconTheme: WidgetStateProperty.resolveWith(
-                  (states) => IconThemeData(
-                    size: 30,
-                    color: states.contains(WidgetState.selected)
-                        ? const Color(0xFFFF642F)
-                        : const Color(0xFF909090),
-                  ),
-                ),
-                labelTextStyle: WidgetStateProperty.resolveWith(
-                  (states) => TextStyle(
-                    fontSize: 11,
-                    color: states.contains(WidgetState.selected)
-                        ? const Color(0xFFFF642F)
-                        : const Color(0xFF909090),
-                  ),
-                ),
-              ),
-              child: NavigationBar(
-                selectedIndex: controller.paginaAtual,
-
-                onDestinationSelected: (indice) {
-                  controller.mudarPagina(indice);
-                },
-
-                destinations: const [
-                  NavigationDestination(
-                    icon: Icon(Icons.home_outlined),
-                    selectedIcon: Icon(Icons.home_outlined),
-                    label: 'Início',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.search_outlined),
-                    selectedIcon: Icon(Icons.search),
-                    label: 'Pesquisa',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.person_outline),
-                    selectedIcon: Icon(Icons.person_outline),
-                    label: 'Perfil',
-                  ),
-                ],
-              ),
-            ),
     );
   }
 }
