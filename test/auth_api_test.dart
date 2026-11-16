@@ -45,13 +45,13 @@ void main() {
 
   test('endpoint PHP legado recusa credenciais inválidas', () async {
     final api = AuthApi(
-        client: MockClient((_) async {
-          return http.Response(
-            '{"erro":"Credenciais inválidas"}',
-            401,
-            headers: {'content-type': 'application/json; charset=utf-8'},
-          );
-        }),
+      client: MockClient((_) async {
+        return http.Response(
+          '{"erro":"Credenciais inválidas"}',
+          401,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }),
     );
     addTearDown(api.close);
     await expectLater(
@@ -60,22 +60,19 @@ void main() {
     );
   });
 
-  test(
-    'endpoint PHP legado aguarda resposta ao encerrar sessão',
-    () async {
-      var autorizado = false;
-      final api = AuthApi(
-        client: MockClient((request) async {
-          expect(request.url.path, endsWith('logout.php'));
-          autorizado = request.headers['Authorization'] == 'Bearer token';
-          return http.Response('{"mensagem":"Sessao encerrada"}', 200);
-        }),
-      );
-      addTearDown(api.close);
-      await api.sair('token');
-      expect(autorizado, isTrue);
-    },
-  );
+  test('endpoint PHP legado aguarda resposta ao encerrar sessão', () async {
+    var autorizado = false;
+    final api = AuthApi(
+      client: MockClient((request) async {
+        expect(request.url.path, endsWith('logout.php'));
+        autorizado = request.headers['Authorization'] == 'Bearer token';
+        return http.Response('{"mensagem":"Sessao encerrada"}', 200);
+      }),
+    );
+    addTearDown(api.close);
+    await api.sair('token');
+    expect(autorizado, isTrue);
+  });
 
   test('rejeita resposta incompleta e falha de conexão', () async {
     for (final body in ['<html>Erro PHP</html>', '{"cliente":{}}']) {

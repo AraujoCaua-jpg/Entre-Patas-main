@@ -6,7 +6,7 @@ import 'package:entre_patas/controller/clientes_scope.dart';
 import 'package:entre_patas/services/login_exception.dart';
 import 'package:entre_patas/services/supabase_service.dart';
 import 'package:entre_patas/view/core/usuario_resumo.dart';
-import 'package:entre_patas/view/usuario/fichaPerfil.dart';
+import 'package:entre_patas/view/usuario/ficha_perfil.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -415,30 +415,33 @@ void main() {
       expect((await operacao)['id'], 9);
     });
 
-    for (final mudanca in ['logout', 'troca de conta', 'novo login da mesma conta']) {
-      test(
-        '$nome descarta resposta após $mudanca',
-        () async {
-          await entrar();
-          rpcIniciada = Completer<void>();
-          liberarRpc = Completer<void>();
-          final operacao = consultar(resumo);
-          final resultado = expectLater(
-            operacao,
-            throwsA(mensagem('Entre novamente para continuar.')),
+    for (final mudanca in [
+      'logout',
+      'troca de conta',
+      'novo login da mesma conta',
+    ]) {
+      test('$nome descarta resposta após $mudanca', () async {
+        await entrar();
+        rpcIniciada = Completer<void>();
+        liberarRpc = Completer<void>();
+        final operacao = consultar(resumo);
+        final resultado = expectLater(
+          operacao,
+          throwsA(mensagem('Entre novamente para continuar.')),
+        );
+        await rpcIniciada!.future;
+        if (mudanca == 'logout') {
+          await Supabase.instance.client.auth.signOut(
+            scope: SignOutScope.local,
           );
-          await rpcIniciada!.future;
-          if (mudanca == 'logout') {
-            await Supabase.instance.client.auth.signOut(
-              scope: SignOutScope.local,
-            );
-          } else {
-            await entrar(mudanca == 'troca de conta' ? 'b@example.com' : 'a@example.com');
-          }
-          liberarRpc!.complete();
-          await resultado;
-        },
-      );
+        } else {
+          await entrar(
+            mudanca == 'troca de conta' ? 'b@example.com' : 'a@example.com',
+          );
+        }
+        liberarRpc!.complete();
+        await resultado;
+      });
     }
   }
 

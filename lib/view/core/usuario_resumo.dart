@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../controller/clientes_scope.dart';
-import '../usuario/fichaPerfil.dart';
+import '../usuario/ficha_perfil.dart';
 import 'foto_perfil_avatar.dart';
 
 class UsuarioResumo extends StatefulWidget {

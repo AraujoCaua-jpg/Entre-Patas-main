@@ -35,8 +35,9 @@ class DadosPerfil extends ClienteController {
   }
 
   @override
-  Future<Map<String, dynamic>?> buscarMeuQuestionarioSupabase() async =>
-      {'id_cliente': 1};
+  Future<Map<String, dynamic>?> buscarMeuQuestionarioSupabase() async => {
+    'id_cliente': 1,
+  };
 
   @override
   Future<List<Animal>> listarAnimaisSupabase({
@@ -128,7 +129,10 @@ void main() {
       await tester.tap(find.text('Tentar novamente'));
       await tester.pumpAndSettle();
       expect(dados.consultas, 2);
-      expect(find.text('Nenhum amiguinho disponível no momento.'), findsOneWidget);
+      expect(
+        find.text('Nenhum amiguinho disponível no momento.'),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       dados.dispose();

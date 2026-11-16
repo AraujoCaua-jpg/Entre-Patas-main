@@ -7,21 +7,42 @@ import 'package:entre_patas/controller/clientes_scope.dart';
 import 'package:entre_patas/model/animais.dart';
 import 'package:entre_patas/model/cliente.dart';
 import 'package:entre_patas/services/compatibilidade_service.dart';
-import 'package:entre_patas/view/animal/fichaAnimal.dart';
+import 'package:entre_patas/view/animal/ficha_animal.dart';
 import 'package:entre_patas/view/animal/compatibilidade_animal.dart';
 
 Map<String, dynamic> respostas() => {
-  'id_cliente': 2, 'dedicacao': 4, 'sozinho': 5, 'imovel': 1,
-  'apoio': 1, 'compromisso': 1, 'moradores': 1, 'rotina': 1,
-  'financeiro': 3, 'idadeMin': 0, 'idadeMax': 10, 'porte': 0,
-  'energia': 1, 'ambiente': 'Apartamento', 'animais': 'Não',
-  'tipo': 'Gato', 'sexo': 'Fêmea',
+  'id_cliente': 2,
+  'dedicacao': 4,
+  'sozinho': 5,
+  'imovel': 1,
+  'apoio': 1,
+  'compromisso': 1,
+  'moradores': 1,
+  'rotina': 1,
+  'financeiro': 3,
+  'idadeMin': 0,
+  'idadeMax': 10,
+  'porte': 0,
+  'energia': 1,
+  'ambiente': 'Apartamento',
+  'animais': 'Não',
+  'tipo': 'Gato',
+  'sexo': 'Fêmea',
 };
 
 Animal animal() => Animal(
-  id: 8, idCliente: 1, nome: 'Lua', idade: 2, tipo: 'Gato',
-  energia: 'Médio', porte: 'Pequeno', convivencia: 'Sim', carencia: 'Sim',
-  descricao: 'Carinhosa', sexo: 'Fêmea', status: 'Disponível',
+  id: 8,
+  idCliente: 1,
+  nome: 'Lua',
+  idade: 2,
+  tipo: 'Gato',
+  energia: 'Médio',
+  porte: 'Pequeno',
+  convivencia: 'Sim',
+  carencia: 'Sim',
+  descricao: 'Carinhosa',
+  sexo: 'Fêmea',
+  status: 'Disponível',
 );
 
 class DadosFichaSupabase extends ClienteController {
@@ -32,8 +53,13 @@ class DadosFichaSupabase extends ClienteController {
 
   @override
   Cliente get clienteLogado => Cliente(
-    id: proprio ? 1 : 2, nome: 'Ana', sobrenome: '', email: '',
-    telefone: '', cidadeDeResidencia: '', usuario: 'ana',
+    id: proprio ? 1 : 2,
+    nome: 'Ana',
+    sobrenome: '',
+    email: '',
+    telefone: '',
+    cidadeDeResidencia: '',
+    usuario: 'ana',
   );
 
   @override
@@ -62,9 +88,11 @@ void main() {
           (call) async => call.method == 'getAll' ? <String, Object>{} : true,
         );
     await Supabase.initialize(
-      url: 'https://example.supabase.co', publishableKey: 'test-key',
+      url: 'https://example.supabase.co',
+      publishableKey: 'test-key',
       authOptions: const FlutterAuthClientOptions(
-        localStorage: EmptyLocalStorage(), autoRefreshToken: false,
+        localStorage: EmptyLocalStorage(),
+        autoRefreshToken: false,
       ),
     );
   });
@@ -72,13 +100,19 @@ void main() {
 
   test('Categorias e pesos preservam resultados conhecidos', () {
     expect(CompatibilidadeService.calcular(animal(), respostas()), {
-      'rotina': 100, 'ambiente': 100, 'preferencias': 100,
-      'total': 100, 'versao': 1,
+      'rotina': 100,
+      'ambiente': 100,
+      'preferencias': 100,
+      'total': 100,
+      'versao': 1,
     });
     final q = respostas()..['sozinho'] = 1;
     expect(CompatibilidadeService.calcular(animal(), q), {
-      'rotina': 67, 'ambiente': 100, 'preferencias': 100,
-      'total': 83, 'versao': 1,
+      'rotina': 67,
+      'ambiente': 100,
+      'preferencias': 100,
+      'total': 83,
+      'versao': 1,
     });
     expect(CompatibilidadeService.calcular(animal(), null), isNull);
     expect(CompatibilidadeService.calcular(animal(), {}), isNull);
@@ -90,17 +124,21 @@ void main() {
         ..proprio = caso == 'proprio'
         ..falhar = caso == 'erro';
       if (caso == 'sem questionario') dados.questionario = null;
-      await tester.pumpWidget(ClientesScope(
-        controller: dados, child: const MaterialApp(
-          home: FichaAnimalScreen(animalId: 8),
+      await tester.pumpWidget(
+        ClientesScope(
+          controller: dados,
+          child: const MaterialApp(home: FichaAnimalScreen(animalId: 8)),
         ),
-      ));
+      );
       await tester.pumpAndSettle();
       if (caso == 'proprio') {
         expect(find.byType(CompatibilidadeAnimal), findsNothing);
         expect(dados.consultas, 0);
       } else if (caso == 'erro') {
-        expect(find.text('Não foi possível carregar o animal.'), findsOneWidget);
+        expect(
+          find.text('Não foi possível carregar o animal.'),
+          findsOneWidget,
+        );
         expect(find.byType(CompatibilidadeAnimal), findsNothing);
         dados.falhar = false;
         await tester.tap(find.text('Não foi possível carregar o animal.'));
@@ -110,14 +148,22 @@ void main() {
         final componente = tester.widget<CompatibilidadeAnimal>(
           find.byType(CompatibilidadeAnimal),
         );
-        expect(componente.dados,
-          CompatibilidadeService.calcular(animal(), dados.questionario));
+        expect(
+          componente.dados,
+          CompatibilidadeService.calcular(animal(), dados.questionario),
+        );
         if (caso == 'normal') {
           dados.questionario = respostas()..['sozinho'] = 1;
           dados.atualizar();
           await tester.pumpAndSettle();
-          expect(tester.widget<CompatibilidadeAnimal>(
-            find.byType(CompatibilidadeAnimal)).dados?['total'], 83);
+          expect(
+            tester
+                .widget<CompatibilidadeAnimal>(
+                  find.byType(CompatibilidadeAnimal),
+                )
+                .dados?['total'],
+            83,
+          );
           dados.falhar = true;
           dados.atualizar();
           await tester.pumpAndSettle();

@@ -6,8 +6,8 @@ import '../../model/cliente.dart';
 import '../../model/animais.dart';
 import '../../controller/clientes_scope.dart';
 import '../../services/login_exception.dart';
-import '../animal/fichaAnimal.dart';
-import '../usuario/fichaPerfil.dart';
+import '../animal/ficha_animal.dart';
+import '../usuario/ficha_perfil.dart';
 import '../core/app_colors.dart';
 import '../core/foto_perfil_avatar.dart';
 
@@ -28,6 +28,8 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
   Timer? _debounce;
   int _versao = 0;
   bool _carregando = false, _iniciada = false, _usuariosAtivos = false;
+  bool _carregandoMais = false, _mais = false;
+  int _pagina = 1;
   String _categoria = 'Todos';
   String? _sexo, _porte, _erro;
 
@@ -40,7 +42,8 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
     }
   }
 
-  Future<void> _buscar() async {
+  Future<void> _buscar({bool mais = false}) async {
+    if (mais && (_carregando || _carregandoMais || !_mais)) return;
     _debounce?.cancel();
 
     final versao = ++_versao;
@@ -51,9 +54,12 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
     final categoria = _categoria;
     final sexo = _sexo;
     final porte = _porte;
+    final pagina = mais ? _pagina + 1 : 1;
 
     setState(() {
-      _carregando = true;
+      _carregando = !mais;
+      _carregandoMais = mais;
+      if (!mais) _mais = false;
       _erro = null;
     });
 
@@ -77,7 +83,6 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
       String? tipo;
       if (categoria == 'Cachorros') tipo = 'Cachorro';
       if (categoria == 'Gatos') tipo = 'Gato';
-      if (categoria == 'Outros') tipo = 'Outros';
       if (categoria == 'Perto de mim') {
         final perfil = controller.clienteLogado;
         if (perfil == null ||
@@ -94,12 +99,14 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
       final filtrados = await controller.listarAnimaisSupabase(
         tipo: tipo,
         filtros: filtros,
-        pagina: 1,
+        pagina: pagina,
       );
 
       if (mounted && versao == _versao) {
         setState(() {
-          _pets = filtrados;
+          _pets = mais ? [..._pets, ...filtrados] : filtrados;
+          _pagina = pagina;
+          _mais = filtrados.length == 50;
           _usuarios = [];
         });
       }
@@ -107,17 +114,27 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
       debugPrint('Pesquisa Supabase: ${filtrados.length} animais');
     } catch (erro) {
       if (mounted && versao == _versao) {
+        final mensagem = erro is LoginException
+            ? erro.mensagem
+            : 'Não foi possível pesquisar no Supabase.';
+        if (mais) {
+          // Falhar na próxima página não deve apagar os resultados já lidos.
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(mensagem)));
+          return;
+        }
         setState(() {
           _pets = [];
 
-          _erro = erro is LoginException
-              ? erro.mensagem
-              : 'Não foi possível pesquisar no Supabase.';
+          _erro = mensagem;
         });
       }
     } finally {
       if (mounted && versao == _versao) {
-        setState(() => _carregando = false);
+        setState(() {
+          _carregando = false;
+          _carregandoMais = false;
+        });
       }
     }
   }
@@ -432,6 +449,7 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
                           button: true,
                           child: InkWell(
                             onTap: () {
+                              if (_categoria == item.$1) return;
                               setState(() => _categoria = item.$1);
                               _buscar();
                             },
@@ -564,6 +582,17 @@ class _PesquisaScreenState extends State<PesquisaScreen> {
                     pet: true,
                     page: FichaAnimalScreen(animalId: animal.id),
                   ),
+              if (!_usuariosAtivos && _mais && !_carregando && _erro == null)
+                Center(
+                  child: TextButton(
+                    onPressed: _carregandoMais
+                        ? null
+                        : () => _buscar(mais: true),
+                    child: Text(
+                      _carregandoMais ? 'Carregando...' : 'Carregar mais',
+                    ),
+                  ),
+                ),
             ],
           ),
         ),

@@ -3,7 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'controller/cliente_controller.dart';
 import 'controller/clientes_scope.dart';
 import 'view/core/app_colors.dart';
-import 'view/questionario/testeCompA.dart';
+import 'view/questionario/teste_comp_a.dart';
 
 class _PreviewController extends ClienteController {
   @override

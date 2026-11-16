@@ -3,12 +3,13 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../controller/clientes_scope.dart';
 import '../../services/login_exception.dart';
+import '../../services/validacao_perfil.dart';
 import '../core/scrollable_screen_body.dart';
 import '../core/app_colors.dart';
 import '../navagacao.dart';
-import '../questionario/testeComp.dart';
-import 'cadastro/cadastroUsuario.dart';
-import 'esqueciSenha.dart';
+import '../questionario/teste_comp.dart';
+import 'cadastro/cadastro_usuario.dart';
+import 'esqueci_senha.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -45,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       return;
     }
-    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
+    if (!emailValido(email)) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Digite um e-mail válido.')));
@@ -69,9 +70,9 @@ class _LoginScreenState extends State<LoginScreen> {
       if (perfil == null) {
         throw const LoginException('Perfil não encontrado ou inativo.');
       }
-      final questionario = perfil.questionarioPendente
-          ? await controller.carregarQuestionario()
-          : null;
+      // A existência das respostas salvas decide o acesso, inclusive para
+      // contas legadas cujo marcador de pendência tem default false.
+      final questionario = await controller.carregarQuestionario();
 
       if (!mounted) return;
 
@@ -80,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (_) => perfil.questionarioPendente && questionario == null
+          builder: (_) => questionario == null
               ? const TesteCompScreen()
               : const NavegacaoScreen(),
         ),
@@ -88,9 +89,8 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } on LoginException catch (erro) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(erro.mensagem)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(erro.mensagem)));
     } on AuthException catch (erro) {
       if (!mounted) return;
 

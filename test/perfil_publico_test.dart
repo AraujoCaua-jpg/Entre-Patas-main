@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:entre_patas/controller/cliente_controller.dart';
 import 'package:entre_patas/controller/clientes_scope.dart';
 import 'package:entre_patas/model/animais.dart';
-import 'package:entre_patas/view/usuario/fichaPerfil.dart';
-import 'package:entre_patas/view/animal/fichaAnimal.dart';
+import 'package:entre_patas/view/usuario/ficha_perfil.dart';
+import 'package:entre_patas/view/animal/ficha_animal.dart';
 
 class PerfilPublicoDados extends ClienteController {
   PerfilPublicoDados({this.lar = true, this.vazio = false});

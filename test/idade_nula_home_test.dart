@@ -3,7 +3,7 @@ import 'package:entre_patas/controller/clientes_scope.dart';
 import 'package:entre_patas/model/animais.dart';
 import 'package:entre_patas/services/compatibilidade_service.dart';
 import 'package:entre_patas/view/principal/home.dart';
-import 'package:entre_patas/view/animal/cadastroAnimal.dart';
+import 'package:entre_patas/view/animal/cadastro_animal.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';

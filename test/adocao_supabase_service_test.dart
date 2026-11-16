@@ -449,14 +449,17 @@ void main() {
     });
   }
 
-  test('Nova operação ignora histórico de renovação e de login anterior', () async {
-    await entrar();
-    await Supabase.instance.client.auth.refreshSession();
-    expect(await service.listarAdocoesSupabase(), hasLength(1));
-    await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
-    await entrar();
-    expect(await service.listarAdocoesSupabase(), hasLength(1));
-  });
+  test(
+    'Nova operação ignora histórico de renovação e de login anterior',
+    () async {
+      await entrar();
+      await Supabase.instance.client.auth.refreshSession();
+      expect(await service.listarAdocoesSupabase(), hasLength(1));
+      await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
+      await entrar();
+      expect(await service.listarAdocoesSupabase(), hasLength(1));
+    },
+  );
 
   test(
     'Falha de conexão recebe mensagem tratável, sem HTTP/PHP fallback',

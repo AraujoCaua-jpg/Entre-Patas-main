@@ -1,6 +1,6 @@
 import 'package:entre_patas/controller/cliente_controller.dart';
 import 'package:entre_patas/controller/clientes_scope.dart';
-import 'package:entre_patas/view/autenticacao/bemVindo.dart';
+import 'package:entre_patas/view/autenticacao/bem_vindo.dart';
 import 'package:entre_patas/view/autenticacao/login.dart';
 import 'package:entre_patas/view/navagacao.dart';
 import 'package:entre_patas/view/principal/home.dart';

@@ -1,14 +1,17 @@
 import 'package:material_ui/material_ui.dart';
+
+import 'support/radio_test_helpers.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:entre_patas/controller/cliente_controller.dart';
 import 'package:entre_patas/controller/clientes_scope.dart';
 import 'package:entre_patas/model/animais.dart';
 import 'package:entre_patas/model/cliente.dart';
-import 'package:entre_patas/view/animal/fichaAnimal.dart';
+import 'package:entre_patas/view/animal/ficha_animal.dart';
 import 'package:entre_patas/view/animal/compatibilidade_animal.dart';
 import 'package:entre_patas/view/core/usuario_resumo.dart';
-import 'package:entre_patas/view/animal/animaisCadastrados.dart';
-import 'package:entre_patas/view/animal/cadastroAnimal.dart';
+import 'package:entre_patas/view/animal/animais_cadastrados.dart';
+import 'package:entre_patas/view/animal/cadastro_animal.dart';
 
 class DadosAnimais extends ClienteController {
   Animal? salvo;
@@ -114,12 +117,7 @@ class DadosFicha extends DadosAnimais {
   @override
   Future<Map<String, dynamic>> buscarResumoResponsavelSupabase(
     int clienteId,
-  ) async => {
-    'id': clienteId,
-    'nome': 'Ana',
-    'usuario': 'ana',
-    'imagem': null,
-  };
+  ) async => {'id': clienteId, 'nome': 'Ana', 'usuario': 'ana', 'imagem': null};
 }
 
 void main() {
@@ -223,13 +221,19 @@ void main() {
         .widgetList<Radio<String>>(find.byType(Radio<String>))
         .toList()
         .sublist(6);
-    expect(saude.map((r) => r.groupValue).toList(), [
+    expect(saude.map((r) => valorGrupoRadio(tester, r)).toList(), [
       'Não',
       'Não',
       'Sim',
       'Sim',
     ]);
-    expect(saude.every((r) => r.onChanged != null), isTrue);
+    for (final indice in [6, 7, 8, 9]) {
+      await clicarRadio(tester, indice);
+      final radio = tester.widget<Radio<String>>(
+        find.byType(Radio<String>).at(indice),
+      );
+      expect(valorGrupoRadio(tester, radio), radio.value);
+    }
     expect(find.byType(DropdownButtonFormField<String>), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());

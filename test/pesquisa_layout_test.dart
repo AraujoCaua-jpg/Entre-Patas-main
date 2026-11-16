@@ -18,7 +18,7 @@ class PesquisaDados extends ClienteController {
     bool somenteMeus = false,
   }) async {
     this.tipo = tipo;
-    this.filtros.add({...filtros, if (tipo != null) 'tipo': tipo});
+    this.filtros.add({...filtros, 'tipo': ?tipo});
     return [];
   }
 

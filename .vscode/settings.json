@@ -1,0 +1,11 @@
+{
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "pubspec.yaml": "pubspec.lock, analysis_options.yaml, .metadata"
+  },
+  "files.exclude": {
+    "**/.dart_tool": true,
+    "**/build": true,
+    "**/.flutter-plugins-dependencies": true
+  }
+}

@@ -4,8 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'controller/clientes_scope.dart';
 import 'view/core/app_colors.dart';
 import 'view/core/recuperacao_senha_navigation.dart';
-import 'view/autenticacao/bemVindo.dart';
-import 'view/navagacao.dart';
+import 'view/autenticacao/bem_vindo.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,8 +41,6 @@ class _MeuAppState extends State<MeuApp> {
   late final _recuperacaoSenha =
       widget.recuperacaoSenha ?? RecuperacaoSenhaNavigation();
 
-  final bool logado = false;
-
   @override
   void dispose() {
     _recuperacaoSenha.dispose();
@@ -67,7 +64,7 @@ class _MeuAppState extends State<MeuApp> {
           colorScheme: ColorScheme.fromSeed(seedColor: AppColors.laranja),
           useMaterial3: true,
         ),
-        home: logado ? const NavegacaoScreen() : const BemVindoScreen(),
+        home: const BemVindoScreen(),
       ),
     );
   }

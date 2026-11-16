@@ -8,7 +8,7 @@ import '../../services/login_exception.dart';
 import '../../services/compatibilidade_service.dart';
 import '../core/app_colors.dart';
 import '../core/usuario_resumo.dart';
-import '../usuario/editarPerfil.dart';
+import '../usuario/editar_perfil.dart';
 
 class AdocaoScreen extends StatefulWidget {
   const AdocaoScreen({super.key, this.animalId, this.adocaoId})

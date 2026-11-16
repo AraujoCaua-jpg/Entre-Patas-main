@@ -1,4 +1,7 @@
 import 'package:material_ui/material_ui.dart';
+
+import 'support/radio_test_helpers.dart';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:entre_patas/controller/cliente_controller.dart';
@@ -7,8 +10,8 @@ import 'package:entre_patas/model/cliente.dart';
 import 'package:entre_patas/model/animais.dart';
 import 'package:entre_patas/model/adocao.dart';
 import 'package:entre_patas/view/animal/adocao.dart';
-import 'package:entre_patas/view/questionario/testeCompA.dart';
-import 'package:entre_patas/view/questionario/testeComp.dart';
+import 'package:entre_patas/view/questionario/teste_comp_a.dart';
+import 'package:entre_patas/view/questionario/teste_comp.dart';
 import 'package:entre_patas/view/usuario/configuracoes.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -187,16 +190,14 @@ void main() {
     expect(
       tester
           .widgetList<Radio<String>>(find.byType(Radio<String>))
-          .every((radio) => radio.groupValue == null),
+          .every((radio) => valorGrupoRadio(tester, radio) == null),
       isTrue,
     );
     expect(dados.salvo, isNull);
     await clicar(tester, 'Gato');
     await tester.enterText(find.byType(TextField).at(0), '0');
     await tester.enterText(find.byType(TextField).at(1), '10');
-    tester.widget<Radio<String>>(find.byType(Radio<String>).at(1)).onChanged!(
-      'Fêmea',
-    );
+    await clicarRadio(tester, 1);
     final sliders = tester.widgetList<Slider>(find.byType(Slider)).toList();
     sliders[0].onChanged!(0);
     sliders[1].onChanged!(1);
@@ -205,19 +206,25 @@ void main() {
     var radios = tester
         .widgetList<Radio<String>>(find.byType(Radio<String>))
         .toList();
-    expect(radios.every((radio) => radio.groupValue == null), isTrue);
+    expect(
+      radios.every((radio) => valorGrupoRadio(tester, radio) == null),
+      isTrue,
+    );
     for (final index in [2, 4, 12, 14]) {
-      radios[index].onChanged!(radios[index].value);
+      await clicarRadio(tester, index);
     }
     await tester.pumpAndSettle();
     await clicar(tester, 'Avançar');
     radios = tester
         .widgetList<Radio<String>>(find.byType(Radio<String>))
         .toList();
-    expect(radios.every((radio) => radio.groupValue == null), isTrue);
+    expect(
+      radios.every((radio) => valorGrupoRadio(tester, radio) == null),
+      isTrue,
+    );
     expect(dados.salvo, isNull);
     for (final index in [0, 2, 4, 6, 8, 11]) {
-      radios[index].onChanged!(radios[index].value);
+      await clicarRadio(tester, index);
     }
     await tester.pumpAndSettle();
     await clicar(tester, 'Avançar');

@@ -93,7 +93,9 @@ class ServidorAuthSimulado {
         {
           'id': id,
           'id_cliente': id,
-          'tipo': id == 1 ? 'Gato' : 'Cachorro',
+          // Cada conta prefere a espécie do animal da outra conta. Assim o
+          // teste de isolamento também respeita o filtro atual da Home.
+          'tipo': id == 1 ? 'Cachorro' : 'Gato',
           'sexo': 'Fêmea',
           'porte': 0,
           'energia': 1,

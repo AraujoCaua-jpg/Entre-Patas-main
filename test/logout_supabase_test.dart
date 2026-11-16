@@ -9,7 +9,7 @@ import 'package:entre_patas/controller/clientes_scope.dart';
 import 'package:entre_patas/model/cliente.dart';
 import 'package:entre_patas/services/supabase_auth_service.dart';
 import 'package:entre_patas/view/usuario/configuracoes.dart';
-import 'package:entre_patas/view/autenticacao/bemVindo.dart';
+import 'package:entre_patas/view/autenticacao/bem_vindo.dart';
 
 Cliente perfil(int id) => Cliente(
   id: id,

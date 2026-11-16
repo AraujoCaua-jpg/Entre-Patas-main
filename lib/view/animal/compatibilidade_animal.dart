@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../core/app_colors.dart';
-import '../questionario/testeComp.dart';
+import '../questionario/teste_comp.dart';
 
 class CompatibilidadeAnimal extends StatelessWidget {
   const CompatibilidadeAnimal({

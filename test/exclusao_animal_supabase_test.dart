@@ -252,54 +252,58 @@ void main() {
     });
   }
 
-  test('Renovação de token preserva confirmação e notificação da exclusão', () async {
-    await entrar();
-    var avisos = 0;
-    controller.addListener(() => avisos++);
-    final tokenAnterior =
-        Supabase.instance.client.auth.currentSession!.accessToken;
-    rpcIniciada = Completer<void>();
-    liberarRpc = Completer<void>();
-    final operacao = controller.apagarAnimalSupabase(9);
-    final resultado = expectLater(operacao, completes);
-    await rpcIniciada!.future;
-    await Supabase.instance.client.auth.refreshSession();
-    expect(
-      Supabase.instance.client.auth.currentSession!.accessToken,
-      isNot(tokenAnterior),
-    );
-    liberarRpc!.complete();
-    await resultado;
-    expect(avisos, 1);
-  });
+  test(
+    'Renovação de token preserva confirmação e notificação da exclusão',
+    () async {
+      await entrar();
+      var avisos = 0;
+      controller.addListener(() => avisos++);
+      final tokenAnterior =
+          Supabase.instance.client.auth.currentSession!.accessToken;
+      rpcIniciada = Completer<void>();
+      liberarRpc = Completer<void>();
+      final operacao = controller.apagarAnimalSupabase(9);
+      final resultado = expectLater(operacao, completes);
+      await rpcIniciada!.future;
+      await Supabase.instance.client.auth.refreshSession();
+      expect(
+        Supabase.instance.client.auth.currentSession!.accessToken,
+        isNot(tokenAnterior),
+      );
+      liberarRpc!.complete();
+      await resultado;
+      expect(avisos, 1);
+    },
+  );
 
-  for (final mudanca in ['logout', 'troca de conta', 'novo login da mesma conta']) {
-    test(
-      'Resposta antiga é rejeitada após $mudanca',
-      () async {
-        await entrar();
-        var avisos = 0;
-        controller.addListener(() => avisos++);
-        rpcIniciada = Completer<void>();
-        liberarRpc = Completer<void>();
-        final operacao = controller.apagarAnimalSupabase(9);
-        final resultado = expectLater(
-          operacao,
-          throwsA(mensagem('Entre novamente para continuar.')),
+  for (final mudanca in [
+    'logout',
+    'troca de conta',
+    'novo login da mesma conta',
+  ]) {
+    test('Resposta antiga é rejeitada após $mudanca', () async {
+      await entrar();
+      var avisos = 0;
+      controller.addListener(() => avisos++);
+      rpcIniciada = Completer<void>();
+      liberarRpc = Completer<void>();
+      final operacao = controller.apagarAnimalSupabase(9);
+      final resultado = expectLater(
+        operacao,
+        throwsA(mensagem('Entre novamente para continuar.')),
+      );
+      await rpcIniciada!.future;
+      if (mudanca == 'logout') {
+        await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
+      } else {
+        await entrar(
+          mudanca == 'troca de conta' ? 'b@example.com' : 'a@example.com',
         );
-        await rpcIniciada!.future;
-        if (mudanca == 'logout') {
-          await Supabase.instance.client.auth.signOut(
-            scope: SignOutScope.local,
-          );
-        } else {
-          await entrar(mudanca == 'troca de conta' ? 'b@example.com' : 'a@example.com');
-        }
-        liberarRpc!.complete();
-        await resultado;
-        expect(avisos, 0);
-      },
-    );
+      }
+      liberarRpc!.complete();
+      await resultado;
+      expect(avisos, 0);
+    });
   }
 
   test('Falha de rede é tratada sem notificar ou usar PHP', () async {

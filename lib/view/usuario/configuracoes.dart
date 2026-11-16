@@ -2,14 +2,14 @@ import 'package:entre_patas/view/core/app_dialog.dart';
 
 import '../../controller/clientes_scope.dart';
 
-import 'package:entre_patas/view/autenticacao/bemVindo.dart';
-import 'package:entre_patas/view/usuario/alterarSenha.dart';
+import 'package:entre_patas/view/autenticacao/bem_vindo.dart';
+import 'package:entre_patas/view/usuario/alterar_senha.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../services/login_exception.dart';
 import '../core/app_colors.dart';
-import '../questionario/testeComp.dart';
-import 'editarPerfil.dart';
+import '../questionario/teste_comp.dart';
+import 'editar_perfil.dart';
 
 class ConfiguracoesScreen extends StatelessWidget {
   const ConfiguracoesScreen({super.key});

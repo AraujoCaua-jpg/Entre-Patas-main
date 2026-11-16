@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../model/animais.dart';
 import '../model/adocao.dart';
 import '../model/cliente.dart';
+import 'validacao_perfil.dart';
+import 'filtros_animais.dart';
 import 'foto_perfil_url.dart';
 import 'login_exception.dart';
 
@@ -216,7 +218,7 @@ class SupabaseService {
       if (_client.auth.currentUser?.id != usuario.id) {
         throw const LoginException('Entre novamente para editar seu perfil.');
       }
-      if (dados == null) {
+      if (dados == null || dados['ativo'] != true) {
         throw const LoginException('Perfil não encontrado ou inativo.');
       }
       final imagemBanco = dados['imagem']?.toString();
@@ -228,7 +230,14 @@ class SupabaseService {
           : FotoPerfilUrl.valida(imagemAuth)
           ? imagemAuth
           : null;
-      return Cliente.fromJson({...dados, 'imagem': imagem});
+      return Cliente.fromJson({
+        ...dados,
+        'imagem': imagem,
+        'questionario_pendente':
+            dados['questionario_pendente'] == true ||
+            dados['questionario_pendente'] == 1 ||
+            usuario.userMetadata?['origem_cadastro'] == 'entre_patas',
+      });
     } on PostgrestException catch (erro) {
       throw _erroPerfil(erro);
     }
@@ -239,7 +248,7 @@ class SupabaseService {
     if (usuario == null) {
       throw const LoginException('Entre novamente para editar seu perfil.');
     }
-    _validarPerfil(cliente);
+    validarPerfil(cliente);
     final novoEmail = cliente.email.trim().toLowerCase();
     if (novoEmail != usuario.email?.trim().toLowerCase() &&
         !alteracaoEmailHabilitada) {
@@ -301,80 +310,6 @@ class SupabaseService {
     );
   }
 
-  void _validarPerfil(Cliente cliente) {
-    final campos = {
-      'nome': (cliente.nome, 50),
-      'sobrenome': (cliente.sobrenome, 100),
-      'e-mail': (cliente.email, 100),
-      'usuário': (cliente.usuario, 50),
-      'cidade': (cliente.cidadeDeResidencia, 100),
-    };
-    for (final campo in campos.entries) {
-      final texto = campo.value.$1.trim();
-      if (texto.isEmpty || texto.runes.length > campo.value.$2) {
-        throw LoginException('Confira o campo ${campo.key}.');
-      }
-    }
-    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(cliente.email.trim())) {
-      throw const LoginException('Digite um e-mail válido.');
-    }
-    if (!RegExp(r'^\d{10,11}$')
-        .hasMatch(cliente.telefone.replaceAll(RegExp(r'\D'), ''))) {
-      throw const LoginException('Digite um telefone com DDD.');
-    }
-    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(cliente.usuario.trim())) {
-      throw const LoginException('Use apenas letras, números e underline (_).');
-    }
-    const estados = {
-      'AC',
-      'AL',
-      'AP',
-      'AM',
-      'BA',
-      'CE',
-      'DF',
-      'ES',
-      'GO',
-      'MA',
-      'MT',
-      'MS',
-      'MG',
-      'PA',
-      'PB',
-      'PR',
-      'PE',
-      'PI',
-      'RJ',
-      'RN',
-      'RS',
-      'RO',
-      'RR',
-      'SC',
-      'SP',
-      'SE',
-      'TO',
-    };
-    if (!estados.contains(cliente.estado)) {
-      throw const LoginException('Selecione o estado.');
-    }
-    if (cliente.larDeAdocao && (cliente.endereco?.trim().isEmpty ?? true)) {
-      throw const LoginException('Informe o endereço do lar de adoção.');
-    }
-    if ((cliente.endereco?.runes.length ?? 0) > 255 ||
-        (cliente.imageUrl?.runes.length ?? 0) > 255) {
-      throw const LoginException(
-        'Endereço e imagem devem ter até 255 caracteres.',
-      );
-    }
-    if (cliente.imageUrl != null &&
-        cliente.imageUrl!.trim().isNotEmpty &&
-        !FotoPerfilUrl.valida(cliente.imageUrl)) {
-      throw const LoginException(
-        'Digite um link de imagem válido (http ou https).',
-      );
-    }
-  }
-
   Future<List<Map<String, dynamic>>> buscarAnimais({
     String? tipo,
     Map<String, String> filtros = const {},
@@ -386,12 +321,15 @@ class SupabaseService {
     final estado = filtros['estado']?.trim() ?? '';
     final cidade = filtros['cidade']?.trim() ?? '';
 
-    if (estado.isNotEmpty && cidade.isNotEmpty) {
-      final dados = await _client.rpc('ep_animais_perto_de_mim');
-
-      return (dados as List)
-          .map((item) => Map<String, dynamic>.from(item as Map))
-          .toList();
+    if (!somenteMeus && estado.isNotEmpty && cidade.isNotEmpty) {
+      final dados = await _buscarAnimaisProximos(
+        tipo: tipo,
+        filtros: filtros,
+        clienteId: clienteId,
+        animalId: animalId,
+      );
+      final inicio = ((pagina < 1 ? 1 : pagina) - 1) * 50;
+      return dados.skip(inicio).take(50).toList();
     }
 
     final usuario = _client.auth.currentUser;
@@ -466,7 +404,10 @@ class SupabaseService {
 
     final inicio = ((pagina < 1 ? 1 : pagina) - 1) * 50;
 
-    final dados = await consulta.order('nome').range(inicio, inicio + 49);
+    final dados = await consulta
+        .order('nome')
+        .order('id')
+        .range(inicio, inicio + 49);
 
     return dados.map((item) => Map<String, dynamic>.from(item)).toList();
   }
@@ -475,6 +416,13 @@ class SupabaseService {
     String? tipo,
     Map<String, String> filtros = const {},
   }) async {
+    if ((filtros['estado']?.trim().isNotEmpty ?? false) &&
+        (filtros['cidade']?.trim().isNotEmpty ?? false)) {
+      // A RPC devolve seu conjunto em uma chamada; não repetir a mesma busca
+      // a cada página nem acrescentar os mesmos animais até atingir o limite.
+      final dados = await _buscarAnimaisProximos(tipo: tipo, filtros: filtros);
+      return dados.map(Animal.fromJson).toList();
+    }
     final todos = <Animal>[];
     for (var pagina = 1; pagina <= 1000; pagina++) {
       final dados = await buscarAnimais(
@@ -487,6 +435,27 @@ class SupabaseService {
     }
     throw const LoginException(
       'Há muitos animais para carregar de uma só vez. Use a pesquisa paginada.',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> _buscarAnimaisProximos({
+    String? tipo,
+    Map<String, String> filtros = const {},
+    int? clienteId,
+    int? animalId,
+  }) async {
+    final dados = await _executarBuscaRpc('ep_animais_perto_de_mim', const {});
+    if (dados is! List) {
+      throw const LoginException(
+        'Não foi possível carregar os animais próximos.',
+      );
+    }
+    return filtrarAnimaisProximos(
+      dados.map((item) => Map<String, dynamic>.from(item as Map)).toList(),
+      tipo: tipo,
+      filtros: filtros,
+      clienteId: clienteId,
+      animalId: animalId,
     );
   }
 

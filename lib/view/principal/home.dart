@@ -7,8 +7,8 @@ import '../../controller/clientes_scope.dart';
 import '../../model/animais.dart';
 import '../../services/compatibilidade_service.dart';
 import '../../services/login_exception.dart';
-import '../animal/fichaAnimal.dart';
-import '../questionario/testeComp.dart';
+import '../animal/ficha_animal.dart';
+import '../questionario/teste_comp.dart';
 
 const _laranjaHome = Color(0xFFFF642F);
 

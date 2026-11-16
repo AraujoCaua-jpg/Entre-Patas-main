@@ -5,7 +5,7 @@ import 'package:entre_patas/controller/clientes_scope.dart';
 import 'package:entre_patas/model/cliente.dart';
 import 'package:entre_patas/model/animais.dart';
 import 'package:entre_patas/view/autenticacao/login.dart';
-import 'package:entre_patas/view/questionario/testeComp.dart';
+import 'package:entre_patas/view/questionario/teste_comp.dart';
 import 'package:entre_patas/view/navagacao.dart';
 import 'package:entre_patas/service/auth_api.dart';
 
@@ -48,14 +48,10 @@ class DadosPrimeiroLogin extends ClienteController {
 }
 
 void main() {
-  testWidgets('conta antiga sem questionário vai direto ao início', (
+  testWidgets('conta antiga sem questionário também exige o teste', (
     tester,
   ) async {
-    final dados = DadosPrimeiroLogin(
-      concluido: false,
-      novo: false,
-      falhar: true,
-    );
+    final dados = DadosPrimeiroLogin(concluido: false, novo: false);
     await tester.pumpWidget(
       ClientesScope(
         controller: dados,
@@ -67,8 +63,8 @@ void main() {
     await tester.ensureVisible(find.text('Entrar'));
     await tester.tap(find.text('Entrar'));
     await tester.pumpAndSettle();
-    expect(find.byType(NavegacaoScreen), findsOneWidget);
-    expect(find.byType(TesteCompScreen), findsNothing);
+    expect(find.byType(NavegacaoScreen), findsNothing);
+    expect(find.byType(TesteCompScreen), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     dados.dispose();

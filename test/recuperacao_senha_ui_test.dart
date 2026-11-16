@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:entre_patas/controller/cliente_controller.dart';
 import 'package:entre_patas/controller/clientes_scope.dart';
-import 'package:entre_patas/view/autenticacao/bemVindo.dart';
-import 'package:entre_patas/view/autenticacao/esqueciSenha.dart';
+import 'package:entre_patas/view/autenticacao/bem_vindo.dart';
+import 'package:entre_patas/view/autenticacao/esqueci_senha.dart';
 import 'package:entre_patas/view/core/recuperacao_senha_navigation.dart';
-import 'package:entre_patas/view/usuario/alterarSenha.dart';
+import 'package:entre_patas/view/usuario/alterar_senha.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;

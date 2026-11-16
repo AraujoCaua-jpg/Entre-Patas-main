@@ -5,7 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../controller/clientes_scope.dart';
 import '../../services/supabase_auth_service.dart';
-import '../usuario/alterarSenha.dart';
+import '../usuario/alterar_senha.dart';
 
 // Não desenha uma nova tela: encaminha somente callbacks já verificados pelo SDK.
 class RecuperacaoSenhaNavigation extends NavigatorObserver {

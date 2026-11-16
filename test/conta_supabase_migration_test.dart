@@ -258,6 +258,29 @@ void main() {
     expect(auth.recuperacaoConfirmada, isFalse);
   });
 
+  test('Login e recarga preservam a foto por URL do banco', () async {
+    servidor.perfil['imagem'] = 'https://example.com/foto-banco.png';
+    await controller.entrar('ana@example.com', _senha);
+    expect(
+      controller.clienteLogado!.imageUrl,
+      'https://example.com/foto-banco.png',
+    );
+    final perfil = await controller.atualizarPerfil();
+    expect(perfil.imageUrl, 'https://example.com/foto-banco.png');
+    expect(servidor.requisicoes.where((r) => r.method == 'PATCH'), isEmpty);
+  });
+
+  test('Login usa foto Auth quando o perfil não tem imagem', () async {
+    servidor.perfil['imagem'] = null;
+    servidor.metadadosUsuario = {'imagem': 'https://example.com/foto-auth.png'};
+    await controller.entrar('ana@example.com', _senha);
+    expect(
+      controller.clienteLogado!.imageUrl,
+      'https://example.com/foto-auth.png',
+    );
+    expect(servidor.perfil['imagem'], isNull);
+  });
+
   test('Perfil só é carregado por auth_user_id autenticado', () async {
     await entrar();
     final cliente = await service.buscarMeuPerfilSupabase();

@@ -3,9 +3,9 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../controller/clientes_scope.dart';
 import '../usuario/configuracoes.dart';
-import '../usuario/editarPerfil.dart';
-import '../animal/animaisCadastrados.dart';
-import '../animal/fichaAnimal.dart';
+import '../usuario/editar_perfil.dart';
+import '../animal/animais_cadastrados.dart';
+import '../animal/ficha_animal.dart';
 import '../core/foto_perfil_avatar.dart';
 import '../../model/animais.dart';
 import '../../services/login_exception.dart';
@@ -71,11 +71,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
               ],
             ),
 
-            FotoPerfilAvatar(
-              url: cliente.imageUrl,
-              radius: 100,
-              iconSize: 80,
-            ),
+            FotoPerfilAvatar(url: cliente.imageUrl, radius: 100, iconSize: 80),
             SizedBox(height: 10),
 
             Text(

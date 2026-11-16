@@ -1,9 +1,40 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:entre_patas/view/questionario/testeCompB.dart';
-import 'package:entre_patas/view/questionario/testeCompC.dart';
+import 'package:flutter/services.dart';
+import 'package:entre_patas/view/questionario/teste_comp_b.dart';
+import 'package:entre_patas/view/questionario/teste_comp_c.dart';
+
+import 'support/radio_test_helpers.dart';
 
 void main() {
+  testWidgets('setas mudam apenas a pergunta em foco', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: TesteCompBScreen()));
+    await tester.pumpAndSettle();
+    expect(find.byType(RadioGroup<String>), findsNWidgets(4));
+    await clicarRadio(tester, 0);
+    await clicarRadio(tester, 4);
+    // Cliques em modo touch não dão foco de teclado automaticamente.
+    final detector = tester.widget<FocusableActionDetector>(
+      find.descendant(
+        of: find.byType(Radio<String>).at(4),
+        matching: find.byType(FocusableActionDetector),
+      ),
+    );
+    detector.focusNode!.requestFocus();
+    await tester.pump();
+    expect(detector.focusNode!.hasFocus, isTrue);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    final radios = tester
+        .widgetList<Radio<String>>(find.byType(Radio<String>))
+        .toList();
+    expect(valorGrupoRadio(tester, radios[4]), '4');
+    expect(valorGrupoRadio(tester, radios[0]), 'Casa c/ Quintal');
+    expect(valorGrupoRadio(tester, radios[9]), isNull);
+    expect(valorGrupoRadio(tester, radios[13]), isNull);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final respostas in [
     <String, dynamic>{},
     <String, dynamic>{
@@ -32,7 +63,9 @@ void main() {
         await escolher(4 + i);
         final grupo = tester.widgetList<Radio<String>>(radios).toList();
         expect(
-          grupo.sublist(4, 9).every((r) => r.groupValue == '${5 - i}'),
+          grupo
+              .sublist(4, 9)
+              .every((r) => valorGrupoRadio(tester, r) == '${5 - i}'),
           isTrue,
         );
       }
@@ -40,10 +73,12 @@ void main() {
         await escolher(9 + i);
         final grupo = tester.widgetList<Radio<String>>(radios).toList();
         expect(
-          grupo.sublist(9, 13).every((r) => r.groupValue == '${i + 1}'),
+          grupo
+              .sublist(9, 13)
+              .every((r) => valorGrupoRadio(tester, r) == '${i + 1}'),
           isTrue,
         );
-        expect(grupo[4].groupValue, '1');
+        expect(valorGrupoRadio(tester, grupo[4]), '1');
       }
       await escolher(13);
       await tester.ensureVisible(find.text('Avançar'));
@@ -71,7 +106,9 @@ void main() {
       await tester.pumpAndSettle();
       final grupo = tester.widgetList<Radio<String>>(radios).toList();
       expect(
-        grupo.sublist(8, 11).every((r) => r.groupValue == '${3 - i}'),
+        grupo
+            .sublist(8, 11)
+            .every((r) => valorGrupoRadio(tester, r) == '${3 - i}'),
         isTrue,
       );
     }

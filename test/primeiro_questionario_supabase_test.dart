@@ -4,7 +4,7 @@ import 'package:entre_patas/controller/cliente_controller.dart';
 import 'package:entre_patas/controller/clientes_scope.dart';
 import 'package:entre_patas/view/autenticacao/login.dart';
 import 'package:entre_patas/view/navagacao.dart';
-import 'package:entre_patas/view/questionario/testeComp.dart';
+import 'package:entre_patas/view/questionario/teste_comp.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -160,16 +160,44 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('Conta legada sem marcador e sem pendência mantém navegação', (
+  testWidgets('Conta legada sem marcador também precisa responder ao teste', (
     tester,
   ) async {
     servidor.cadastroDoApp = false;
     await loginNaTela(tester);
     expect(controller.clienteLogado!.questionarioPendente, isFalse);
-    expect(find.byType(NavegacaoScreen), findsOneWidget);
-    expect(find.byType(TesteCompScreen), findsNothing);
+    expect(find.byType(NavegacaoScreen), findsNothing);
+    expect(find.byType(TesteCompScreen), findsOneWidget);
     expect(servidor.chamadas.where((r) => r.method == 'PATCH'), isEmpty);
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Conta legada reutiliza respostas salvas em novo login', (
+    tester,
+  ) async {
+    servidor.cadastroDoApp = false;
+    servidor.questionario = {'id': 9, 'id_cliente': 1, 'dedicacao': 2};
+    await loginNaTela(tester);
+    expect(find.byType(NavegacaoScreen), findsOneWidget);
+    expect(find.byType(TesteCompScreen), findsNothing);
+    expect(
+      servidor.chamadas.where(
+        (r) => r.url.path == '/rest/v1/questionario' && r.method != 'GET',
+      ),
+      isEmpty,
+    );
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Erro na consulta de conta legada também bloqueia a Home', (
+    tester,
+  ) async {
+    servidor.cadastroDoApp = false;
+    servidor.falharConsulta = true;
+    await loginNaTela(tester);
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byType(NavegacaoScreen), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
 

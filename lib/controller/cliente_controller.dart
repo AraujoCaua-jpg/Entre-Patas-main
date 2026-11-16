@@ -61,6 +61,7 @@ class ClienteController extends ChangeNotifier {
       // recente pode substituir o cache usado pelo badge.
       return List.unmodifiable(adocoes);
     }
+    final mudou = !_mesmasAdocoes(_adocoesNotificacoes, adocoes);
     _adocoesNotificacoes = List.of(adocoes);
     _notificacoes = adocoes.where((adocao) {
       final recebida = adocao.idDono == cliente.id
@@ -70,7 +71,7 @@ class ClienteController extends ChangeNotifier {
       return recebida &&
           !_notificacoesLidas.contains((adocao.id, adocao.status));
     }).toList();
-    notifyListeners();
+    if (mudou) notifyListeners();
     // A tela filtra as lidas; o badge conta apenas as notificações novas.
     return List.unmodifiable(_adocoesNotificacoes);
   }
@@ -87,7 +88,7 @@ class ClienteController extends ChangeNotifier {
     }
     // O SQL instalado não persiste leitura de notificações. Mantém a versão
     // exibida em memória nesta sessão, sem alterar o histórico nem usar PHP.
-    _notificacoesLidas.add((adocao.id, adocao.status));
+    if (!_notificacoesLidas.add((adocao.id, adocao.status))) return;
     _notificacoes.removeWhere(
       (a) => a.id == adocao.id && a.status == adocao.status,
     );
@@ -102,6 +103,24 @@ class ClienteController extends ChangeNotifier {
     _notificacoesLidas.clear();
   }
 
+  bool _mesmasAdocoes(List<Adocao> anteriores, List<Adocao> atuais) {
+    if (anteriores.length != atuais.length) return false;
+    for (var i = 0; i < atuais.length; i++) {
+      final a = anteriores[i];
+      final b = atuais[i];
+      if (a.id != b.id ||
+          a.status != b.status ||
+          a.data != b.data ||
+          a.idAnimal != b.idAnimal ||
+          a.idCliente != b.idCliente ||
+          a.idDono != b.idDono ||
+          !mapEquals(a.detalhes, b.detalhes)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   Cliente? get clienteLogado =>
       _clienteLogadoId == null ? null : buscarCliente(_clienteLogadoId!);
 
@@ -113,41 +132,13 @@ class ClienteController extends ChangeNotifier {
       throw const LoginException('Entre novamente para continuar.');
     }
 
-    final dados = await Supabase.instance.client
-        .from('cliente')
-        .select()
-        .eq('auth_user_id', usuario.id)
-        .maybeSingle();
+    final cliente = await _supabaseService.buscarMeuPerfilSupabase();
 
     // Uma consulta iniciada antes do logout não pode restaurar o perfil antigo.
     if (versaoSessao != _versaoSessao ||
         Supabase.instance.client.auth.currentUser?.id != usuario.id) {
       throw const LoginException('Entre novamente para continuar.');
     }
-
-    if (dados == null || dados['ativo'] != true) {
-      throw const LoginException('Perfil não encontrado ou inativo.');
-    }
-
-    final cliente = Cliente(
-      id: (dados['id'] as num).toInt(),
-      nome: dados['nome'] as String? ?? '',
-      sobrenome: dados['sobrenome'] as String? ?? '',
-      email: dados['email'] as String? ?? '',
-      telefone: dados['telefone'] as String? ?? '',
-      usuario: dados['usuario'] as String? ?? '',
-      cidadeDeResidencia: dados['cidadeDeResidencia'] as String? ?? '',
-      estado: dados['estado'] as String?,
-      endereco: dados['endereco'] as String?,
-      imageUrl: dados['imagem'] as String?,
-      larDeAdocao: dados['larDeAdocao'] == true,
-      questionarioPendente:
-          dados['questionario_pendente'] == true ||
-          dados['questionario_pendente'] == 1 ||
-          // O trigger legado usa default 0. Cadastros do app continuam
-          // obrigados a responder; respostas já salvas têm precedência.
-          usuario.userMetadata?['origem_cadastro'] == 'entre_patas',
-    );
 
     _clienteLogadoId = cliente.id;
     _atualizar(cliente);
